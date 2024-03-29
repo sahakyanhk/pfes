@@ -22,9 +22,8 @@ w = p[:20] #probabilities for random sequence generation
 
     
 #random sequence generator
-def randomseq(nres, weights=w):
+def randomseq(nres=18, weights=w):
     return ''.join(random.choices(aa_alphabet, weights=weights, k=nres))
-
 
 
 def sequence_mutator(seq):  
