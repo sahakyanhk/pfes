@@ -1,1 +1,1 @@
-# PFES
+# PFES: protein fold evolution simulation

@@ -9,11 +9,8 @@ def pydssp(input_pdb_path, chainid='A'):
     dssp, max_helix = stdout.split(',')
     return  dssp, int(max_helix)
 
-input_pdb_path = str(sys.argv[1])
-chainid = str(sys.argv[2])
-
 if  os.path.isfile(input_pdb_path): 
-    print(pydssp(input_pdb_path, chainid))
+    print(pydssp(str(sys.argv[1]), str(sys.argv[2])))
 
 
 
