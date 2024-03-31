@@ -27,13 +27,15 @@ def backup_output(outpath):
         os.replace(outpath, outpath + '.' + str(last_backup +  1))
 
 
-def esm_to_data(esm_out, model):
+def esm2data(esm_out):
     output = {key: value.cpu() for key, value in esm_out.items()}
-    pdb_txt = model.output_to_pdb(esm_out)
-    
-    ptm = esm_out["ptm"][0].tolist()
-    mean_plddt = esm_out["mean_plddt"][0].tolist()
-    return(round(ptm, 3), round(mean_plddt*0.01, 3), pdb_txt)
+    pdbs = model.output_to_pdb(output)
+    ptm = esm_out["ptm"].tolist()
+    mean_plddt = esm_out["mean_plddt"].tolist()
+    return(pdbs, ptm, mean_plddt)
+
+
+
 
 def create_batched_sequence_datasest(sequences: T.List[T.Tuple[str, str]], max_tokens_per_batch: int = 1024
 ) -> T.Generator[T.Tuple[T.List[str], T.List[str]], None, None]:
@@ -77,12 +79,9 @@ PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFY
 
 
 
-def inter_evolver(args):  
+def inter_evolver(args, model):  
 
-    #load models
-    print('\nloading esm.pretrained.esmfold_v1... \n')
-    model = esm.pretrained.esmfold_v1()
-    model = model.eval().cuda()
+
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
@@ -113,7 +112,7 @@ def inter_evolver(args):
     for gen_i in range(args.num_generations):
         n = 0
         new_gen = pd.DataFrame(columns=columns)
-        sequences = []
+        generated_sequences = []
         for sequence in init_gen.sequence:
 
             id = "gen{0}_seq{1}".format(gen_i, n); n+=1 # give an uniq id even if the same sequence already exists            
@@ -127,14 +126,14 @@ def inter_evolver(args):
                     seqmask = ancestral_memory.sequence == seq 
 
         
-            sequences.append((id, seq+seq2))
+            generated_sequences.append((id, seq+seq))
 
             if seqmask.any():
                 repit = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'])
                 repit.id = id #assing a new id to the already exiting sequence
                 new_gen = new_gen.append(repit)
 
-            batched_sequences = create_batched_sequence_datasest(sequences, args.max_tokens_per_batch)
+            batched_sequences = create_batched_sequence_datasest(generated_sequences, args.max_tokens_per_batch)
 
             #predict data for the new sequence
             for headers, sequences in batched_sequences:
@@ -155,50 +154,51 @@ def inter_evolver(args):
 
                         continue
                     raise 
+                pdbs, ptms, mean_plddts = esm2data(output)             
+                seq_len = len(seq)
 
 
-############################################################################################################
-            ptm, _, pdb_txt = esm_to_data(model.infer(seq + seq2), model)
-            seq_len = len(seq)
-            with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
-                f.write(pdb_txt)   
+            for pdb_txt, ptm, mean_plddt, seq in zip(pdbs, ptm, mean_plddt, sequences):
+                seq_len = len(seq)
+                with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
+                    f.write(pdb_txt)   
 
-            #================================SCORING================================# 
-            num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6, 70)
-            num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6, 70) #TODO dinamicaly change the cutoff plddt
-            dssp, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
+                #================================SCORING================================# 
+                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6, 70)
+                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6, 70) #TODO dinamicaly change the cutoff plddt
+                dssp, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
-            #Rg, aspher = get_aspher(pdb_txt)
-            prot_len_penalty =  1 - sigmoid(seq_len, pL0) * np.tanh(seq_len*0.05)
-            max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
+                #Rg, aspher = get_aspher(pdb_txt)
+                prot_len_penalty =  1 - sigmoid(seq_len, pL0) * np.tanh(seq_len*0.05)
+                max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
 
-            score  = np.prod([mean_plddt,           #[0, 1]
-            ptm,                  #[0, 1]
-            prot_len_penalty,     #[0, 1]
-            max_helix_penalty,    #[0, 1]
-            num_conts,            #[1, inf]
-            num_inter_conts])     #[1, inf]
-            #================================SCORING================================#
+                score  = np.prod([mean_plddt,           #[0, 1]
+                ptm,                  #[0, 1]
+                prot_len_penalty,     #[0, 1]
+                max_helix_penalty,    #[0, 1]
+                num_conts,            #[1, inf]
+                num_inter_conts])     #[1, inf]
+                #================================SCORING================================#
+
+                new_gen = new_gen.append({'genndx': gen_i,
+                                        'id': id, 
+                                        'seq_len': seq_len,
+                                        'prot_len_penalty': round(prot_len_penalty, 3), 
+                                        'max_helix_penalty': round(max_helix_penalty, 3),
+                                        'ptm': ptm, 
+                                        'mean_plddt': mean_plddt, 
+                                        'num_conts': num_conts, 
+                                        'num_inter_conts': num_inter_conts, 
+                                        'score': round(score, 3), 
+                                        'sequence': seq, 
+                                        'dssp': dssp
+                                        }, ignore_index=True)
+
+                    #write a log file NOW same as new gen 
+                    #log = (f'{id}\t{seq_len}\t{round(prot_len_penalty,2)}\t{round(max_helix_penalty,2)}\t{ptm}\t{mean_plddt}\t{num_conts}\t{num_inter_conts}\t{round(score,2)}\t{seq}\t{dssp}')
+                    #print(f'{log}')
                 
-            new_gen = new_gen.append({'genndx': gen_i,
-                                    'id': id, 
-                                    'seq_len': seq_len,
-                                    'prot_len_penalty': round(prot_len_penalty, 3), 
-                                    'max_helix_penalty': round(max_helix_penalty, 3),
-                                    'ptm': ptm, 
-                                    'mean_plddt': mean_plddt, 
-                                    'num_conts': num_conts, 
-                                    'num_inter_conts': num_inter_conts, 
-                                    'score': round(score, 3), 
-                                    'sequence': seq, 
-                                    'dssp': dssp
-                                    }, ignore_index=True)
-               
-                #write a log file NOW same as new gen 
-                #log = (f'{id}\t{seq_len}\t{round(prot_len_penalty,2)}\t{round(max_helix_penalty,2)}\t{ptm}\t{mean_plddt}\t{num_conts}\t{num_inter_conts}\t{round(score,2)}\t{seq}\t{dssp}')
-                #print(f'{log}')
-                
-            print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
+                print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
         ancestral_memory =  ancestral_memory.append(init_gen)
         
         #select the next generation 
@@ -295,13 +295,16 @@ if __name__ == '__main__':
     
     
     # TODO check arguments and input paths before loading models 
-
+    #load models
+    print('\nloading esm.pretrained.esmfold_v1... \n')
+    model = esm.pretrained.esmfold_v1()
+    model = model.eval().cuda()
 
     pdb_path = args.outpath + '/pdb/' #set paths 
     basename = "pfes" #(os.path.basename(args.pdbfile).split('.')[0])
 
     if args.evolution_mode == "inter_chain":
-        inter_evolver(args)
+        inter_evolver(args, model)
     else: 
         single_fold_evolver(args)
 
