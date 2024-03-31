@@ -101,7 +101,7 @@ def inter_evolver(args, model):
              'num_inter_conts', 
              'score', 
              'sequence', 
-             'dssp']
+             'ss']
     
 
     init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
@@ -125,40 +125,44 @@ def inter_evolver(args, model):
                     seq = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
+            generated_sequences.append((id, seq+":"+seq))
         
-            generated_sequences.append((id, seq+seq))
 
             if seqmask.any():
-                repit = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'])
-                repit.id = id #assing a new id to the already exiting sequence
-                new_gen = new_gen.append(repit)
+                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'])
+                repeat.id = id #assing a new id to the already exiting sequence
+                new_gen = new_gen.append(repeat)
+                generated_sequences.remove(generated_sequences[-1])
+
 
             batched_sequences = create_batched_sequence_datasest(generated_sequences, args.max_tokens_per_batch)
 
             #predict data for the new sequence
-            for headers, sequences in batched_sequences:
-                try:
-                    with torch.no_grad(): 
-                        output = model.infer(sequences) #, num_recycles=args.num_recycles)
-                except RuntimeError as e:
-                    if e.args[0].startswith("CUDA out of memory"):
-                        if len(sequences) > 1:
-                            print(
-                                f"Failed (CUDA out of memory) to predict batch of size {len(sequences)}. "
-                                "Try lowering `--max-tokens-per-batch`."
-                            )
-                        else:
-                            print(
-                                f"Failed (CUDA out of memory) on sequence {headers[0]} of length {len(sequences[0])}."
-                            )
+        for headers, sequences in batched_sequences:
+            print(headers)
+            try:
+                with torch.no_grad(): 
+                    output = model.infer(sequences) #, num_recycles=args.num_recycles)
+            except RuntimeError as e:
+                if e.args[0].startswith("CUDA out of memory"):
+                    if len(sequences) > 1:
+                        print(
+                            f"Failed (CUDA out of memory) to predict batch of size {len(sequences)}. "
+                            "Try lowering `--max-tokens-per-batch`."
+                        )
+                    else:
+                        print(
+                            f"Failed (CUDA out of memory) on sequence {headers[0]} of length {len(sequences[0])}."
+                        )
 
-                        continue
-                    raise 
-                pdbs, ptms, mean_plddts = esm2data(output)             
-                seq_len = len(seq)
+                    continue
+                raise 
 
+            pdbs, ptms, mean_plddts = [], [], []
+            pdbs, ptms, mean_plddts = esm2data(output)             
 
-            for pdb_txt, ptm, mean_plddt, seq in zip(pdbs, ptm, mean_plddt, sequences):
+            for pdb_txt, ptm, mean_plddt, seq, id in zip(pdbs, ptms, mean_plddts, sequences, headers):
+                seq = seq.split(':')[0]
                 seq_len = len(seq)
                 with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
                     f.write(pdb_txt)   
@@ -166,7 +170,7 @@ def inter_evolver(args, model):
                 #================================SCORING================================# 
                 num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6, 70)
                 num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6, 70) #TODO dinamicaly change the cutoff plddt
-                dssp, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
+                ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
                 prot_len_penalty =  1 - sigmoid(seq_len, pL0) * np.tanh(seq_len*0.05)
@@ -185,27 +189,27 @@ def inter_evolver(args, model):
                                         'seq_len': seq_len,
                                         'prot_len_penalty': round(prot_len_penalty, 3), 
                                         'max_helix_penalty': round(max_helix_penalty, 3),
-                                        'ptm': ptm, 
+                                        'ptm': round(ptm, 3), 
                                         'mean_plddt': mean_plddt, 
                                         'num_conts': num_conts, 
                                         'num_inter_conts': num_inter_conts, 
                                         'score': round(score, 3), 
                                         'sequence': seq, 
-                                        'dssp': dssp
+                                        'ss': ss
                                         }, ignore_index=True)
 
                     #write a log file NOW same as new gen 
-                    #log = (f'{id}\t{seq_len}\t{round(prot_len_penalty,2)}\t{round(max_helix_penalty,2)}\t{ptm}\t{mean_plddt}\t{num_conts}\t{num_inter_conts}\t{round(score,2)}\t{seq}\t{dssp}')
+                    #log = (f'{id}\t{seq_len}\t{round(prot_len_penalty,2)}\t{round(max_helix_penalty,2)}\t{ptm}\t{mean_plddt}\t{num_conts}\t{num_inter_conts}\t{round(score,2)}\t{seq}\t{ss}')
                     #print(f'{log}')
                 
                 print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
-        ancestral_memory =  ancestral_memory.append(init_gen)
+            ancestral_memory =  ancestral_memory.append(init_gen)
         
         #select the next generation 
         init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.genndx = f'genndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
-        print(batch)
+
         #with open(os.path.join(args.outpath, args.log), 'a') as f:
         #    f.write(f'{init_gen}\n')
 
