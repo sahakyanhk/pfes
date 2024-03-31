@@ -146,15 +146,10 @@ def inter_evolver(args, model):
             except RuntimeError as e:
                 if e.args[0].startswith("CUDA out of memory"):
                     if len(sequences) > 1:
-                        print(
-                            f"Failed (CUDA out of memory) to predict batch of size {len(sequences)}. "
-                            "Try lowering `--max-tokens-per-batch`."
-                        )
+                        print(f"Failed (CUDA out of memory) to predict batch of size {len(sequences)}. "
+                                "Try lowering `--max-tokens-per-batch`.")
                     else:
-                        print(
-                            f"Failed (CUDA out of memory) on sequence {headers[0]} of length {len(sequences[0])}."
-                        )
-
+                        print(f"Failed (CUDA out of memory) on sequence {headers[0]} of length {len(sequences[0])}.")
                     continue
                 raise 
 
@@ -177,11 +172,11 @@ def inter_evolver(args, model):
                 max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
 
                 score  = np.prod([mean_plddt,           #[0, 1]
-                ptm,                  #[0, 1]
-                prot_len_penalty,     #[0, 1]
-                max_helix_penalty,    #[0, 1]
-                num_conts,            #[1, inf]
-                num_inter_conts])     #[1, inf]
+                                  ptm,                  #[0, 1]
+                                  prot_len_penalty,     #[0, 1]
+                                  max_helix_penalty,    #[0, 1]
+                                  num_conts,            #[1, inf]
+                                  num_inter_conts])     #[1, inf]
                 #================================SCORING================================#
 
                 new_gen = new_gen.append({'genndx': gen_i,
