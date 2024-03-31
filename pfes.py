@@ -4,13 +4,15 @@ import pandas as pd
 import numpy as np
 import typing as T
 
+import torch
+import esm
+
 from evolver import sequence_mutator, selector, randomseq
 from score import get_nconts, get_inter_nconts
 from psique import pypsique
 
 
-import torch
-import esm
+
 
 def backup_output(outpath):
     print(f'\nSaving output files to {args.outpath}')
@@ -63,8 +65,8 @@ def sigmoid(x,L0=0,c=0.1):
 #================================single_fold_evolver================================# 
 def single_fold_evolver(args): 
     print('not ready yet')
-#def dimer_evolver(model, args):  
-#    print("evolution of interacting dimers")
+def dimer_evolver(model, args):  
+    print("evolution of interacting dimers")
 #================================single_fold_evolver================================# 
 
 
@@ -81,11 +83,9 @@ PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFY
 
 def inter_evolver(args, model):  
 
-
-
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
-        f.write(' '.join(sys.argv[1:]) + '\n')
+        f.write("#" + ' '.join(sys.argv[1:]) + '\n')
 
     seq2 =  PDB_4QR0 
 
@@ -103,8 +103,11 @@ def inter_evolver(args, model):
              'sequence', 
              'ss']
     
-
-    init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
+    if args.initial_seq == 'random':
+        init_gen = pd.DataFrame({'sequence': [randomseq(18) for i in range(args.pop_size)]})
+    else: 
+        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
+        
     ancestral_memory = pd.DataFrame(columns=columns)
     ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
     
@@ -125,7 +128,7 @@ def inter_evolver(args, model):
                     seq = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            generated_sequences.append((id, seq+":"+seq))
+            generated_sequences.append((id, seq+seq2))
         
 
             if seqmask.any():
@@ -182,13 +185,13 @@ def inter_evolver(args, model):
                 new_gen = new_gen.append({'genndx': gen_i,
                                         'id': id, 
                                         'seq_len': seq_len,
-                                        'prot_len_penalty': round(prot_len_penalty, 3), 
-                                        'max_helix_penalty': round(max_helix_penalty, 3),
-                                        'ptm': round(ptm, 3), 
+                                        'prot_len_penalty': round(prot_len_penalty, 2), 
+                                        'max_helix_penalty': round(max_helix_penalty, 2),
+                                        'ptm': round(ptm, 2), 
                                         'mean_plddt': mean_plddt, 
                                         'num_conts': num_conts, 
                                         'num_inter_conts': num_inter_conts, 
-                                        'score': round(score, 3), 
+                                        'score': round(score, 2), 
                                         'sequence': seq, 
                                         'ss': ss
                                         }, ignore_index=True)
@@ -205,8 +208,6 @@ def inter_evolver(args, model):
         init_gen.genndx = f'genndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
-        #with open(os.path.join(args.outpath, args.log), 'a') as f:
-        #    f.write(f'{init_gen}\n')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -281,7 +282,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    print(' '.join(sys.argv[1:]))
+    print("#" + ' '.join(sys.argv[1:]))
 
     #backup if output directory exists
     if args.nobackup:
