@@ -58,16 +58,19 @@ def sequence_mutator(seq):
 
 
 
-def selector(new_gen, init_gen, pop_size, selection_mode, repeat): # TODO add differen selection modes here
+def selector(new_gen, init_gen, pop_size, selection_mode, norepeat): # TODO add differen selection modes here
     mixed_pop = pd.concat([new_gen, init_gen], axis=0, ignore_index=True) 
-    if repeat:
+    
+    if norepeat:
         mixed_pop = mixed_pop.drop_duplicates(subset=['sequence'])
+
     if selection_mode == "strong":
         new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
+
     elif selection_mode == "weak":
         weights = np.array(mixed_pop.score / mixed_pop.score.sum())
         weights[np.isnan(weights)] = 0
-        #selectd_list = random.choices(mixed_pop.id.tolist(), weights=weights, k=pop_size)
         new_init_gen = mixed_pop.sample(n=pop_size, weights=weights).sort_values('score', ascending=False)
+
     return new_init_gen
 

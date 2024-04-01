@@ -1,8 +1,7 @@
 TO DO:
     active:
-        CHECK HOW MANY REPEATS ARE IN THE PREV RUNS
-        ☐ predic all sequences in the generation in parallel @high
-        ☐ randome sequence generator
+        ☐ CHECK HOW MANY REPEATS ARE IN THE PREV RUNS
+        ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ The number contacts in alpha-helixes is higher that number of contacs in beta-hairpines that is why the genereted strucutres are biased towar alpha helixes @high 
         ☐ add a function to indicate only several residues in the partner protetein for contacts. In will constrain the number of possible contacts!
         ☐ add a function to save pdb (all atoms, only CA, ziped, etc) and 
@@ -14,6 +13,8 @@ TO DO:
         ☐ Score testing and adjusting @high 
         
         Finished:
+            ✔ predic all sequences in the generation in parallel @high @done (4/1/2024, 8:32:02 AM)
+            ✔ randome sequence generator @done (4/1/2024, 8:32:06 AM)
             ✔ substitute DSSP with psique @done (3/27/2024, 8:27:08 PM)
             ✔ change the selection mechanism (ask Sanasar for help here) @high @done (3/26/2024, 4:58:26 PM)
             ✔ nobackup argumet/function @done (3/25/2024, 11:02:55 AM)
@@ -21,14 +22,14 @@ TO DO:
             ✔ check in the mutating sequence already was is in the list @high @done (3/25/2024, 9:22:10 AM)
             ✔ chech why tables are not combined and selected correctly @critical @done (3/11/2024, 3:06:42 PM)
             ✔ include secondary structures information into score to avoid long alpha helicxes @done (3/6/2024, 9:22:33 AM)
-            ✔ add number of contacts in the groing chain a term in the scoring function    @high @done (2/29/2024, 3:56:10 PM)
+            ✔ add number of contacts in the groing chain as a term in the scoring function    @high @done (2/29/2024, 3:56:10 PM)
             ✔ reduce the lenght contribution in the score when protein becomes too long @done (2/21/2024, 8:11:57 PM)
             ✔ DSSP (add a function to reward optimal size secondary structures) @done (2/21/2024, 8:12:10 PM) 
-            ✔  Calculate number of contacts for both CA and CB @done (2/17/2024, 7:47:26 PM)
-            ✔  select the best prot from each generation @done (2/17/2024, 7:14:10 PM)
-            ✔  avoid error when plddt cutoff is low for all residues @done (2/17/2024, 7:14:09 PM)
-            ✔  calclate plddt only for chain A @done (2/17/2024, 7:14:09 PM)
-            ✔  add partial duplication e.g partial insertion deletion @done (2/17/2024, 7:14:06 PM)
+            ✔ Calculate number of contacts for both CA and CB @done (2/17/2024, 7:47:26 PM)
+            ✔ select the best prot from each generation @done (2/17/2024, 7:14:10 PM)
+            ✔ avoid the error when plddt cutoff is low for all residues @done (2/17/2024, 7:14:09 PM)
+            ✔ calclate plddt only for chain A @done (2/17/2024, 7:14:09 PM)
+            ✔ add partial duplication e.g partial insertion deletion @done (2/17/2024, 7:14:06 PM)
 
     The questions we are trying to answer:
             * ramdome intergenic regions evolve faster than random sequences?

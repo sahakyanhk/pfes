@@ -78,6 +78,7 @@ PDB_1RFP=":QCRRLCYKQRCVTYCRGR" # 1RFP contains S-S bond
 PDB_4REX=":DVPLPAGWEMAKTSSGQRYFLNHIDQTTTWQDPRKAMLSQ" #4REX (170 to 207)
 PDB_6SVE=":WEKRMSRNSGRVYYFNHITNASQF" #WW domain
 PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
+PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
 
 
 
@@ -87,7 +88,13 @@ def inter_evolver(args, model):
     with open(os.path.join(args.outpath, args.log), 'w') as f:
         f.write("#" + ' '.join(sys.argv[1:]) + '\n')
 
-    seq2 =  PDB_4QR0 
+    seq2 =  PDB_4QR02
+    
+    if args.initial_seq == 'random':
+        init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
+    else: 
+        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
+        
 
     #creare an initial pool of sequences with pop_size
     columns=['genndx',
@@ -103,11 +110,6 @@ def inter_evolver(args, model):
              'sequence', 
              'ss']
     
-    if args.initial_seq == 'random':
-        init_gen = pd.DataFrame({'sequence': [randomseq(18) for i in range(args.pop_size)]})
-    else: 
-        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
-        
     ancestral_memory = pd.DataFrame(columns=columns)
     ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
     
@@ -128,21 +130,24 @@ def inter_evolver(args, model):
                     seq = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            generated_sequences.append((id, seq+seq2))
+            generated_sequences.append((id, seq+":"+seq))
         
 
-            if seqmask.any():
-                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'])
+            if seqmask.any(): #if sequence already exits do not predict a strcuture again 
+                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence']) 
                 repeat.id = id #assing a new id to the already exiting sequence
                 new_gen = new_gen.append(repeat)
                 generated_sequences.remove(generated_sequences[-1])
-
-
+                try:
+                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id + '.pdb')  
+                except  FileNotFoundError: 
+                    pass
+                    
             batched_sequences = create_batched_sequence_datasest(generated_sequences, args.max_tokens_per_batch)
 
             #predict data for the new sequence
         for headers, sequences in batched_sequences:
-            print(headers)
+
             try:
                 with torch.no_grad(): 
                     output = model.infer(sequences) #, num_recycles=args.num_recycles)
@@ -171,7 +176,7 @@ def inter_evolver(args, model):
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
-                prot_len_penalty =  1 - sigmoid(seq_len, pL0) * np.tanh(seq_len*0.05)
+                prot_len_penalty =  (1 - sigmoid(seq_len, pL0, 0.1)) * np.tanh(seq_len*0.05)
                 max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
 
                 score  = np.prod([mean_plddt,           #[0, 1]
@@ -228,6 +233,11 @@ if __name__ == '__main__':
             help='a sequence to initiate with',
             default='random'
     )    
+    parser.add_argument(
+            '--random_seq_len', type=int,
+            help='a sequence to initiate with',
+            default=18
+    )
     parser.add_argument(
             '-o' ,'--outpath', type=str,
             help='output filepath for saving sampled sequences',
