@@ -58,7 +58,8 @@ def create_batched_sequence_datasest(sequences: T.List[T.Tuple[str, str]], max_t
 
 #needed for score
 pL0 = 120 # protein lenght penalty (0.5 at 120)
-hL0 = 30 # helix lenght penalty (0.5 at 20)
+hL0 = 25 # helix lenght penalty (0.5 at 25)
+
 def sigmoid(x,L0=0,c=0.1):
     return 1 / (1+2.71828182**(c * (L0-x)))
 
@@ -152,7 +153,7 @@ def inter_evolver(args, model):
                 with torch.no_grad(): 
                     output = model.infer(sequences, 
                                          num_recycles = args.num_recycles,
-                                         residue_index_offset = -25,
+                                         residue_index_offset = 1,
                                          chain_linker = "G" * 25) 
             except RuntimeError as e:
                 if e.args[0].startswith("CUDA out of memory"):
@@ -174,8 +175,8 @@ def inter_evolver(args, model):
                     f.write(pdb_txt)   
 
                 #================================SCORING================================# 
-                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6, 70)
-                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6, 70) #TODO dinamicaly change the cutoff plddt
+                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6, 50)
+                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6, 50) #TODO dinamicaly change the cutoff plddt
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
@@ -239,7 +240,7 @@ if __name__ == '__main__':
     parser.add_argument(
             '--random_seq_len', type=int,
             help='a sequence to initiate with',
-            default=18
+            default=18,
     )
     parser.add_argument(
             '-o' ,'--outpath', type=str,
@@ -254,7 +255,7 @@ if __name__ == '__main__':
     parser.add_argument(
             '-ps', '--pop_size', type=int,
             help='population size',
-            default=10
+            default=10,
     )
     parser.add_argument(
             '-l', '--log', type=str,

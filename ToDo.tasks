@@ -12,6 +12,7 @@ TO DO:
         ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
         ☐ not poin subsitutions with random sequences
         ☐ Score testing and adjusting @high 
+        ☐ make an sh tool to extract the fastas and make analyses 
         
         Finished:
             ✔ predic all sequences in the generation in parallel @high @done (4/1/2024, 8:32:02 AM)
