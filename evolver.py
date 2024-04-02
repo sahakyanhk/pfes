@@ -26,35 +26,35 @@ def randomseq(nres=18, weights=w):
     return ''.join(random.choices(aa_alphabet, weights=weights, k=nres))
 
 
-def sequence_mutator(seq):  
-    mutation_posiotion = random.choice(range(len(seq)))
+def sequence_mutator(sequence):  
+    mutation_posiotion = random.choice(range(len(sequence)))
     mutation =  random.choices(mutation_types, weights=p)[0]
     
     if mutation in aa_alphabet:
-        seq_mutated = seq[:mutation_posiotion] + mutation + seq[mutation_posiotion + 1:]
+        sequence_mutated = sequence[:mutation_posiotion] + mutation + sequence[mutation_posiotion + 1:]
     
     elif mutation =='+':
         mutation = random.choices(aa_alphabet)[0]
-        seq_mutated = seq[:mutation_posiotion + 1] + mutation + seq[mutation_posiotion + 1:]
+        sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
     
     elif mutation == '-':
-        seq_mutated = seq[:mutation_posiotion] + seq[mutation_posiotion + 1:]
+        sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + 1:]
     
-    elif mutation =='*' and len(seq) > 5:
-        insertion_len = random.choice(range(2, int(len(seq)/2))) #what is the probable insertion lenght?
-        seq_mutated = seq[:mutation_posiotion] + seq[mutation_posiotion:][:insertion_len] + seq[mutation_posiotion:]
+    elif mutation =='*' and len(sequence) > 5:
+        insertion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable insertion lenght?
+        sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion:][:insertion_len] + sequence[mutation_posiotion:]
     
-    elif mutation =='/' and len(seq) > 5:
-        deletion_len = random.choice(range(2, int(len(seq)/2))) #what is the probable deletion lenght?
-        seq_mutated = seq[:mutation_posiotion] + seq[mutation_posiotion + deletion_len:]
+    elif mutation =='/' and len(sequence) > 5:
+        deletion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable deletion lenght?
+        sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + deletion_len:]
     
-    elif mutation =='r' and len(seq) > 5: #recombination
-        seq_mutated = seq
+    elif mutation =='d':
+        sequence_mutated = sequence + 'GGGG' + sequence     
     
-    else:
-        seq_mutated = seq + seq     
+    elif mutation =='r' and len(sequence) > 5: #TODO recombination 
+        sequence_mutated = sequence
     
-    return seq_mutated
+    return sequence_mutated
 
 
 
@@ -67,7 +67,7 @@ def selector(new_gen, init_gen, pop_size, selection_mode, norepeat): # TODO add 
     if selection_mode == "strong":
         new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
 
-    elif selection_mode == "weak":
+    if selection_mode == "weak":
         weights = np.array(mixed_pop.score / mixed_pop.score.sum())
         weights[np.isnan(weights)] = 0
         new_init_gen = mixed_pop.sample(n=pop_size, weights=weights).sort_values('score', ascending=False)

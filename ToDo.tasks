@@ -1,6 +1,7 @@
 TO DO:
     active:
         ☐ CHECK HOW MANY REPEATS ARE IN THE PREV RUNS
+        ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ The number contacts in alpha-helixes is higher that number of contacs in beta-hairpines that is why the genereted strucutres are biased towar alpha helixes @high 
         ☐ add a function to indicate only several residues in the partner protetein for contacts. In will constrain the number of possible contacts!

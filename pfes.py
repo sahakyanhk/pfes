@@ -130,7 +130,7 @@ def inter_evolver(args, model):
                     seq = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            generated_sequences.append((id, seq+":"+seq))
+            generated_sequences.append((id, seq+seq2)) # add a function to select the sma
         
 
             if seqmask.any(): #if sequence already exits do not predict a strcuture again 
@@ -145,12 +145,15 @@ def inter_evolver(args, model):
                     
             batched_sequences = create_batched_sequence_datasest(generated_sequences, args.max_tokens_per_batch)
 
-            #predict data for the new sequence
+        #predict data for the new batch
         for headers, sequences in batched_sequences:
 
             try:
                 with torch.no_grad(): 
-                    output = model.infer(sequences) #, num_recycles=args.num_recycles)
+                    output = model.infer(sequences, 
+                                         num_recycles = args.num_recycles,
+                                         residue_index_offset = -25,
+                                         chain_linker = "G" * 25) 
             except RuntimeError as e:
                 if e.args[0].startswith("CUDA out of memory"):
                     if len(sequences) > 1:
@@ -258,9 +261,9 @@ if __name__ == '__main__':
             help='log output',
             default='progress.log',
     )
-    parser.add_argument(                        #!
-            '-nrep', '--norepeat', action='store_true',        #!
-            help='do not allow to generate the same sequences',     #1
+    parser.add_argument(                      
+            '-nrep', '--norepeat', action='store_true', 
+            help='do not allow to generate the same sequences', 
     )
     parser.add_argument(
             '-nbk', '--nobackup', action='store_true', 
@@ -292,7 +295,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    print("#" + ' '.join(sys.argv[1:]))
+    print('#pfes.py ' + ' '.join(sys.argv[1:]))
 
     #backup if output directory exists
     if args.nobackup:
@@ -302,7 +305,9 @@ if __name__ == '__main__':
         os.makedirs(args.outpath)
     else:
         backup_output(args.outpath)
-    
+
+    pdb_path = args.outpath + '/pdb/' 
+
     
     # TODO check arguments and input paths before loading models 
     #load models
@@ -310,8 +315,6 @@ if __name__ == '__main__':
     model = esm.pretrained.esmfold_v1()
     model = model.eval().cuda()
 
-    pdb_path = args.outpath + '/pdb/' #set paths 
-    basename = "pfes" #(os.path.basename(args.pdbfile).split('.')[0])
 
     if args.evolution_mode == "inter_chain":
         inter_evolver(args, model)
