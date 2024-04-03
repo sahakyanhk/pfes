@@ -10,9 +10,14 @@ TO DO:
         ☐ continue simulations (all sequences from a generation are needed)
         ☐ Consider adding new mutation types: split sequnece and join sequences
         ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
-        ☐ not poin subsitutions with random sequences
-        ☐ Score testing and adjusting @high 
+        ☐ partial subsitutions with random sequences
+        ☐ Score testing and adjusting @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
         ☐ make an sh tool to extract the fastas and make analyses 
+        ###add more tools for analyses###
+            ☐ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html, https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html
+            ☐ trajectory with side chains
+            ☐ secondary structure plot
+            ☐ sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
         
         Finished:
             ✔ predic all sequences in the generation in parallel @high @done (4/1/2024, 8:32:02 AM)

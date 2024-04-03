@@ -5,10 +5,15 @@ import shutil
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+import MDAnalysis as mda
+from MDAnalysis.analysis import align
+
+import warnings
+
 
 parser = argparse.ArgumentParser(description="Analyse PFES")
 parser.add_argument('-l', '--log', type=str, help='log file name', default='progress.log', required=True) #rename log to pfes traj
-parser.add_argument('-pdb', '--pdbdir', type=str, help='directory with pdb files', default='pdb')
+parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='pdb')
 parser.add_argument('-t', '--traj', type=str, help='make backbone trajectory', default='pfestraj.pdb')
 parser.add_argument('-o', '--outdir', type=str, help='output directory name', default='visual_pfes_results')
 
@@ -19,7 +24,7 @@ log = pd.read_csv(args.log, sep='\t', comment='#')
 outdir = args.outdir 
 pdbdir = os.path.join(args.pdbdir)
 plotdir = os.path.join(outdir, 'plots/')
-
+trajpath = os.path.join(outdir, args.traj)
 
 
 print(pdbdir)
@@ -52,7 +57,8 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
     2. save trajectory in xyz format to save space. 
     """
     bestpdb = os.path.join(outdir, 'bestpdb/')
-    bestlog = log.drop_duplicates(subset='genndx')
+    bestlog = log.groupby('genndx').head(1)
+    bestlog = bestlog.drop_duplicates(subset = 'sequence')
     pfeslen = len(bestlog)
 
     os.makedirs(bestpdb, exist_ok=True)
@@ -103,14 +109,14 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
         lastBB_B.append(lastresidueB) #save bb of the last residue of chain B
 
     topmax_A = max([len(i) for i in PDB_A])
-    topmax_B = max([len(i) for i in PDB_A])
+    topmax_B = max([len(i) for i in PDB_B])
     for pdbA, pdbB in zip(PDB_A, PDB_B): 
         if len(pdbA) == topmax_A:
             toppdb = ''.join(pdbA + pdbB)
             break
     
-    print('writing backbone trajectory...')
-    with open(os.path.join(outdir, trajout), 'w') as f:
+    print('preparing backbone trajectory...')
+    with open('tmp.pdb', 'w') as f:
         i=1
         f.write(f'MODEL        {i}\n' + toppdb + 'TER\nENDMDL\n')
         for chA, chB, lastresBB_A, lastresBB_B in tqdm(zip(PDB_A, PDB_B, lastBB_A, lastBB_B), total=len(PDB_A)): 
@@ -120,7 +126,18 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
 
             f.write(f'MODEL        {i}\n' + ''.join(chA) + dumlinesA + 'TER\n' + ''.join(chB) + dumlinesB + 'TER\nENDMDL\n')
 
+    print('writing aligned backbone trajectory...')
+    traj = mda.Universe('tmp.pdb')
+    top = traj.select_atoms('protein')
 
+    #warnings.filterwarnings("ignore")
+    align.AlignTraj(traj,  # trajectory to align
+                    top,  # reference
+                    select='chainID B',  # selection of atoms to align
+                    filename=trajpath,  # file to write the trajectory to
+                ).run()
+
+    os.remove('tmp.pdb')
 
 make_plots(log)
 backbone_traj(log, pdbdir)
