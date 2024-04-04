@@ -27,7 +27,6 @@ plotdir = os.path.join(outdir, 'plots/')
 trajpath = os.path.join(outdir, args.traj)
 
 
-print(pdbdir)
 
 def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -130,7 +129,7 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
     traj = mda.Universe('tmp.pdb')
     top = traj.select_atoms('protein')
 
-    #warnings.filterwarnings("ignore")
+    warnings.filterwarnings("ignore")
     align.AlignTraj(traj,  # trajectory to align
                     top,  # reference
                     select='chainID B',  # selection of atoms to align

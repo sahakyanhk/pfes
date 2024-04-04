@@ -66,7 +66,7 @@ def sigmoid(x,L0=0,c=0.1):
 #================================single_fold_evolver================================# 
 def single_fold_evolver(args): 
     print('not ready yet')
-def dimer_evolver(model, args):  
+def multimer_evolver(model, args):  
     print("evolution of interacting dimers")
 #================================single_fold_evolver================================# 
 
