@@ -57,7 +57,7 @@ def create_batched_sequence_datasest(sequences: T.List[T.Tuple[str, str]], max_t
 
 
 #needed for score
-pL0 = 120 # protein lenght penalty (0.5 at 120)
+pL0 = 100 # protein lenght penalty (0.5 at 120)
 hL0 = 25 # helix lenght penalty (0.5 at 25)
 
 def sigmoid(x,L0=0,c=0.1):
@@ -131,7 +131,7 @@ def inter_evolver(args, model):
                     seq = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            generated_sequences.append((id, seq+seq2)) # add a function to select the sma
+            generated_sequences.append((id, seq+':'+seq)) #(seq+seq2)) add a function to select the sma
         
 
             if seqmask.any(): #if sequence already exits do not predict a strcuture again 
@@ -175,8 +175,8 @@ def inter_evolver(args, model):
                     f.write(pdb_txt)   
 
                 #================================SCORING================================# 
-                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6, 50)
-                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6, 50) #TODO dinamicaly change the cutoff plddt
+                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.5, 50)
+                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.5, 50) #TODO dinamicaly change the cutoff plddt
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)

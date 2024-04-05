@@ -14,6 +14,42 @@ evoldict ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
            '/' : 1,   #partial deletion
            'd' : 0.1} #full duplication    
 
+
+#by number of codons
+evoldict2 ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
+            'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
+            'K' : 2,  'L' : 4,  'M' : 1,  'N' : 2,  
+            'P' : 4,  'Q' : 2,  'R' : 2,  'S' : 2,  
+            'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
+            '+' : 1,   #insertion
+            '-' : 1,   #single deletion
+            '*' : 1,   #partial duplication
+            '/' : 1,   #partial deletion
+            'd' : 0.1} #full duplication    
+
+#aafreq in sr_filter           this is normalized by codons
+#"A" => 0.07422,                'A'	:	4	0.078
+#"C" => 0.02469,                'C'	:	2	0.039
+#"D" => 0.05363,                'D'	:	2	0.039
+#"E" => 0.05431,                'E'	:	2	0.039
+#"F" => 0.04742,                'F'	:	2	0.039
+#"G" => 0.07415,                'G'	:	4	0.078
+#"H" => 0.02621,                'H'	:	2	0.039
+#"I" => 0.06792,                'I'	:	3	0.059
+#"K" => 0.05816,                'K'	:	2	0.039
+#"L" => 0.09891,                'L'	:	4	0.078
+#"M" => 0.02499,                'M'	:	1	0.020
+#"N" => 0.04465,                'N'	:	2	0.039
+#"P" => 0.03854,                'P'	:	4	0.078
+#"Q" => 0.03426,                'Q'	:	2	0.039
+#"R" => 0.05161,                'R'	:	2	0.039
+#"S" => 0.05723,                'S'	:	2	0.039
+#"T" => 0.05089,                'T'	:	4	0.078
+#"V" => 0.07292,                'V'	:	4	0.078
+#"W" => 0.01303,                'W'	:	1	0.020
+#"Y" => 0.03228,                'Y'	:	2	0.039
+
+
 mutation_types = list(evoldict.keys())  #mutation type
 p = list(evoldict.values()) #probability for each mutation
 aa_alphabet = mutation_types[:20] #allowed substitutions for point mutations 

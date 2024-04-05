@@ -94,7 +94,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.5, plddt_cutoff=0):
         col = line.split()
         if col[0] == 'ATOM'and col[4] == chain:
             plddt.append(float(col[10]))
-        if (col[0] == 'ATOM' and col[2] == 'CA' and float(col[10]) > plddt_cutoff and col[4] == chain) :
+        if (col[0] == 'ATOM' and col[2] == 'CB' and float(col[10]) > plddt_cutoff and col[4] == chain) :
             ca_data.append([
             int(col[5]), # residue index 
             np.array(list(map(float, col[6:9]))), #xyz
@@ -113,7 +113,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.5, plddt_cutoff=0):
         distances_matrix = np.linalg.norm(coords[:, None] - coords, axis=2)
         row = 0
         for i in range(n_atoms):
-            for j in range(i + 1, n_atoms):
+            for j in range(i + 4, n_atoms): # do not calc dist between atom i, ... i+4
                 if distances_matrix[i, j] < distance_cutoff:
                     pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], distances_matrix[i, j]]], axis=0)
                     row += 1
@@ -127,7 +127,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.5, plddt_cutoff=0):
 def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.5, plddt_cutoff=0): 
     """
     Calculates number of contaict between two protein chains
-    
+    returns a tuple (number of contacts, average plddt of residues with plddt > plddt_cutoff)
     """
 
     # Get all C-beta atoms with specific pLDDT cutoff
@@ -170,15 +170,6 @@ def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.5, plddt
         return(len(pairs_data)+1, round(CA_pLDDT_A * 0.01, 2))
 
 
-
-
-
-
-#print("radius of gyration is: " + str(get_aspher(pdb_txt)[0]))
-#print("asphericity is: " + str(get_aspher(pdb_txt)[1]))
-
-
-
 # for rosetta 
 # def get_best_score(score_file_path):
 #     score_dict = {}    
@@ -208,7 +199,7 @@ if  os.path.isfile(input_pdb_path):
     pdb_txt = file.read()
 
 
-    print(get_nconts(pdb_txt, "B", 4, 0))
-    print(get_inter_nconts(pdb_txt,"C","B", 7, 0))
+    print("inner contancts:" + str(get_nconts(pdb_txt, "A", 6.5, 0)))
+    print("intra contancts:" + str(get_inter_nconts(pdb_txt,"A","B", 6.5, 0)))
 
 

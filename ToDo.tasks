@@ -1,3 +1,6 @@
+DIR=$(cd $(dirname $0); pwd)
+
+
 TO DO:
     active:
         ☐ CHECK HOW MANY REPEATS ARE IN THE PREV RUNS
@@ -18,7 +21,10 @@ TO DO:
             ☐ trajectory with side chains
             ☐ secondary structure plot
             ☐ sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
-        
+            ☐ make a tool for probability matrix calculation
+            ☐ write an sr_filter.py?
+        #hello from Eugene
+        evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
             ✔ predic all sequences in the generation in parallel @high @done (4/1/2024, 8:32:02 AM)
             ✔ randome sequence generator @done (4/1/2024, 8:32:06 AM)
