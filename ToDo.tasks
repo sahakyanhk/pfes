@@ -6,7 +6,6 @@ TO DO:
         ☐ CHECK HOW MANY REPEATS ARE IN THE PREV RUNS
         ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
-        ☐ The number contacts in alpha-helixes is higher that number of contacs in beta-hairpines that is why the genereted strucutres are biased towar alpha helixes @high 
         ☐ add a function to indicate only several residues in the partner protetein for contacts. In will constrain the number of possible contacts!
         ☐ add a function to save pdb (all atoms, only CA, ziped, etc) and 
         ☐ do not wait untill files are writen to move forward
@@ -17,15 +16,16 @@ TO DO:
         ☐ Score testing and adjusting @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
         ☐ make an sh tool to extract the fastas and make analyses 
         ###add more tools for analyses###
-            ☐ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html, https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html
-            ☐ trajectory with side chains
-            ☐ secondary structure plot
-            ☐ sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
-            ☐ make a tool for probability matrix calculation
-            ☐ write an sr_filter.py?
+        ☐ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html
+        ☐ trajectory with side chains
+        ☐ secondary structure plot
+        ☐ sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
+        ☐ make a tool for probability matrix calculation
+        ☐ write an sr_filter.py?
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✔ The number contacts in alpha-helixes is higher that number of contacs in beta-hairpines that is why the genereted strucutres are biased towar alpha helixes @high @done (4/8/2024, 4:27:15 PM)
             ✔ predic all sequences in the generation in parallel @high @done (4/1/2024, 8:32:02 AM)
             ✔ randome sequence generator @done (4/1/2024, 8:32:06 AM)
             ✔ substitute DSSP with psique @done (3/27/2024, 8:27:08 PM)

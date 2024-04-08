@@ -82,7 +82,7 @@ def get_aspher(pdb_txt):
  
 
 
-def get_nconts(pdb_txt, chain="A", distance_cutoff=6.5, plddt_cutoff=0): 
+def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0): 
     """
     Calculates number of contaict in a protein.
 
@@ -113,7 +113,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.5, plddt_cutoff=0):
         distances_matrix = np.linalg.norm(coords[:, None] - coords, axis=2)
         row = 0
         for i in range(n_atoms):
-            for j in range(i + 4, n_atoms): # do not calc dist between atom i, ... i+4
+            for j in range(i + 4, n_atoms): # do not calc dist between atoms i, ... i+4
                 if distances_matrix[i, j] < distance_cutoff:
                     pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], distances_matrix[i, j]]], axis=0)
                     row += 1
@@ -124,7 +124,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.5, plddt_cutoff=0):
 
 
 
-def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.5, plddt_cutoff=0): 
+def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=0): 
     """
     Calculates number of contaict between two protein chains
     returns a tuple (number of contacts, average plddt of residues with plddt > plddt_cutoff)
@@ -199,7 +199,7 @@ if  os.path.isfile(input_pdb_path):
     pdb_txt = file.read()
 
 
-    print("inner contancts:" + str(get_nconts(pdb_txt, "A", 6.5, 0)))
-    print("intra contancts:" + str(get_inter_nconts(pdb_txt,"A","B", 6.5, 0)))
+    print("inner contancts:" + str(get_nconts(pdb_txt, "A", 6.0, 0)))
+    print("intra contancts:" + str(get_inter_nconts(pdb_txt,"A","B", 6.0, 0)))
 
 

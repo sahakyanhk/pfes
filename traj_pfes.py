@@ -57,6 +57,7 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
     """
     bestpdb = os.path.join(outdir, 'bestpdb/')
     bestlog = log.groupby('genndx').head(1)
+    bestlog.to_csv('bestlog.tsv', sep='\t')
     bestlog = bestlog.drop_duplicates(subset = 'sequence')
     pfeslen = len(bestlog)
 

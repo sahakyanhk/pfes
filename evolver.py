@@ -9,9 +9,10 @@ evoldict ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
            'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
            'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
            '+' : 1,   #insertion
+           '#' : 1,   #random insertion
            '-' : 1,   #single deletion
            '*' : 1,   #partial duplication
-           '/' : 1,   #partial deletion
+           '%' : 1,   #partial deletion
            'd' : 0.1} #full duplication    
 
 
@@ -22,10 +23,13 @@ evoldict2 ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,
             'P' : 4,  'Q' : 2,  'R' : 2,  'S' : 2,  
             'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
             '+' : 1,   #insertion
+            '#' : 1,   #random insertion
             '-' : 1,   #single deletion
             '*' : 1,   #partial duplication
-            '/' : 1,   #partial deletion
+            '%' : 1,   #partial deletion
             'd' : 0.1} #full duplication    
+
+evoldict=evoldict2
 
 #aafreq in sr_filter           this is normalized by codons
 #"A" => 0.07422,                'A'	:	4	0.078
@@ -72,7 +76,11 @@ def sequence_mutator(sequence):
     elif mutation =='+':
         mutation = random.choices(aa_alphabet)[0]
         sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
-    
+
+    elif mutation =='#':
+        mutation = randomseq(random.choice(range(2, int(len(sequence)/2))))
+        sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
+        
     elif mutation == '-':
         sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + 1:]
     
@@ -80,7 +88,7 @@ def sequence_mutator(sequence):
         insertion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable insertion lenght?
         sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion:][:insertion_len] + sequence[mutation_posiotion:]
     
-    elif mutation =='/' and len(sequence) > 5:
+    elif mutation =='%' and len(sequence) > 5:
         deletion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable deletion lenght?
         sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + deletion_len:]
     
@@ -105,7 +113,7 @@ def selector(new_gen, init_gen, pop_size, selection_mode, norepeat): # TODO add 
 
     if selection_mode == "weak":
         weights = np.array(mixed_pop.score / mixed_pop.score.sum())
-        weights[np.isnan(weights)] = 0
+        weights[np.isnan(weights)] = 0.001
         new_init_gen = mixed_pop.sample(n=pop_size, weights=weights).sort_values('score', ascending=False)
 
     return new_init_gen

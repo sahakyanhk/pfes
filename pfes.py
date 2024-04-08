@@ -63,27 +63,151 @@ hL0 = 25 # helix lenght penalty (0.5 at 25)
 def sigmoid(x,L0=0,c=0.1):
     return 1 / (1+2.71828182**(c * (L0-x)))
 
-#================================single_fold_evolver================================# 
-def single_fold_evolver(args): 
+#========================================CONCEPT========================================# 
+def fold_evolver(args): 
     print('not ready yet')
 def multimer_evolver(model, args):  
     print("evolution of interacting dimers")
-#================================single_fold_evolver================================# 
-
-
-#evolution of an interacting chain
-PDB_6WXQ=":MKSYFVTMGFNETFLLRLLNETSAQKEDSLVIVVPSPIVSGTRAAIESLRAQISRLNYPPPRIYEIEITDFNLALSKILDIILTLPEPIISDLTMGMRMINLILLGIIVSRKRFTVYVRDE" # 6WXQ (12 to 134) 
-NZ_CP011286=":LNIIKLFHGHKYCLIFYVLP" #intergenic region from Yersinia
-PDB_1RFA=":ASNTIRVFLPNKQRTVVNVRNGMSLHDCLMKALKVRGLQPECCAVFRLLHEHKGKKARLDWNTDAASLIGEELQVDFLD" #1RFA (55 to 132)
-PDB_1RFP=":QCRRLCYKQRCVTYCRGR" # 1RFP contains S-S bond
-PDB_4REX=":DVPLPAGWEMAKTSSGQRYFLNHIDQTTTWQDPRKAMLSQ" #4REX (170 to 207)
-PDB_6SVE=":WEKRMSRNSGRVYYFNHITNASQF" #WW domain
-PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
-PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
+#========================================CONCEPT========================================# 
 
 
 
-def inter_evolver(args, model):  
+#============================================================================#
+#================================FOLD_EVOLVER================================# 
+def fold_evolver(args, model): 
+
+    os.makedirs(pdb_path, exist_ok=True)
+    with open(os.path.join(args.outpath, args.log), 'w') as f:
+        f.write("#" + ' '.join(sys.argv[1:]) + '\n')
+
+    if args.initial_seq == 'random':
+        init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
+    else: 
+        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
+
+    #creare an initial pool of sequences with pop_size
+    columns=['genndx',
+             'id', 
+             'seq_len', 
+             'prot_len_penalty', 
+             'max_helix_penalty',
+             'ptm', 
+             'mean_plddt', 
+             'num_conts', 
+             'score', 
+             'sequence', 
+             'ss']
+    
+    ancestral_memory = pd.DataFrame(columns=columns)
+    ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
+    
+    #mutate seqs from init_gen and select the best n seqs for the next generation    
+    for gen_i in range(args.num_generations):
+        n = 0
+        new_gen = pd.DataFrame(columns=columns)
+        generated_sequences = []
+        for sequence in init_gen.sequence:
+
+            id = "gen{0}_seq{1}".format(gen_i, n); n+=1 # give an uniq id even if the same sequence already exists            
+            seq = sequence_mutator(sequence)
+            
+            #chek if the mutated seqeuece was already predicted
+            seqmask = ancestral_memory.sequence == seq 
+            if args.norepeat and seqmask.any(): #if seq is in the ancestral_memory mutate it again 
+                while seqmask.any():
+                    seq = sequence_mutator(seq)
+                    seqmask = ancestral_memory.sequence == seq 
+
+            generated_sequences.append((id, seq)) #(seq+seq2)) add a function to select the sma
+        
+
+            if seqmask.any(): #if sequence already exits do not predict a strcuture again 
+                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence']) 
+                repeat.id = id #assing a new id to the already exiting sequence
+                new_gen = new_gen.append(repeat)
+                generated_sequences.remove(generated_sequences[-1])
+                try:
+                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id + '.pdb')  
+                except  FileNotFoundError: 
+                    pass
+                    
+            batched_sequences = create_batched_sequence_datasest(generated_sequences, args.max_tokens_per_batch)
+
+        #predict data for the new batch
+        for headers, sequences in batched_sequences:
+            pdbs, ptms, mean_plddts = [], [], []
+            with torch.no_grad(): 
+                pdbs, ptms, mean_plddts = esm2data(model.infer(sequences, 
+                                                               num_recycles = args.num_recycles,
+                                                               residue_index_offset = 1,
+                                                               chain_linker = "G" * 25))
+
+            for id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+                seq_len = len(seq)
+                with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
+                    f.write(pdb_txt)   
+
+                #================================SCORING================================# 
+                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
+                ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
+
+                #Rg, aspher = get_aspher(pdb_txt)
+                prot_len_penalty =  (1 - sigmoid(seq_len, pL0, 0.1)) * np.tanh(seq_len*0.05)
+                max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
+
+                score  = np.prod([mean_plddt,           #[0, 1]
+                                  ptm,                  #[0, 1]
+                                  prot_len_penalty,     #[0, 1]
+                                  max_helix_penalty,    #[0, 1]
+                                  np.sqrt(num_conts/seq_len)])   #[~0, inf]
+                #================================SCORING================================#
+
+                new_gen = new_gen.append({'genndx': gen_i,
+                                        'id': id, 
+                                        'seq_len': seq_len,
+                                        'prot_len_penalty': round(prot_len_penalty, 2), 
+                                        'max_helix_penalty': round(max_helix_penalty, 2),
+                                        'ptm': round(ptm, 2), 
+                                        'mean_plddt': mean_plddt, 
+                                        'num_conts': num_conts, 
+                                        'score': round(score, 3), 
+                                        'sequence': seq, 
+                                        'ss': ss
+                                        }, ignore_index=True)
+
+                    #write a log file NOW same as new gen 
+                    #log = (f'{id}\t{seq_len}\t{round(prot_len_penalty,2)}\t{round(max_helix_penalty,2)}\t{ptm}\t{mean_plddt}\t{num_conts}\t{num_inter_conts}\t{round(score,2)}\t{seq}\t{ss}')
+                    #print(f'{log}')
+                
+                print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
+            ancestral_memory =  ancestral_memory.append(init_gen)
+        
+        #select the next generation 
+        init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
+        init_gen.genndx = f'genndx{gen_i}' #assign a new gen index
+        init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
+#================================FOLD_EVOLVER================================# 
+#============================================================================# 
+
+
+
+
+
+#==================================================================================#
+#================================INTER_FOLD_EVOLVER================================# 
+
+def inter_fold_evolver(args, model):  
+
+    #evolution of an interacting chain
+    PDB_6WXQ=":MKSYFVTMGFNETFLLRLLNETSAQKEDSLVIVVPSPIVSGTRAAIESLRAQISRLNYPPPRIYEIEITDFNLALSKILDIILTLPEPIISDLTMGMRMINLILLGIIVSRKRFTVYVRDE" # 6WXQ (12 to 134) 
+    NZ_CP011286=":LNIIKLFHGHKYCLIFYVLP" #intergenic region from Yersinia
+    PDB_1RFA=":ASNTIRVFLPNKQRTVVNVRNGMSLHDCLMKALKVRGLQPECCAVFRLLHEHKGKKARLDWNTDAASLIGEELQVDFLD" #1RFA (55 to 132)
+    PDB_1RFP=":QCRRLCYKQRCVTYCRGR" # 1RFP contains S-S bond
+    PDB_4REX=":DVPLPAGWEMAKTSSGQRYFLNHIDQTTTWQDPRKAMLSQ" #4REX (170 to 207)
+    PDB_6SVE=":WEKRMSRNSGRVYYFNHITNASQF" #WW domain
+    PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
+    PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
+
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
@@ -148,35 +272,22 @@ def inter_evolver(args, model):
 
         #predict data for the new batch
         for headers, sequences in batched_sequences:
-
-            try:
-                with torch.no_grad(): 
-                    output = model.infer(sequences, 
-                                         num_recycles = args.num_recycles,
-                                         residue_index_offset = 1,
-                                         chain_linker = "G" * 25) 
-            except RuntimeError as e:
-                if e.args[0].startswith("CUDA out of memory"):
-                    if len(sequences) > 1:
-                        print(f"Failed (CUDA out of memory) to predict batch of size {len(sequences)}. "
-                                "Try lowering `--max-tokens-per-batch`.")
-                    else:
-                        print(f"Failed (CUDA out of memory) on sequence {headers[0]} of length {len(sequences[0])}.")
-                    continue
-                raise 
-
             pdbs, ptms, mean_plddts = [], [], []
-            pdbs, ptms, mean_plddts = esm2data(output)             
+            with torch.no_grad(): 
+                pdbs, ptms, mean_plddts = esm2data(model.infer(sequences, 
+                                                               num_recycles = args.num_recycles,
+                                                               residue_index_offset = 1,
+                                                               chain_linker = "G" * 25))
 
-            for pdb_txt, ptm, mean_plddt, seq, id in zip(pdbs, ptms, mean_plddts, sequences, headers):
+            for id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
                 seq = seq.split(':')[0]
                 seq_len = len(seq)
                 with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
                     f.write(pdb_txt)   
 
                 #================================SCORING================================# 
-                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.5, 50)
-                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.5, 50) #TODO dinamicaly change the cutoff plddt
+                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
+                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.0, 50) #TODO dinamicaly change the cutoff plddt
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
@@ -216,6 +327,8 @@ def inter_evolver(args, model):
         init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.genndx = f'genndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
+#================================INTER_FOLD_EVOLVER================================# 
+#==================================================================================#
 
 
 if __name__ == '__main__':
@@ -224,8 +337,8 @@ if __name__ == '__main__':
     )
     parser.add_argument(
             '-em', '--evolution_mode', type=str,
-            help='evolution mode',
-            default='inter_chain',
+            help='evolution mode: single_chain, inter_chain, multimer',
+            default='single_chain, ',
     )
     parser.add_argument(
             '-sm', '--selection_mode', type=str,
@@ -317,8 +430,11 @@ if __name__ == '__main__':
     model = model.eval().cuda()
 
 
-    if args.evolution_mode == "inter_chain":
-        inter_evolver(args, model)
-    else: 
-        single_fold_evolver(args)
-
+    if args.evolution_mode == "single_chain":
+        fold_evolver(args, model)
+    elif args.evolution_mode == "inter_chain":
+        inter_fold_evolver(args, model)
+    elif args.evolution_mode == "multimer":
+        print("sorry, I am not ready yet")
+    elif not args.evolution_mode in ['single_chain', 'inter_chain', 'multimer']:
+        print("Unknown PFES mode: aveilable options are: single_chain, inter_chain or multimer")
