@@ -152,14 +152,14 @@ def fold_evolver(args, model):
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
-                prot_len_penalty =  (1 - sigmoid(seq_len, pL0, 0.1)) * np.tanh(seq_len*0.05)
+                prot_len_penalty =  (1 - sigmoid(seq_len, pL0, 0.1)) * np.tanh(seq_len*0.08)
                 max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
 
                 score  = np.prod([mean_plddt,           #[0, 1]
                                   ptm,                  #[0, 1]
                                   prot_len_penalty,     #[0, 1]
                                   max_helix_penalty,    #[0, 1]
-                                  np.sqrt(num_conts/seq_len)])   #[~0, inf]
+                                  num_conts/np.sqrt(seq_len)])   #[~0, inf]
                 #================================SCORING================================#
 
                 new_gen = new_gen.append({'genndx': gen_i,

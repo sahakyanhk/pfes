@@ -9,9 +9,9 @@ evoldict ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
            'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
            'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
            '+' : 1,   #insertion
-           '#' : 1,   #random insertion
            '-' : 1,   #single deletion
            '*' : 1,   #partial duplication
+           '#' : 1,   #random insertion
            '%' : 1,   #partial deletion
            'd' : 0.1} #full duplication    
 
@@ -23,15 +23,14 @@ evoldict2 ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,
             'P' : 4,  'Q' : 2,  'R' : 2,  'S' : 2,  
             'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
             '+' : 1,   #insertion
-            '#' : 1,   #random insertion
             '-' : 1,   #single deletion
             '*' : 1,   #partial duplication
+            '#' : 1,   #random insertion
             '%' : 1,   #partial deletion
             'd' : 0.1} #full duplication    
+#evoldict=evoldict2
 
-evoldict=evoldict2
-
-#aafreq in sr_filter           this is normalized by codons
+#aafreq in sr_filter           thesw are normalized by codons
 #"A" => 0.07422,                'A'	:	4	0.078
 #"C" => 0.02469,                'C'	:	2	0.039
 #"D" => 0.05363,                'D'	:	2	0.039
@@ -76,10 +75,6 @@ def sequence_mutator(sequence):
     elif mutation =='+':
         mutation = random.choices(aa_alphabet)[0]
         sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
-
-    elif mutation =='#':
-        mutation = randomseq(random.choice(range(2, int(len(sequence)/2))))
-        sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
         
     elif mutation == '-':
         sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + 1:]
@@ -88,12 +83,17 @@ def sequence_mutator(sequence):
         insertion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable insertion lenght?
         sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion:][:insertion_len] + sequence[mutation_posiotion:]
     
+    elif mutation =='#':
+        mutation = randomseq(random.choice(range(2, int(len(sequence)/2))))
+        sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
+
     elif mutation =='%' and len(sequence) > 5:
         deletion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable deletion lenght?
         sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + deletion_len:]
     
     elif mutation =='d':
-        sequence_mutated = sequence + 'GGGG' + sequence     
+        linker = randomseq(4)
+        sequence_mutated = sequence + linker + sequence     
     
     elif mutation =='r' and len(sequence) > 5: #TODO recombination 
         sequence_mutated = sequence
