@@ -74,12 +74,29 @@ def multimer_evolver(model, args):
 
 #============================================================================#
 #================================FOLD_EVOLVER================================# 
+#VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV#
 def fold_evolver(args, model): 
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
-        f.write("#" + ' '.join(sys.argv[1:]) + '\n')
-
+        f.write(f"#================input cmd===============#\n#$pfes.py" + ' '.join(sys.argv[1:]) + '\n')
+        f.write(f'''        
+#================input cmd===============#
+#-em, --evolution_mode\t = \t{args.evolution_mode}
+#-sm, --selection_mode\t = \t{args.selection_mode}
+#-seq, --initial_seq\t = \t{args.initial_seq}
+#--random_seq_len\t = \t{args.random_seq_len}
+#-o, --outpath\t = \t{args.outpath}
+#-ng, --num_generations\t = \t{args.num_generations}
+#-ps, --pop_size\t = \t{args.pop_size}
+#-l, --log\t = \t{args.log}
+#-nrep, --norepeat\t = \t{args.norepeat}
+#-nbk, --nobackup\t = \t{args.nobackup}
+#--num-recycles\t = \t{args.num_recycles}
+#--max-tokens-per-batch\t = \t{args.max_tokens_per_batch}
+#--chunk-size\t = \t{args.chunk_size}
+''')
+        
     if args.initial_seq == 'random':
         init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
     else: 
@@ -384,13 +401,13 @@ if __name__ == '__main__':
             help='owerride files if exists',
     )
     parser.add_argument(
-        "--num-recycles",
+        "--num_recycles",
         type=int,
         default=None,
         help="Number of recycles to run. Defaults to number used in training (4).",
     )
     parser.add_argument(
-        "--max-tokens-per-batch",
+        "--max_tokens_per_batch",
         type=int,
         default=1024,
         help="Maximum number of tokens per gpu forward-pass. This will group shorter sequences together "
@@ -398,7 +415,7 @@ if __name__ == '__main__':
         "short sequences.",
     )
     parser.add_argument(
-        "--chunk-size",
+        "--chunk_size",
         type=int,
         default=None,
         help="Chunks axial attention computation to reduce memory usage from O(L^2) to O(L). "
