@@ -4,6 +4,8 @@ import pandas as pd
 import shutil
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import plotly.express as px
+from scipy.stats import gaussian_kde
 
 import MDAnalysis as mda
 from MDAnalysis.analysis import align
@@ -19,13 +21,16 @@ parser.add_argument('-o', '--outdir', type=str, help='output directory name', de
 
 args = parser.parse_args()
 
-
 log = pd.read_csv(args.log, sep='\t', comment='#')
+bestlog = log.groupby('genndx').head(1)
+
 outdir = args.outdir 
 pdbdir = os.path.join(args.pdbdir)
 plotdir = os.path.join(outdir, 'plots/')
 trajpath = os.path.join(outdir, args.traj)
 
+os.makedirs(outdir, exist_ok=True)
+bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t')
 
 
 def sorted_alphanumeric(data):
@@ -37,15 +42,38 @@ def sorted_alphanumeric(data):
 def make_plots(log):
     print('processing evolution trajectory do make plots')
     os.makedirs(plotdir, exist_ok=True)
-
     for colname, coldata in log.iteritems(): 
-        if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'index', 'id', 'genndx']:
-            plt.plot(coldata,'.')
-            plt.legend([colname], loc ="upper left")
-            plt.savefig(plotdir + colname + '.png')
-            plt.close()
+       if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'index', 'id', 'genndx']:
+           plt.plot(coldata,'.', markersize=1)
+           plt.legend([colname], loc ="upper left")
+           plt.savefig(plotdir + colname + '.png')
+           plt.close()
+
+    fig, axs = plt.subplots(4, figsize=(10, 10))
+
+    fig.suptitle('Horizontally stacked subplots')
+    axs[0].plot(log.ptm, 'o', markersize=1)
+    axs[0].set(xlabel='x-label', ylabel='pTM')
+    axs[1].plot(log.mean_plddt, 'tab:orange')
+    axs[1].set(xlabel='x-label', ylabel='mean_pLDDT')
+    axs[2].plot(log.num_conts, 'tab:green')
+    axs[2].set(xlabel='x-label', ylabel='num_conts')
+    axs[3].plot(log.score, 'tab:red')
+    axs[3].set(xlabel='x-label', ylabel='Score')
+
+    #for ax in axs.flat:
+    #   ax.set(xlabel='x-label', ylabel='y-label')
+
+    # Hide x labels and tick labels for top plots and y ticks for right plots.
+    for ax in axs.flat:
+       ax.label_outer()
+
+    fig.savefig(os.path.join(outdir,'fig.png'))
 
 
+           #the same with plotly
+            #fig = px.line(coldata,labels={"index": "# Mutations", "value": colname}, width=1000, height=600)
+            #fig.write_image(plotdir + colname + '.png')
 
 def backbone_traj(log, pdbdir, trajout=args.traj):
     """
@@ -57,7 +85,7 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
     """
     bestpdb = os.path.join(outdir, 'bestpdb/')
     bestlog = log.groupby('genndx').head(1)
-    bestlog.to_csv('bestlog.tsv', sep='\t')
+    bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t')
     bestlog = bestlog.drop_duplicates(subset = 'sequence')
     pfeslen = len(bestlog)
 
@@ -133,13 +161,12 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
     warnings.filterwarnings("ignore")
     align.AlignTraj(traj,  # trajectory to align
                     top,  # reference
-                    select='chainID B',  # selection of atoms to align
+                    select='chainID A',  # selection of atoms to align
                     filename=trajpath,  # file to write the trajectory to
                 ).run()
 
     os.remove('tmp.pdb')
 
 make_plots(log)
-backbone_traj(log, pdbdir)
-
+#backbone_traj(log, pdbdir)#
 

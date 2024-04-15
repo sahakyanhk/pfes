@@ -108,16 +108,16 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
         coords = np.array([item[1] for item in ca_data])  # Extract coordinates
         CA_pLDDT = np.mean(np.array([item[2] for item in ca_data]))
         n_atoms = len(coords)
-        pairs_data = np.zeros((0, 4))
+        #pairs_data = np.zeros((0, 5))
 
         distances_matrix = np.linalg.norm(coords[:, None] - coords, axis=2)
         row = 0
         for i in range(n_atoms):
             for j in range(i + 4, n_atoms): # do not calc dist between atoms i, ... i+4
                 if distances_matrix[i, j] < distance_cutoff:
-                    pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], distances_matrix[i, j]]], axis=0)
+                    #pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], np.mean([ca_data[i][2], ca_data[j][2]]), distances_matrix[i, j]]], axis=0)
                     row += 1
-        return(len(pairs_data)+1, round(CA_pLDDT * 0.01, 2))
+        return(row+1, round(CA_pLDDT * 0.01, 2))
 
 
 

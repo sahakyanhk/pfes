@@ -74,12 +74,12 @@ def multimer_evolver(model, args):
 
 #============================================================================#
 #================================FOLD_EVOLVER================================# 
-def fold_evolver(args, model): 
-
+def fold_evolver(args, model, loghead): 
+    
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
-        f.write("#" + ' '.join(sys.argv[1:]) + '\n')
-
+        f.write(loghead)
+        
     if args.initial_seq == 'random':
         init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
     else: 
@@ -148,18 +148,18 @@ def fold_evolver(args, model):
                     f.write(pdb_txt)   
 
                 #================================SCORING================================# 
-                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
+                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 150)
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
                 prot_len_penalty =  (1 - sigmoid(seq_len, pL0, 0.1)) * np.tanh(seq_len*0.08)
                 max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
 
-                score  = np.prod([mean_plddt,           #[0, 1]
+                score  = np.prod([mean_plddt*100,           #[0, 1]
                                   ptm,                  #[0, 1]
                                   prot_len_penalty,     #[0, 1]
                                   max_helix_penalty,    #[0, 1]
-                                  num_conts/np.sqrt(seq_len)])   #[~0, inf]
+                                  num_conts])   #[~0, inf]s
                 #================================SCORING================================#
 
                 new_gen = new_gen.append({'genndx': gen_i,
@@ -384,32 +384,43 @@ if __name__ == '__main__':
             help='owerride files if exists',
     )
     parser.add_argument(
-        "--num-recycles",
+        '--num-recycles',
         type=int,
-        default=None,
+        default=4,
         help="Number of recycles to run. Defaults to number used in training (4).",
     )
     parser.add_argument(
-        "--max-tokens-per-batch",
+        '--max-tokens-per-batch',
         type=int,
         default=1024,
         help="Maximum number of tokens per gpu forward-pass. This will group shorter sequences together "
         "for batched prediction. Lowering this can help with out of memory issues, if these occur on "
         "short sequences.",
     )
-    parser.add_argument(
-        "--chunk-size",
-        type=int,
-        default=None,
-        help="Chunks axial attention computation to reduce memory usage from O(L^2) to O(L). "
-        "Equivalent to running a for loop over chunks of of each dimension. Lower values will "
-        "result in lower memory usage at the cost of speed. Recommended values: 128, 64, 32. "
-        "Default: None.",
-    )
+
 
     args = parser.parse_args()
     
-    print('#pfes.py ' + ' '.join(sys.argv[1:]))
+    loghead = f'''
+#================input cmd===============#\n
+#$pfes.py" + {' '.join(sys.argv[1:])}\n' 
+#================input cmd===============#
+#-em, --evolution_mode\t = \t{args.evolution_mode}
+#-sm, --selection_mode\t = \t{args.selection_mode}
+#-seq, --initial_seq\t = \t{args.initial_seq}
+#--random_seq_len\t = \t{args.random_seq_len}
+#-o, --outpath\t = \t{args.outpath}
+#-ng, --num_generations\t = \t{args.num_generations}
+#-ps, --pop_size\t = \t{args.pop_size}
+#-l, --log\t = \t{args.log}
+#-nrep, --norepeat\t = \t{args.norepeat}
+#-nbk, --nobackup\t = \t{args.nobackup}
+#--num-recycles\t = \t{args.num_recycles}
+#--max-tokens-per-batch\t = \t{args.max_tokens_per_batch}
+#
+'''
+
+    print(loghead)
 
     #backup if output directory exists
     if args.nobackup:
@@ -431,9 +442,9 @@ if __name__ == '__main__':
 
 
     if args.evolution_mode == "single_chain":
-        fold_evolver(args, model)
+        fold_evolver(args, model, loghead)
     elif args.evolution_mode == "inter_chain":
-        inter_fold_evolver(args, model)
+        inter_fold_evolver(args, model, loghead)
     elif args.evolution_mode == "multimer":
         print("sorry, I am not ready yet")
     elif not args.evolution_mode in ['single_chain', 'inter_chain', 'multimer']:
