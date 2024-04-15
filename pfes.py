@@ -3,6 +3,7 @@ import os, sys, shutil
 import pandas as pd
 import numpy as np
 import typing as T
+from datetime import datetime
 
 import torch
 import esm
@@ -166,19 +167,15 @@ def fold_evolver(args, model, loghead):
                 new_gen = new_gen.append({'genndx': gen_i,
                                         'id': id, 
                                         'seq_len': seq_len,
-                                        'prot_len_penalty': round(prot_len_penalty, 2), 
-                                        'max_helix_penalty': round(max_helix_penalty, 2),
-                                        'ptm': round(ptm, 2), 
+                                        'prot_len_penalty': round(prot_len_penalty, 3), 
+                                        'max_helix_penalty': round(max_helix_penalty, 3),
+                                        'ptm': round(ptm, 3), 
                                         'mean_plddt': mean_plddt, 
                                         'num_conts': num_conts, 
                                         'score': round(score, 3), 
                                         'sequence': seq, 
                                         'ss': ss
                                         }, ignore_index=True)
-
-                    #write a log file NOW same as new gen 
-                    #log = (f'{id}\t{seq_len}\t{round(prot_len_penalty,2)}\t{round(max_helix_penalty,2)}\t{ptm}\t{mean_plddt}\t{num_conts}\t{num_inter_conts}\t{round(score,2)}\t{seq}\t{ss}')
-                    #print(f'{log}')
                 
                 print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
             ancestral_memory =  ancestral_memory.append(init_gen)
@@ -413,23 +410,30 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     
-    loghead = f'''
-#================input cmd===============#\n
-#$pfes.py" + {' '.join(sys.argv[1:])}\n' 
-#================input cmd===============#
+
+    now = datetime.now() # current date and time
+    date = now.strftime("%d-%b-%Y")
+    time = now.strftime("%H:%M:%S")
+    
+
+    loghead = f'''#========================PFESv0.1========================#
+#======================{date}=======================#
+#========================{time}========================#
+#$pfes.py {' '.join(sys.argv[1:])}
+#====================input pfes params===================#
 #-em, --evolution_mode\t = \t{args.evolution_mode}
 #-sm, --selection_mode\t = \t{args.selection_mode}
 #-seq, --initial_seq\t = \t{args.initial_seq}
 #--random_seq_len\t = \t{args.random_seq_len}
-#-o, --outpath\t = \t{args.outpath}
+#-o, --outpath\t\t = \t{args.outpath}
 #-ng, --num_generations\t = \t{args.num_generations}
 #-ps, --pop_size\t = \t{args.pop_size}
-#-l, --log\t = \t{args.log}
+#-l, --log\t\t = \t{args.log}
 #-nrep, --norepeat\t = \t{args.norepeat}
 #-nbk, --nobackup\t = \t{args.nobackup}
 #--num-recycles\t = \t{args.num_recycles}
 #--max-tokens-per-batch\t = \t{args.max_tokens_per_batch}
-#
+#========================================================#
 '''
 
     print(loghead)
@@ -437,7 +441,7 @@ if __name__ == '__main__':
     #backup if output directory exists
     if args.nobackup:
         if os.path.isdir(args.outpath):
-            print(f'\nWARNING! Directory {args.outpath} exists, it will be replaced!' )
+            print(f'\nWARNING! Directory {args.outpath} exists, it will be replaced!')
             shutil.rmtree(args.outpath)
         os.makedirs(args.outpath)
     else:
@@ -461,3 +465,4 @@ if __name__ == '__main__':
         print("sorry, I am not ready yet")
     elif not args.evolution_mode in ['single_chain', 'inter_chain', 'multimer']:
         print("Unknown PFES mode: aveilable options are: single_chain, inter_chain or multimer")
+

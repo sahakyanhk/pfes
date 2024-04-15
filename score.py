@@ -87,7 +87,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
     Calculates number of contaict in a protein.
 
     """
-
+    
     # Get all C-alpha atoms with specific pLDDT cutoff
     ca_data, plddt = [],[]
     for line in pdb_txt.splitlines():

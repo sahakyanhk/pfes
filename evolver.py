@@ -113,7 +113,7 @@ def selector(new_gen, init_gen, pop_size, selection_mode, norepeat): # TODO add 
 
     if selection_mode == "weak":
         weights = np.array(mixed_pop.score / mixed_pop.score.sum())
-        weights[np.isnan(weights)] = 0.001
+        weights[np.isnan(weights)] = 1e-100
         new_init_gen = mixed_pop.sample(n=pop_size, weights=weights).sort_values('score', ascending=False)
 
     return new_init_gen
