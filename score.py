@@ -103,7 +103,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
     
     if len(ca_data) == 0:
         mean_plddt = np.mean(np.array(plddt))
-        return(1, round(mean_plddt * 0.01, 2))
+        return(1, round(mean_plddt * 0.01, 3))
     else:    
         coords = np.array([item[1] for item in ca_data])  # Extract coordinates
         CA_pLDDT = np.mean(np.array([item[2] for item in ca_data]))
@@ -117,7 +117,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
                 if distances_matrix[i, j] < distance_cutoff:
                     #pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], np.mean([ca_data[i][2], ca_data[j][2]]), distances_matrix[i, j]]], axis=0)
                     row += 1
-        return(row+1, round(CA_pLDDT * 0.01, 2))
+        return(row+1, round(CA_pLDDT * 0.01, 3))
 
 
 
@@ -167,7 +167,7 @@ def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt
                 if distances_matrix[i, j] < distance_cutoff:
                     pairs_data = np.append(pairs_data, [[row, ca_data_A[i][0], ca_data_B[j][0], distances_matrix[i, j]]], axis=0)
                     row += 1 
-        return(len(pairs_data)+1, round(CA_pLDDT_A * 0.01, 2))
+        return(len(pairs_data)+1, round(CA_pLDDT_A * 0.01, 3))
 
 
 # for rosetta 

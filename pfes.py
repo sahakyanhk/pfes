@@ -56,20 +56,15 @@ def create_batched_sequence_datasest(sequences: T.List[T.Tuple[str, str]], max_t
 
 
 
-
-#needed for score
-pL0 = 100 # protein lenght penalty (0.5 at 120)
-hL0 = 25 # helix lenght penalty (0.5 at 25)
-
 def sigmoid(x,L0=0,c=0.1):
     return 1 / (1+2.71828182**(c * (L0-x)))
 
-#========================================CONCEPT========================================# 
+#========================================CONCEPTS========================================# 
 def fold_evolver(args): 
     print('not ready yet')
 def multimer_evolver(model, args):  
     print("evolution of interacting dimers")
-#========================================CONCEPT========================================# 
+#========================================CONCEPTS========================================# 
 
 
 
@@ -154,14 +149,14 @@ def fold_evolver(args, model, loghead):
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
-                prot_len_penalty =  (1 - sigmoid(seq_len, pL0, 0.1)) * np.tanh(seq_len*0.08)
-                max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
+                prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.1)) * np.tanh(seq_len*0.08)
+                max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
 
-                score  = np.prod([mean_plddt*100,           #[0, 1]
+                score  = np.prod([mean_plddt,           #[0, 1]
                                   ptm,                  #[0, 1]
                                   prot_len_penalty,     #[0, 1]
                                   max_helix_penalty,    #[0, 1]
-                                  np.sqrt(num_conts)])   #[~0, inf]s
+                                  num_conts**(1/3)])   #[~0, inf]s
                 #================================SCORING================================#
 
                 new_gen = new_gen.append({'genndx': gen_i,
@@ -205,7 +200,7 @@ def inter_fold_evolver(args, model):
     PDB_6SVE=":WEKRMSRNSGRVYYFNHITNASQF" #WW domain
     PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
     PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
-
+    PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
@@ -289,8 +284,8 @@ def inter_fold_evolver(args, model):
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
-                prot_len_penalty =  (1 - sigmoid(seq_len, pL0, 0.1)) * np.tanh(seq_len*0.05)
-                max_helix_penalty = 1 - sigmoid(max_helix, hL0, 0.5)
+                prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.1)) * np.tanh(seq_len*0.05)
+                max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
 
                 score  = np.prod([mean_plddt,           #[0, 1]
                                   ptm,                  #[0, 1]
@@ -344,15 +339,15 @@ if __name__ == '__main__':
             default="weak"
     )
     parser.add_argument(
-            '-seq', '--initial_seq', type=str,
-            help='a sequence to initiate with',
+            '-iseq', '--initial_seq', type=str,
+            help='a sequence to initiate with, if "random" pop_size random sequneces will be generated, the lenght of the random sequences can be assigned with "--random_seq_len"',
             default='random'
-    )    
-    parser.add_argument(
-            '--random_seq_len', type=int,
-            help='a sequence to initiate with',
-            default=18,
     )
+    parser.add_argument(
+            '-l', '--log', type=str,
+            help='log output',
+            default='progress.log',
+    )   
     parser.add_argument(
             '-o' ,'--outpath', type=str,
             help='output filepath for saving sampled sequences',
@@ -369,9 +364,19 @@ if __name__ == '__main__':
             default=10,
     )
     parser.add_argument(
-            '-l', '--log', type=str,
-            help='log output',
-            default='progress.log',
+            '-pl0', '--prot_len_penalty', type=int,
+            help='population size',
+            default=100,
+    )
+    parser.add_argument(
+            '-hl0', '--helix_len_penalty', type=int,
+            help='population size',
+            default=25,
+    )
+    parser.add_argument(
+            '--random_seq_len', type=int,
+            help='a sequence to initiate with',
+            default=18,
     )
     parser.add_argument(                      
             '-nrep', '--norepeat', action='store_true', 
@@ -383,29 +388,17 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--num-recycles',
-        "--num_recycles",
         type=int,
         default=4,
         help="Number of recycles to run. Defaults to number used in training (4).",
     )
     parser.add_argument(
         '--max-tokens-per-batch',
-        "--max_tokens_per_batch",
         type=int,
         default=1024,
         help="Maximum number of tokens per gpu forward-pass. This will group shorter sequences together "
         "for batched prediction. Lowering this can help with out of memory issues, if these occur on "
         "short sequences.",
-    )
-
-    parser.add_argument(
-        "--chunk_size",
-        type=int,
-        default=None,
-        help="Chunks axial attention computation to reduce memory usage from O(L^2) to O(L). "
-        "Equivalent to running a for loop over chunks of of each dimension. Lower values will "
-        "result in lower memory usage at the cost of speed. Recommended values: 128, 64, 32. "
-        "Default: None.",
     )
 
     args = parser.parse_args()
@@ -416,24 +409,26 @@ if __name__ == '__main__':
     time = now.strftime("%H:%M:%S")
     
 
-    loghead = f'''#========================PFESv0.1========================#
-#======================{date}=======================#
-#========================{time}========================#
+    loghead = f'''#======================== PFESv0.1 ========================#
+#====================== {date} =======================#
+#======================== {time} ========================#
 #$pfes.py {' '.join(sys.argv[1:])}
-#====================input pfes params===================#
-#-em, --evolution_mode\t = \t{args.evolution_mode}
-#-sm, --selection_mode\t = \t{args.selection_mode}
-#-seq, --initial_seq\t = \t{args.initial_seq}
-#--random_seq_len\t = \t{args.random_seq_len}
-#-o, --outpath\t\t = \t{args.outpath}
-#-ng, --num_generations\t = \t{args.num_generations}
-#-ps, --pop_size\t = \t{args.pop_size}
-#-l, --log\t\t = \t{args.log}
-#-nrep, --norepeat\t = \t{args.norepeat}
-#-nbk, --nobackup\t = \t{args.nobackup}
-#--num-recycles\t = \t{args.num_recycles}
-#--max-tokens-per-batch\t = \t{args.max_tokens_per_batch}
-#========================================================#
+#====================  pfes input params ===================#
+#--evolution_mode, -em \t\t = {args.evolution_mode}
+#--selection_mode, -sm\t\t = {args.selection_mode}
+#--initial_seq, -iseq\t\t = {args.initial_seq}
+#--log, -l\t\t\t = {args.log}
+#--outpath, -o\t\t\t = {args.outpath}
+#--helix_len_penalty, -hl0\t = {args.helix_len_penalty}
+#--prot_len_penalty, -pl0\t = {args.prot_len_penalty}
+#--num_generations, -ng\t\t = {args.num_generations}
+#--pop_size, -ps\t\t = {args.pop_size}
+#--random_seq_len\t\t = {args.random_seq_len}
+#--norepeat, -nrep\t\t = {args.norepeat}
+#--nobackup, -nbk\t\t = {args.nobackup}
+#--num-recycles\t\t\t = {args.num_recycles}
+#--max-tokens-per-batch\t\t = {args.max_tokens_per_batch}
+#==========================================================#
 '''
 
     print(loghead)
@@ -447,7 +442,7 @@ if __name__ == '__main__':
     else:
         backup_output(args.outpath)
 
-    pdb_path = args.outpath + '/pdb/' 
+    pdb_path = args.outpath + '/structures/' 
 
     
     # TODO check arguments and input paths before loading models 

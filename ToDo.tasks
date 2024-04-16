@@ -22,6 +22,7 @@ TO DO:
         ☐ sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
         ☐ make a tool for probability matrix calculation
         ☐ write an sr_filter.py?
+        ☐ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:

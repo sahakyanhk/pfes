@@ -15,7 +15,7 @@ import warnings
 
 parser = argparse.ArgumentParser(description="Analyse PFES")
 parser.add_argument('-l', '--log', type=str, help='log file name', default='progress.log', required=True) #rename log to pfes traj
-parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='pdb')
+parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='structures')
 parser.add_argument('-t', '--traj', type=str, help='make backbone trajectory', default='pfestraj.pdb')
 parser.add_argument('-o', '--outdir', type=str, help='output directory name', default='visual_pfes_results')
 
@@ -49,31 +49,36 @@ def make_plots(log):
            plt.savefig(plotdir + colname + '.png')
            plt.close()
 
-    fig, axs = plt.subplots(4, figsize=(10, 10))
+    fig, axs = plt.subplots(3,2, figsize=(26, 14))
 
-    fig.suptitle('Horizontally stacked subplots')
-    axs[0].plot(log.ptm, 'o', markersize=1)
-    axs[0].set(xlabel='x-label', ylabel='pTM')
-    axs[1].plot(log.mean_plddt, 'tab:orange')
-    axs[1].set(xlabel='x-label', ylabel='mean_pLDDT')
-    axs[2].plot(log.num_conts, 'tab:green')
-    axs[2].set(xlabel='x-label', ylabel='num_conts')
-    axs[3].plot(log.score, 'tab:red')
-    axs[3].set(xlabel='x-label', ylabel='Score')
+    fig.suptitle(None)
+    axs[0,0].plot(log.mean_plddt, '.', markersize=1)
+    axs[0,0].set(xlabel=None, ylabel='mean_plddt')
+
+    axs[1,0].plot(log.num_conts, '.', markersize=1)
+    axs[1,0].set(xlabel=None, ylabel='num_conts')
+    
+    axs[2,0].plot(log.score,  '.', markersize=1)
+    axs[2,0].set(xlabel='# mutation', ylabel='score')
+    
+    axs[0,1].plot(log.max_helix_penalty, '.', markersize=1)
+    axs[0,1].set(xlabel=None, ylabel='max_helix_penalty')
+    
+    axs[1,1].plot(log.seq_len, '.', markersize=1)
+    axs[1,1].set(xlabel=None, ylabel='seq_len')
+    
+    axs[2,1].plot(log.ptm, '.', markersize=1)
+    axs[2,1].set(xlabel='# mutation', ylabel='ptm')
 
     #for ax in axs.flat:
     #   ax.set(xlabel='x-label', ylabel='y-label')
 
     # Hide x labels and tick labels for top plots and y ticks for right plots.
-    for ax in axs.flat:
-       ax.label_outer()
+    #for ax in axs.flat:
+    #   ax.label_outer()
 
-    fig.savefig(os.path.join(outdir,'fig.png'))
+    fig.savefig(os.path.join(outdir,'summary_plot.png'))
 
-
-           #the same with plotly
-            #fig = px.line(coldata,labels={"index": "# Mutations", "value": colname}, width=1000, height=600)
-            #fig.write_image(plotdir + colname + '.png')
 
 def backbone_traj(log, pdbdir, trajout=args.traj):
     """
@@ -103,7 +108,7 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
     else: 
         print(f'The best folds from {pfeslen} generations are selected')
 
-
+    #if single_chian:
     print("extracting backbone coordinates...")
     i=0
     PDB_A, PDB_B, lastBB_A, lastBB_B = [], [], [], []
@@ -117,14 +122,14 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
                 col[2] == 'N' or 
                 col[2] == 'CA' or 
                 col[2] == 'C' or 
-                col[2] == 'O') and 
+                col[2] == '.') and 
                 col[4] == 'A'):
                 bb_chain_A.append(line + '\n') 
             if (col[0] == 'ATOM' and (
                 col[2] == 'N' or 
                 col[2] == 'CA' or 
                 col[2] == 'C' or 
-                col[2] == 'O') and 
+                col[2] == '.') and 
                 col[4] == 'B'):
                 bb_chain_B.append(line + '\n')
 
@@ -152,7 +157,7 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
             dumlinesA = lastresBB_A  * int((topmax_A - len(chA)) / 4)
             dumlinesB = lastresBB_B  * int((topmax_B - len(chB)) / 4)
 
-            f.write(f'MODEL        {i}\n' + ''.join(chA) + dumlinesA + 'TER\n' + ''.join(chB) + dumlinesB + 'TER\nENDMDL\n')
+            f.write(f'MODEL        {i}\n' + ''.join(chA) + dumlinesA + 'TER\n' + ''.join(chB) + dumlinesB + 'ENDMDL\n')
 
     print('writing aligned backbone trajectory...')
     traj = mda.Universe('tmp.pdb')
@@ -167,6 +172,69 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
 
     os.remove('tmp.pdb')
 
+'''    if multiple_chains:
+    print("extracting backbone coordinates...")
+    i=0
+    PDB_A, PDB_B, lastBB_A, lastBB_B = [], [], [], []
+    for pdb in tqdm(sorted_alphanumeric(os.listdir(bestpdb))):
+        with open(os.path.join(bestpdb, pdb), 'r') as file:
+            pdb_txt = file.read()
+        bb_chain_A, bb_chain_B = [], []
+        for line in pdb_txt.splitlines():
+            col = line.split()
+            if (col[0] == 'ATOM' and (
+                col[2] == 'N' or 
+                col[2] == 'CA' or 
+                col[2] == 'C' or 
+                col[2] == '.') and 
+                col[4] == 'A'):
+                bb_chain_A.append(line + '\n') 
+            if (col[0] == 'ATOM' and (
+                col[2] == 'N' or 
+                col[2] == 'CA' or 
+                col[2] == 'C' or 
+                col[2] == '.') and 
+                col[4] == 'B'):
+                bb_chain_B.append(line + '\n')
+
+        lastresidueA=''.join([str(elem) for elem in bb_chain_A[-4:]]) # keep the last four lines to repeate them and make numer of atom in all models equal
+        lastresidueB=''.join([str(elem) for elem in bb_chain_B[-4:]]) # keep the last four lines to repeate them and make numer of atom in all models equal
+
+        PDB_A.append(bb_chain_A) #save chain A
+        PDB_B.append(bb_chain_B) #save chain A
+        lastBB_A.append(lastresidueA) #save bb of the last residue of chain A 
+        lastBB_B.append(lastresidueB) #save bb of the last residue of chain B
+
+    topmax_A = max([len(i) for i in PDB_A])
+    topmax_B = max([len(i) for i in PDB_B])
+    for pdbA, pdbB in zip(PDB_A, PDB_B): 
+        if len(pdbA) == topmax_A:
+            toppdb = ''.join(pdbA + pdbB)
+            break
+    
+    print('preparing backbone trajectory...')
+    with open('tmp.pdb', 'w') as f:
+        i=1
+        f.write(f'MODEL        {i}\n' + toppdb + 'TER\nENDMDL\n')
+        for chA, chB, lastresBB_A, lastresBB_B in tqdm(zip(PDB_A, PDB_B, lastBB_A, lastBB_B), total=len(PDB_A)): 
+            i+=1
+            dumlinesA = lastresBB_A  * int((topmax_A - len(chA)) / 4)
+            dumlinesB = lastresBB_B  * int((topmax_B - len(chB)) / 4)
+
+            f.write(f'MODEL        {i}\n' + ''.join(chA) + dumlinesA + 'TER\n' + ''.join(chB) + dumlinesB + 'ENDMDL\n')
+
+    print('writing aligned backbone trajectory...')
+    traj = mda.Universe('tmp.pdb')
+    top = traj.select_atoms('protein')
+
+    warnings.filterwarnings("ignore")
+    align.AlignTraj(traj,  # trajectory to align
+                    top,  # reference
+                    select='chainID A',  # selection of atoms to align
+                    filename=trajpath,  # file to write the trajectory to
+                ).run()
+'''
+
 make_plots(log)
-#backbone_traj(log, pdbdir)#
+#backbone_traj(log, pdbdir)
 
