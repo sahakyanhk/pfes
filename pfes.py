@@ -150,7 +150,7 @@ def fold_evolver(args, model, loghead):
                     f.write(pdb_txt)   
 
                 #================================SCORING================================# 
-                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 150)
+                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
                 ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
 
                 #Rg, aspher = get_aspher(pdb_txt)
@@ -161,7 +161,7 @@ def fold_evolver(args, model, loghead):
                                   ptm,                  #[0, 1]
                                   prot_len_penalty,     #[0, 1]
                                   max_helix_penalty,    #[0, 1]
-                                  num_conts])   #[~0, inf]s
+                                  np.sqrt(num_conts)])   #[~0, inf]s
                 #================================SCORING================================#
 
                 new_gen = new_gen.append({'genndx': gen_i,
