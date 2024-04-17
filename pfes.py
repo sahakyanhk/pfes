@@ -39,6 +39,38 @@ def esm2data(esm_out):
 
 
 
+def extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts):
+    global new_gen #this will be modified in the fold_evolver()
+    for id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+        seq_len = len(seq)
+        with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
+            f.write(pdb_txt)   
+        #================================SCORING================================# 
+        num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
+        ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
+        #Rg, aspher = get_aspher(pdb_txt)
+        prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.1)) * np.tanh(seq_len*0.08)
+        max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
+        score  = np.prod([mean_plddt,           #[0, 1]
+                          ptm,                  #[0, 1]
+                          prot_len_penalty,     #[0, 1]
+                          max_helix_penalty,    #[0, 1]
+                          num_conts**(1/3)])   #[~0, inf]s
+        #================================SCORING================================#
+        new_gen = new_gen.append({'genndx': gen_i,
+                                'id': id, 
+                                'seq_len': seq_len,
+                                'prot_len_penalty': round(prot_len_penalty, 3), 
+                                'max_helix_penalty': round(max_helix_penalty, 3),
+                                'ptm': round(ptm, 3), 
+                                'mean_plddt': mean_plddt, 
+                                'num_conts': num_conts, 
+                                'score': round(score, 3), 
+                                'sequence': seq, 
+                                'ss': ss
+                                }, ignore_index=True)
+        print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
+
 
 def create_batched_sequence_datasest(sequences: T.List[T.Tuple[str, str]], max_tokens_per_batch: int = 1024
 ) -> T.Generator[T.Tuple[T.List[str], T.List[str]], None, None]:
@@ -66,18 +98,20 @@ def multimer_evolver(model, args):
     print("evolution of interacting dimers")
 #========================================CONCEPTS========================================# 
 
-
+global new_gen #this will be modified in the extract_results() 
 
 #============================================================================#
 #================================FOLD_EVOLVER================================# 
 def fold_evolver(args, model, loghead): 
-
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
         f.write(loghead)
         
     if args.initial_seq == 'random':
+        randomsequence = randomseq(args.random_seq_len)
+        init_gen = pd.DataFrame({'sequence': [randomsequence for i in range(args.pop_size)]})
+    elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
     else: 
         init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
@@ -101,6 +135,7 @@ def fold_evolver(args, model, loghead):
     #mutate seqs from init_gen and select the best n seqs for the next generation    
     for gen_i in range(args.num_generations):
         n = 0
+        global new_gen #this will be modified in the extract_results() 
         new_gen = pd.DataFrame(columns=columns)
         generated_sequences = []
         for sequence in init_gen.sequence:
@@ -138,41 +173,8 @@ def fold_evolver(args, model, loghead):
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
+            extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts)
 
-            for id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
-                seq_len = len(seq)
-                with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
-                    f.write(pdb_txt)   
-
-                #================================SCORING================================# 
-                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
-                ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
-
-                #Rg, aspher = get_aspher(pdb_txt)
-                prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.1)) * np.tanh(seq_len*0.08)
-                max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
-
-                score  = np.prod([mean_plddt,           #[0, 1]
-                                  ptm,                  #[0, 1]
-                                  prot_len_penalty,     #[0, 1]
-                                  max_helix_penalty,    #[0, 1]
-                                  num_conts**(1/3)])   #[~0, inf]s
-                #================================SCORING================================#
-
-                new_gen = new_gen.append({'genndx': gen_i,
-                                        'id': id, 
-                                        'seq_len': seq_len,
-                                        'prot_len_penalty': round(prot_len_penalty, 3), 
-                                        'max_helix_penalty': round(max_helix_penalty, 3),
-                                        'ptm': round(ptm, 3), 
-                                        'mean_plddt': mean_plddt, 
-                                        'num_conts': num_conts, 
-                                        'score': round(score, 3), 
-                                        'sequence': seq, 
-                                        'ss': ss
-                                        }, ignore_index=True)
-                
-                print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
             ancestral_memory =  ancestral_memory.append(init_gen)
         
         #select the next generation 
@@ -412,8 +414,11 @@ if __name__ == '__main__':
     loghead = f'''#======================== PFESv0.1 ========================#
 #====================== {date} =======================#
 #======================== {time} ========================#
+
 #$pfes.py {' '.join(sys.argv[1:])}
+
 #====================  pfes input params ===================#
+
 #--evolution_mode, -em \t\t = {args.evolution_mode}
 #--selection_mode, -sm\t\t = {args.selection_mode}
 #--initial_seq, -iseq\t\t = {args.initial_seq}
@@ -428,6 +433,7 @@ if __name__ == '__main__':
 #--nobackup, -nbk\t\t = {args.nobackup}
 #--num-recycles\t\t\t = {args.num_recycles}
 #--max-tokens-per-batch\t\t = {args.max_tokens_per_batch}
+
 #==========================================================#
 '''
 

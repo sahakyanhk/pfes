@@ -22,13 +22,14 @@ evoldict2 ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,
             'K' : 2,  'L' : 4,  'M' : 1,  'N' : 2,  
             'P' : 4,  'Q' : 2,  'R' : 2,  'S' : 2,  
             'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
-            '+' : 1,   #insertion
-            '-' : 1,   #single deletion
-            '*' : 1,   #partial duplication
-            '#' : 1,   #random insertion
-            '%' : 1,   #partial deletion
-            'd' : 0.1} #full duplication    
-#evoldict=evoldict2
+            '+' : 3,   #insertion
+            '-' : 3,   #single deletion
+            '*' : 2,   #partial duplication
+            '#' : 2,   #random insertion
+            '%' : 2,   #partial deletion
+            'd' : 0.3} #full duplication    
+
+evoldict=evoldict2
 
 #aafreq in sr_filter           thesw are normalized by codons
 #"A" => 0.07422,                'A'	:	4	0.078
@@ -102,8 +103,8 @@ def sequence_mutator(sequence):
 
 
 
-def selector(new_gen, init_gen, pop_size, selection_mode, norepeat): # TODO add differen selection modes here
-    mixed_pop = pd.concat([new_gen, init_gen], axis=0, ignore_index=True) 
+def selector(input_new_gen, input_init_gen, pop_size, selection_mode, norepeat): # TODO add differen selection modes here
+    mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
     
     if norepeat:
         mixed_pop = mixed_pop.drop_duplicates(subset=['sequence'])
