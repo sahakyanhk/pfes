@@ -62,6 +62,7 @@ def make_plots(log, bestlog):
     if 'num_inter_conts' in log.keys():
         axs[0,0].plot(log.num_inter_conts, '.', markersize=ms)
         axs[0,0].plot(bestlog.num_inter_conts, '-', linewidth=lw)
+#        axs[0,0].plot(averlog.num_inter_conts, '-', linewidth=lw)
         axs[0,0].set(xlabel=None, ylabel='num_inter_conts')
     else: 
         axs[0,0].plot(log.mean_plddt, '.', markersize=ms)

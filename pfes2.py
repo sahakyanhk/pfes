@@ -33,30 +33,13 @@ def backup_output(outpath):
         os.replace(outpath, outpath + '.' + str(last_backup +  1))
 
 
-def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_tokens_per_batch: int = 1524
-) -> T.Generator[T.Tuple[T.List[str], T.List[str]], None, None]:
-
-    batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0 
-    for header, seq in sequences:
-        if (len(seq) + num_tokens > max_tokens_per_batch) and num_tokens > 0:
-            yield batch_headers, batch_sequences
-            batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0 
-        batch_headers.append(header)
-        batch_sequences.append(seq)
-        num_tokens += len(seq)
-        num_sequences += 1
-        if num_sequences > args.pop_size / 2:
-           yield batch_headers, batch_sequences
-           batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0
-    yield batch_headers, batch_sequences
-
-
 def esm2data(esm_out):
     output = {key: value.cpu() for key, value in esm_out.items()}
     pdbs = model.output_to_pdb(output)
     ptm = esm_out["ptm"].tolist()
     mean_plddt = esm_out["mean_plddt"].tolist()
     return(pdbs, ptm, mean_plddt)
+
 
 
 def extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts):
@@ -90,6 +73,21 @@ def extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts):
                                 'ss': ss
                                 }, ignore_index=True)
         print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
+
+
+def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_tokens_per_batch: int = 1524
+) -> T.Generator[T.Tuple[T.List[str], T.List[str]], None, None]:
+
+    batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0 
+    for header, seq in sequences:
+        if (len(seq) + num_tokens > max_tokens_per_batch) and num_tokens > 0:
+            yield batch_headers, batch_sequences
+            batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0 
+        batch_headers.append(header)
+        batch_sequences.append(seq)
+        num_tokens += len(seq)
+    yield batch_headers, batch_sequences
+
 
 
 def sigmoid(x,L0=0,c=0.1):
@@ -141,7 +139,7 @@ def fold_evolver(args, model, loghead):
         n = 0
         global new_gen #this will be modified in the extract_results() 
         new_gen = pd.DataFrame(columns=columns)
-        #now = datetime.now()
+        now = datetime.now()
         generated_sequences = []
         for sequence in init_gen.sequence:
 
@@ -170,6 +168,12 @@ def fold_evolver(args, model, loghead):
                     
             batched_sequences = create_batched_sequence_datasets(generated_sequences, args.max_tokens_per_batch)
         
+        def countdown():
+            count=0
+            while  count < args.pop_size: #
+                count=len(new_gen)
+                print(f"process is active, count: {count}")
+                time.sleep(1.5)
 
         #predict data for the new batch
         for headers, sequences in batched_sequences:
@@ -179,26 +183,24 @@ def fold_evolver(args, model, loghead):
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
-            #extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts)
+            extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts)
             
-            trd = threading.Thread(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
-            trd.start()
-            
+
+        #    trd = threading.Thread(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
+        #    trd.start()
             # p1 = multiprocessing.Process(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
             # p1.start()
             # p1.join()
-
-        while trd.is_alive(): 
-            time.sleep(0.2)
-
-        #print(f"#GENtime {datetime.now() - now}")
+            
+        
+        print(f"#roundtime {datetime.now() - now}")
         ancestral_memory =  ancestral_memory.append(init_gen)
 
         #select the next generation 
         init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.genndx = f'genndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
-
+        
 #================================FOLD_EVOLVER================================# 
 #============================================================================# 
 
@@ -428,9 +430,9 @@ if __name__ == '__main__':
     loghead = f'''#======================== PFESv0.1 ========================#
 #====================== {date_now} =======================#
 #======================== {time_now} ========================#
-#WD: {os.getcwd()}
-#$pfes.py {' '.join(sys.argv[1:])}
 #
+#$pfes.py {' '.join(sys.argv[1:])}
+#WD: {os.getcwd()}
 #====================  pfes input params ===================#
 #
 #--evolution_mode, -em \t\t = {args.evolution_mode}
