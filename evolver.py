@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 
-evoldict ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
+flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
            'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
            'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
            'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
@@ -17,18 +17,19 @@ evoldict ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
 
 
 #by number of codons
-evoldict2 ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
-            'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
-            'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
-            'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 2,  
-            'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
-            '+' : 3,   #insertion
-            '-' : 3,   #single deletion
-            '*' : 2,   #partial duplication
-            '#' : 2,   #random insertion
-            '%' : 2,   #partial deletion
-            'd' : 0.1} #full duplication    
+codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
+              'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
+              'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
+              'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 2,  
+              'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
+              '+' : 3,   #insertion
+              '-' : 3,   #single deletion
+              '*' : 2,   #partial duplication
+              '#' : 2,   #random insertion
+              '%' : 2,   #partial deletion
+              'd' : 0.1} #full duplication    
 
+evoldict = flatrates
 
 mutation_types = list(evoldict.keys())  #mutation type
 p = list(evoldict.values()) #probability for each mutation
