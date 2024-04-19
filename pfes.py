@@ -45,7 +45,7 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
         batch_sequences.append(seq)
         num_tokens += len(seq)
         num_sequences += 1
-        if num_sequences > args.pop_size / 2:
+        if num_sequences > args.pop_size / 2: #CHECK THIS
            yield batch_headers, batch_sequences
            batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0
     yield batch_headers, batch_sequences
@@ -77,7 +77,7 @@ def extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts):
                           max_helix_penalty,    #[0, 1]
                           num_conts**(1/3)])   #[~0, inf]s
         #================================SCORING================================#
-        new_gen = new_gen.append({'genndx': gen_i,
+        new_gen = new_gen.append({'gndx': gen_i,
                                 'id': id, 
                                 'seq_len': seq_len,
                                 'prot_len_penalty': round(prot_len_penalty, 3), 
@@ -89,7 +89,7 @@ def extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts):
                                 'sequence': seq, 
                                 'ss': ss
                                 }, ignore_index=True)
-        print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
+    print(new_gen.drop('gndx', axis=1).to_string(index=False, header=False))#.replace(' ', '\t'))
 
 
 def sigmoid(x,L0=0,c=0.1):
@@ -121,7 +121,7 @@ def fold_evolver(args, model, loghead):
         init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
 
     #creare an initial pool of sequences with pop_size
-    columns=['genndx',
+    columns=['gndx',
              'id', 
              'seq_len', 
              'prot_len_penalty', 
@@ -179,11 +179,12 @@ def fold_evolver(args, model, loghead):
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
-            #extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts)
             
             trd = threading.Thread(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
             trd.start()
-            
+
+
+            #extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts)
             # p1 = multiprocessing.Process(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
             # p1.start()
             # p1.join()
@@ -196,7 +197,7 @@ def fold_evolver(args, model, loghead):
 
         #select the next generation 
         init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
-        init_gen.genndx = f'genndx{gen_i}' #assign a new gen index
+        init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
 #================================FOLD_EVOLVER================================# 
@@ -235,7 +236,7 @@ def inter_fold_evolver(args, model):
         
 
     #creare an initial pool of sequences with pop_size
-    columns=['genndx',
+    columns=['gndx',
              'id', 
              'seq_len', 
              'prot_len_penalty', 
@@ -315,7 +316,7 @@ def inter_fold_evolver(args, model):
                                   num_inter_conts])     #[1, inf]
                 #================================SCORING================================#
 
-                new_gen = new_gen.append({'genndx': gen_i,
+                new_gen = new_gen.append({'gndx': gen_i,
                                         'id': id, 
                                         'seq_len': seq_len,
                                         'prot_len_penalty': round(prot_len_penalty, 2), 
@@ -329,12 +330,12 @@ def inter_fold_evolver(args, model):
                                         'ss': ss
                                         }, ignore_index=True)
 
-                print(new_gen.drop('genndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
+                print(new_gen.drop('gndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
             ancestral_memory =  ancestral_memory.append(init_gen)
         
         #select the next generation 
         init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
-        init_gen.genndx = f'genndx{gen_i}' #assign a new gen index
+        init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 #================================INTER_FOLD_EVOLVER================================# 
 #==================================================================================#

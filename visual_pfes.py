@@ -30,7 +30,7 @@ plotdir = os.path.join(outdir, 'plots/')
 trajpath = os.path.join(outdir, args.traj)
 
 os.makedirs(outdir, exist_ok=True)
-bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t')
+bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
 
 
 def sorted_alphanumeric(data):
@@ -81,8 +81,8 @@ def make_plots(log, bestlog):
     axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
     axs[0,1].set(xlabel=None, ylabel='seq_len')
     
-    axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
-    axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
+    axs[1,1].plot(log.prot_len_penalty, '.', markersize=ms)
+    axs[1,1].plot(bestlog.prot_len_penalty, '-', linewidth=lw)
     axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
 
     axs[2,1].plot(log.ptm, '.', markersize=ms)
@@ -99,7 +99,7 @@ def make_plots(log, bestlog):
     fig.savefig(os.path.join(outdir,'summary_plot.png'))
 
 
-def backbone_traj(log, pdbdir, trajout=args.traj):
+def backbone_traj(bestlog, pdbdir):
     """
     make trajectory from C-alpha atoms
     TO DO: 
@@ -108,8 +108,6 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
     2. save trajectory in xyz format to save space. 
     """
     bestpdb = os.path.join(outdir, 'bestpdb/')
-    bestlog = log.groupby('genndx').head(1)
-    bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t')
     bestlog = bestlog.drop_duplicates(subset = 'sequence')
     pfeslen = len(bestlog)
 
@@ -122,7 +120,7 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
             try:
                 shutil.copy(pdbdir +'/' + pdbid +'.pdb', bestpdb +'/'+ genndx + '.pdb')
             except FileNotFoundError:
-                #print(pdbid +'.pdb is missing' )
+                print(pdbid +'.pdb is missing' )
                 pass
     else: 
         print(f'The best folds from {pfeslen} generations are selected')
@@ -193,5 +191,5 @@ def backbone_traj(log, pdbdir, trajout=args.traj):
 
 
 make_plots(log, bestlog)
-backbone_traj(log, pdbdir)
+backbone_traj(bestlog, pdbdir)
 

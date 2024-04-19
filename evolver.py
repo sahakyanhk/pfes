@@ -8,12 +8,12 @@ flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
            'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
            'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
            'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
-           '+' : 1,   #insertion
-           '-' : 1,   #single deletion
-           '*' : 1,   #partial duplication
-           '#' : 1,   #random insertion
-           '%' : 1,   #partial deletion
-           'd' : 0.05} #full duplication    
+           '+' : 1,    #insertion
+           '-' : 1,    #single deletion
+           '*' : 1,    #partial duplication
+           '#' : 1,    #random insertion
+           '%' : 1,    #partial deletion
+           'd' : 0.02} #full duplication    
 
 
 #by number of codons

@@ -3,23 +3,21 @@ DIR=$(cd $(dirname $0); pwd)
 
 TO DO:
     active:
-        ☐ CHECK HOW MANY REPEATS ARE IN THE PREV RUNS
+        ☐ rosetta scoring for BEST PDB @high
         ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ add a function to indicate only several residues in the partner protetein for contacts. In will constrain the number of possible contacts!
         ☐ add a function to save pdb (all atoms, only CA, ziped, etc) and 
-        ☐ do not wait untill files are writen to move forward
+        ✔ do not wait untill files are writen to move forward @done (4/19/2024, 11:48:58 AM)
         ☐ continue simulations (all sequences from a generation are needed)
         ☐ Consider adding new mutation types: split sequnece and join sequences
         ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
         ☐ partial subsitutions with random sequences
         ☐ Score testing and adjusting @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
-        ☐ make an sh tool to extract the fastas and make analyses 
         ###add more tools for analyses###
-        ☐ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html
+        ✔ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html @done (4/19/2024, 11:47:44 AM)
         ☐ trajectory with side chains
-        ☐ secondary structure plot
-        ☐ sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
+        ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
         ☐ make a tool for probability matrix calculation
         ☐ write an sr_filter.py?
         ☐ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py
