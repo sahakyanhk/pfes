@@ -8,12 +8,12 @@ flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
            'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
            'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
            'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
-           '+' : 1,    #insertion
-           '-' : 1,    #single deletion
-           '*' : 1,    #partial duplication
-           '#' : 1,    #random insertion
-           '%' : 1,    #partial deletion
-           'd' : 0.02} #full duplication    
+           '+' : 0,    #insertion
+           '-' : 0,    #single deletion
+           '*' : 0,    #partial duplication
+           '#' : 0,    #random insertion
+           '%' : 0,    #partial deletion
+           'd' : 0.0} #full duplication    
 
 
 #by number of codons
@@ -29,6 +29,13 @@ codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,
               '%' : 2,   #partial deletion
               'd' : 0.1} #full duplication    
 
+uniprotrates = {'A' : 0.0826, 'C' : 0.0139, 'D' : 0.0546, 'E' : 0.0672, 
+                'F' : 0.0387, 'G' : 0.0707, 'H' : 0.0228, 'K' : 0.0580, 
+                'L' : 0.0965, 'L' : 0.0591, 'M' : 0.0241, 'N' : 0.0406, 
+                'P' : 0.0475, 'Q' : 0.0393, 'R' : 0.0553, 'S' : 0.0665, 
+                'T' : 0.0536, 'V' : 0.0686, 'W' : 0.0110, 'Y' : 0.0292}
+
+
 evoldict = flatrates
 
 mutation_types = list(evoldict.keys())  #mutation type
@@ -36,7 +43,7 @@ p = list(evoldict.values()) #probability for each mutation
 aa_alphabet = mutation_types[:20] #allowed substitutions for point mutations 
 
 w = p[:20] #probabilities for random sequence generation
-
+upw = list(uniprotrates.values())
     
 #random sequence generator
 def randomseq(nres=20, weights=w):
@@ -44,39 +51,49 @@ def randomseq(nres=20, weights=w):
 
 
 def sequence_mutator(sequence):  
-    mutation_posiotion = random.choice(range(len(sequence)))
+    mutation_position = random.choice(range(len(sequence)))
     mutation =  random.choices(mutation_types, weights=p)[0]
     
     if mutation in aa_alphabet:
-        sequence_mutated = sequence[:mutation_posiotion] + mutation + sequence[mutation_posiotion + 1:]
-    
+        sequence_mutated = sequence[:mutation_position] + mutation + sequence[mutation_position + 1:]
+        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}.{mutation}'
+
     elif mutation =='+':
         mutation = random.choices(aa_alphabet)[0]
-        sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
+        sequence_mutated = sequence[:mutation_position + 1] + mutation + sequence[mutation_position + 1:]
+        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}+{mutation}'
         
-    elif mutation == '-':
-        sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + 1:]
-    
-    elif mutation =='*' and len(sequence) > 5:
-        insertion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable insertion lenght?
-        sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion:][:insertion_len] + sequence[mutation_posiotion:]
-    
-    elif mutation =='#':
-        mutation = randomseq(random.choice(range(2, int(len(sequence)/2))))
-        sequence_mutated = sequence[:mutation_posiotion + 1] + mutation + sequence[mutation_posiotion + 1:]
 
-    elif mutation =='%' and len(sequence) > 5:
+    elif mutation == '-':
+        sequence_mutated = sequence[:mutation_position] + sequence[mutation_position + 1:]
+        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}-'
+
+    elif mutation =='*' and len(sequence) > 5: #partial duplication
+        insertion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable insertion lenght?
+        sequence_mutated = sequence[:mutation_position] + sequence[mutation_position:][:insertion_len] + sequence[mutation_position:]
+        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}*{sequence[mutation_position:][:insertion_len]}'
+
+    elif mutation =='#': #random insertion
+        mutation = randomseq(random.choice(range(2, int(len(sequence)/2), w=upw))) #using UP rates for random insertions
+        sequence_mutated = sequence[:mutation_position + 1] + mutation + sequence[mutation_position + 1:]
+        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}#{mutation}'
+
+
+    elif mutation =='%' and len(sequence) > 5: #partial deletion
         deletion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable deletion lenght?
-        sequence_mutated = sequence[:mutation_posiotion] + sequence[mutation_posiotion + deletion_len:]
-    
+        sequence_mutated = sequence[:mutation_position] + sequence[mutation_position + deletion_len:]
+        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}%{deletion_len}'
+
     elif mutation =='d':
         linker = randomseq(4)
         sequence_mutated = sequence + linker + sequence     
-    
+        mutation_info = f'd{linker}'
+        
     elif mutation =='r' and len(sequence) > 5: #TODO recombination 
         sequence_mutated = sequence
-    
-    return sequence_mutated
+        mutation_info = f'{mutation_position+1}'
+
+    return sequence_mutated, mutation_info
 
 
 

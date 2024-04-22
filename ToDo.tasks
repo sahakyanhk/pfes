@@ -3,7 +3,11 @@ DIR=$(cd $(dirname $0); pwd)
 
 TO DO:
     active:
+        ☐ mutation reporte @high 
+        ☐ make a tool for probability matrix calculation
         ☐ rosetta scoring for BEST PDB @high
+        ☐ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
+        ☐ why some strucutres are missing when running visual_pfes? @bag 
         ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ add a function to indicate only several residues in the partner protetein for contacts. In will constrain the number of possible contacts!
@@ -12,18 +16,16 @@ TO DO:
         ☐ continue simulations (all sequences from a generation are needed)
         ☐ Consider adding new mutation types: split sequnece and join sequences
         ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
-        ☐ partial subsitutions with random sequences
-        ☐ Score testing and adjusting @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
         ###add more tools for analyses###
         ✔ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html @done (4/19/2024, 11:47:44 AM)
         ☐ trajectory with side chains
         ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
-        ☐ make a tool for probability matrix calculation
         ☐ write an sr_filter.py?
         ☐ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✘ partial subsitutions with random sequences @cancelled (4/21/2024, 8:58:46 AM) (it is unprobable to have several adjusen mutation)
             ✔ The number contacts in alpha-helixes is higher that number of contacs in beta-hairpines that is why the genereted strucutres are biased towar alpha helixes @high @done (4/8/2024, 4:27:15 PM)
             ✔ predic all sequences in the generation in parallel @high @done (4/1/2024, 8:32:02 AM)
             ✔ randome sequence generator @done (4/1/2024, 8:32:06 AM)

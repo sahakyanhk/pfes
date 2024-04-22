@@ -17,7 +17,6 @@ from datetime import datetime
 
 
 
-
 def backup_output(outpath):
     print(f'\nSaving output files to {args.outpath}')
     if os.path.isdir(outpath): 
@@ -51,6 +50,10 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
     yield batch_headers, batch_sequences
 
 
+def sigmoid(x,L0=0,c=0.1):
+    return 1 / (1+2.71828182**(c * (L0-x)))
+
+
 def esm2data(esm_out):
     output = {key: value.cpu() for key, value in esm_out.items()}
     pdbs = model.output_to_pdb(output)
@@ -59,10 +62,13 @@ def esm2data(esm_out):
     return(pdbs, ptm, mean_plddt)
 
 
-def extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts):
+def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
     global new_gen #this will be modified in the fold_evolver()
-    for id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+    for fullID, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
         seq_len = len(seq)
+        id = fullID.split('_')[0]
+        mutation = fullID.split('_')[1]
+
         with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
             f.write(pdb_txt)   
         #================================SCORING================================# 
@@ -87,13 +93,11 @@ def extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts):
                                 'num_conts': num_conts, 
                                 'score': round(score, 3), 
                                 'sequence': seq, 
+                                'mutation': mutation,
                                 'ss': ss
                                 }, ignore_index=True)
     print(new_gen.drop('gndx', axis=1).to_string(index=False, header=False))#.replace(' ', '\t'))
 
-
-def sigmoid(x,L0=0,c=0.1):
-    return 1 / (1+2.71828182**(c * (L0-x)))
 
 #========================================CONCEPTS========================================# 
 def fold_evolver(args): 
@@ -131,6 +135,7 @@ def fold_evolver(args, model, loghead):
              'num_conts', 
              'score', 
              'sequence', 
+             'mutation',
              'ss']
     
     ancestral_memory = pd.DataFrame(columns=columns)
@@ -143,32 +148,38 @@ def fold_evolver(args, model, loghead):
         new_gen = pd.DataFrame(columns=columns)
         #now = datetime.now()
         generated_sequences = []
+        mutation_collection = []
+
         for sequence in init_gen.sequence:
 
-            id = "gen{0}_seq{1}".format(gen_i, n); n+=1 # give an uniq id even if the same sequence already exists            
-            seq = sequence_mutator(sequence)
+            seq, mutation_data= sequence_mutator(sequence)
             
             #chek if the mutated seqeuece was already predicted
             seqmask = ancestral_memory.sequence == seq 
-            if args.norepeat and seqmask.any(): #if seq is in the ancestral_memory mutate it again 
+            
+            #if --norepeat and seq is in the ancestral_memory mutate it again
+            if args.norepeat and seqmask.any():  
                 while seqmask.any():
-                    seq = sequence_mutator(seq)
+                    seq, mutation_data = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            generated_sequences.append((id, seq)) #(seq+seq2)) add a function to select the sma
+            id = "g{0}seq{1}_{2}".format(gen_i, n, mutation_data); n+=1 # give an uniq id even if the same sequence already exists            
         
 
-            if seqmask.any(): #if sequence already exits do not predict a strcuture again 
-                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence']) 
-                repeat.id = id #assing a new id to the already exiting sequence
-                new_gen = new_gen.append(repeat)
-                generated_sequences.remove(generated_sequences[-1])
+            if seqmask.any(): #if sequence already exits do not predict a structure again 
+                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'], keep='last') 
                 try:
-                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id + '.pdb')  
+                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id.split('_')[0] + '.pdb')  
                 except  FileNotFoundError: 
                     pass
-                    
-            batched_sequences = create_batched_sequence_datasets(generated_sequences, args.max_tokens_per_batch)
+                repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
+                new_gen = new_gen.append(repeat)
+            else:
+                generated_sequences.append((id, seq)) #(seq+seq2)) add a function to select the sma
+                mutation_collection.append(mutation_data)    
+
+
+        batched_sequences = create_batched_sequence_datasets(generated_sequences, args.max_tokens_per_batch)
         
 
         #predict data for the new batch
@@ -180,7 +191,8 @@ def fold_evolver(args, model, loghead):
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
             
-            trd = threading.Thread(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
+            #run extract_results() in becground and imediately start next round of model.infer()
+            trd = threading.Thread(target=extract_results, args=(gen_i, headers, sequences, pdbs, ptms, mean_plddts))
             trd.start()
 
 
@@ -191,7 +203,7 @@ def fold_evolver(args, model, loghead):
 
         while trd.is_alive(): 
             time.sleep(0.2)
-
+        
         #print(f"#GENtime {datetime.now() - now}")
         ancestral_memory =  ancestral_memory.append(init_gen)
 
@@ -396,11 +408,11 @@ if __name__ == '__main__':
             default=18,
     )
     parser.add_argument(                      
-            '-nrep', '--norepeat', action='store_true', 
+            '--norepeat', action='store_true', 
             help='do not allow to generate the same sequences', 
     )
     parser.add_argument(
-            '-nbk', '--nobackup', action='store_true', 
+            '--nobackup', action='store_true', 
             help='owerride files if exists',
     )
     parser.add_argument(
@@ -444,8 +456,8 @@ if __name__ == '__main__':
 #--num_generations, -ng\t\t = {args.num_generations}
 #--pop_size, -ps\t\t = {args.pop_size}
 #--random_seq_len\t\t = {args.random_seq_len}
-#--norepeat, -nrep\t\t = {args.norepeat}
-#--nobackup, -nbk\t\t = {args.nobackup}
+#--norepeat\t\t\t = {args.norepeat}
+#--nobackup\t\t\t = {args.nobackup}
 #--num-recycles\t\t\t = {args.num_recycles}
 #--max-tokens-per-batch\t\t = {args.max_tokens_per_batch}
 #
