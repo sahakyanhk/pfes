@@ -6,7 +6,6 @@ import typing as T
 import threading
 import multiprocessing
 import time
-import asyncio
 import torch
 import esm
 

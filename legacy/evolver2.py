@@ -2,18 +2,19 @@ import random
 import numpy as np
 import pandas as pd
 
+#random sequence generator
 
 flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
-            'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
-            'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
-            'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
-            'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
-            '+' : 1,    #insertion
-            '-' : 1,    #single deletion
-            '*' : 1,    #partial duplication
-            '#' : 1,    #random insertion
-            '%' : 1,    #partial deletion
-            'd' : 0.02} #full duplication    
+           'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
+           'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
+           'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
+           'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
+           '+' : 1,    #insertion
+           '-' : 1,    #single deletion
+           '*' : 1,    #partial duplication
+           '#' : 1,    #random insertion
+           '%' : 1,    #partial deletion
+           'd' : 0.002} #full duplication    
 
 
 #by number of codons
@@ -23,7 +24,7 @@ codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,
               'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 2,  
               'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
               '+' : 3,   #insertion
-              '-' : 3,   #single deletion
+              '-' : 3,   #deletion
               '*' : 2,   #partial duplication
               '#' : 2,   #random insertion
               '%' : 2,   #partial deletion
@@ -44,8 +45,8 @@ aa_alphabet = mutation_types[:20] #allowed substitutions for point mutations
 
 w = p[:20] #probabilities for random sequence generation
 upw = list(uniprotrates.values())
-    
-#random sequence generator
+
+
 def randomseq(nres=20, weights=w):
     return ''.join(random.choices(aa_alphabet, weights=weights, k=nres))
 
@@ -54,46 +55,76 @@ def sequence_mutator(sequence):
     mutation_position = random.choice(range(len(sequence)))
     mutation =  random.choices(mutation_types, weights=p)[0]
     
-    if mutation in aa_alphabet:
+    def substitution(sequence, mutation_position, mutation):
         sequence_mutated = sequence[:mutation_position] + mutation + sequence[mutation_position + 1:]
         mutation_info = f'{sequence[mutation_position]}{mutation_position+1}.{mutation}'
-
-    elif mutation =='+':
+        return sequence_mutated, mutation_info
+    
+    def insertion(sequence, mutation_position, mutation):
         mutation = random.choices(aa_alphabet)[0]
         sequence_mutated = sequence[:mutation_position + 1] + mutation + sequence[mutation_position + 1:]
         mutation_info = f'{sequence[mutation_position]}{mutation_position+1}+{mutation}'
-        
+        return sequence_mutated, mutation_info
 
-    elif mutation == '-':
+    def deletion(sequence, mutation_position, mutation):
         sequence_mutated = sequence[:mutation_position] + sequence[mutation_position + 1:]
         mutation_info = f'{sequence[mutation_position]}{mutation_position+1}-'
+        return sequence_mutated, mutation_info
 
-    elif mutation =='*' and len(sequence) > 5: #partial duplication
+    def partialduplication(sequence, mutation_position, mutation):
         insertion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable insertion lenght?
         sequence_mutated = sequence[:mutation_position] + sequence[mutation_position:][:insertion_len] + sequence[mutation_position:]
         mutation_info = f'{sequence[mutation_position]}{mutation_position+1}*{sequence[mutation_position:][:insertion_len]}'
+        return sequence_mutated, mutation_info
 
-    elif mutation =='#': #random insertion
+    def fullduplication(sequence, mutation_position, mutation):
+        sequence_mutated = sequence
+        mutation_info = f'{mutation_position+1}'
+        return sequence_mutated, mutation_info
+
+    def randominsertion(sequence, mutation_position, mutation):
         mutation = randomseq(random.choice(range(2, int(len(sequence)/2))), weights=upw) #using UP rates for random insertions
         sequence_mutated = sequence[:mutation_position + 1] + mutation + sequence[mutation_position + 1:]
         mutation_info = f'{sequence[mutation_position]}{mutation_position+1}#{mutation}'
+        return sequence_mutated, mutation_info
 
-
-    elif mutation =='%' and len(sequence) > 5: #partial deletion
+    def partialdeletion(sequence, mutation_position, mutation):
         deletion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable deletion lenght?
         sequence_mutated = sequence[:mutation_position] + sequence[mutation_position + deletion_len:]
         mutation_info = f'{sequence[mutation_position]}{mutation_position+1}%{deletion_len}'
+        return sequence_mutated, mutation_info
 
-    elif mutation =='d':
-        linker = randomseq(4)
-        sequence_mutated = sequence + linker + sequence     
-        mutation_info = f'd{linker}'
-        
-    elif mutation =='r' and len(sequence) > 5: #TODO recombination 
-        sequence_mutated = sequence
-        mutation_info = f'{mutation_position+1}'
 
-    return sequence_mutated, mutation_info
+    mutators ={'A' : substitution,
+               'C' : substitution,  
+               'D' : substitution,  
+               'E' : substitution,  
+               'F' : substitution,
+               'G' : substitution,  
+               'H' : substitution,  
+               'I' : substitution,  
+               'K' : substitution,  
+               'L' : substitution,  
+               'M' : substitution,  
+               'N' : substitution,  
+               'P' : substitution,  
+               'Q' : substitution,  
+               'R' : substitution,  
+               'S' : substitution,  
+               'T' : substitution,          
+               'V' : substitution,  
+               'W' : substitution,  
+               'Y' : substitution,  
+               '+' : insertion,   #insertion
+               '-' : deletion,   #single deletion
+               '*' : partialduplication,   #partial duplication
+               '#' : randominsertion,   #random insertion
+               '%' : partialdeletion,   #partial deletion
+               'd' : fullduplication} #full duplication    
+
+    mutator_type = mutators.get(mutation)
+
+    return mutator_type(sequence, mutation_position, mutation)
 
 
 
