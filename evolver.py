@@ -29,6 +29,7 @@ codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,
               '%' : 2,   #partial deletion
               'd' : 0.1} #full duplication    
 
+#https://www.uniprot.org/uniprotkb/statistics#amino-acid-composition
 uniprotrates = {'A' : 0.0826, 'C' : 0.0139, 'D' : 0.0546, 'E' : 0.0672, 
                 'F' : 0.0387, 'G' : 0.0707, 'H' : 0.0228, 'I' : 0.0591, 
                 'K' : 0.0580, 'L' : 0.0965, 'M' : 0.0241, 'N' : 0.0406, 

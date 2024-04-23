@@ -7,7 +7,8 @@ TO DO:
         ☐ make a tool for probability matrix calculation
         ☐ rosetta scoring for BEST PDB @high
         ☐ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
-        ☐ why some strucutres are missing when running visual_pfes? @bag 
+        ☐ add a new scoring term based of fold density volume/number of atoms https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1301551/pdf/11463623.pdf
+        ☐ why some strucutres are missing when running visual_pfes? @bag  
         ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ add a function to indicate only several residues in the partner protetein for contacts. In will constrain the number of possible contacts!

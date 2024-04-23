@@ -1,8 +1,10 @@
 #!/bin/bash
 set -e
 
-DIR=$(cd $(dirname $0); pwd)
+#DIR=$(cd $(dirname $0); pwd)
 
+#calculate AA occurance 
+#awk '$7>.80 {print $0}'  run1/progress.log |  tail -n +50000 |  awk '{print $10}' | fold -w1 | sort | uniq -c
 
 muscle5="/data/saakyanh2/WD/PFES/pfes/bin/muscle5"
 iqtree2="/data/saakyanh2/WD/PFES/pfes/bin/iqtree2"

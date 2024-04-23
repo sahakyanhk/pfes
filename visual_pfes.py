@@ -22,7 +22,7 @@ args = parser.parse_args()
 log = pd.read_csv(args.log, sep='\t', comment='#')
 #log['ndx']  = log.index
 
-bestlog = log.groupby('genndx').head(1)
+bestlog = log.groupby('gndx').head(1)
 
 outdir = args.outdir 
 pdbdir = os.path.join(args.pdbdir)
@@ -46,7 +46,7 @@ def make_plots(log, bestlog):
     lw=3.0
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
-       if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'index', 'id', 'genndx']:
+       if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'index', 'id', 'gndx']:
            plt.plot(log[colname],'.', markersize=ms)
            plt.plot(bestlog[colname],'-', linewidth=lw)
            plt.legend([colname], loc ="upper left")
@@ -116,9 +116,9 @@ def backbone_traj(bestlog, pdbdir):
         shutil.rmtree(bestpdb)
         os.makedirs(bestpdb, exist_ok=True)
         print(f'Selecting best folds from {pfeslen} generations') # do not copy files, just make a list and extract BB coords from pdb dir
-        for genndx, pdbid in tqdm(zip(bestlog.genndx, bestlog.id), total=len(bestlog)):
+        for gndx, pdbid in tqdm(zip(bestlog.gndx, bestlog.id), total=len(bestlog)):
             try:
-                shutil.copy(pdbdir +'/' + pdbid +'.pdb', bestpdb +'/'+ genndx + '.pdb')
+                shutil.copy(pdbdir +'/' + pdbid +'.pdb', bestpdb +'/'+ gndx + '.pdb')
             except FileNotFoundError:
                 print(pdbid +'.pdb is missing' )
                 pass
