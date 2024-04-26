@@ -82,7 +82,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
                           max_helix_penalty,    #[0, 1]
                           num_conts**(1/3)])   #[~0, inf]s
         #================================SCORING================================#
-        new_gen = new_gen.append({'gndx': gen_i,
+        iterlog = pd.DataFrame({'gndx': gen_i,
                                 'id': id, 
                                 'seq_len': seq_len,
                                 'prot_len_penalty': round(prot_len_penalty, 3), 
@@ -93,9 +93,10 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
                                 'score': round(score, 3), 
                                 'sequence': seq, 
                                 'mutation': mutation,
-                                'ss': ss
-                                }, ignore_index=True)
-    print(new_gen.drop('gndx', axis=1).to_string(index=False, header=False))#.replace(' ', '\t'))
+                                'ss': ss}, index=[0])
+    
+        new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
+    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))#.replace(' ', '\t'))
 
 
 #========================================CONCEPTS========================================# 
@@ -121,7 +122,7 @@ def fold_evolver(args, model, loghead):
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
     else: 
-        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
+        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq)[0] for i in range(args.pop_size)]})
 
     #creare an initial pool of sequences with pop_size
     columns=['gndx',

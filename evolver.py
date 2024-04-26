@@ -3,17 +3,18 @@ import numpy as np
 import pandas as pd
 
 
+
 flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
             'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
             'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
             'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
             'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
-            '+' : 1,    #insertion
+            '+' : 0.8,    #insertion
             '-' : 1,    #single deletion
-            '*' : 1,    #partial duplication
-            '#' : 1,    #random insertion
+            '*' : 0.3,    #partial duplication
+            '#' : 0.3,    #random insertion
             '%' : 1,    #partial deletion
-            'd' : 0.02} #full duplication    
+            'd' : 0.01} #full duplication    
 
 
 #by number of codons

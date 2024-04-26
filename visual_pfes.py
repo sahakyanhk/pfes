@@ -1,9 +1,12 @@
 import argparse
 import os, re
 import pandas as pd
+import numpy as np
 import shutil
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib import colors
 
 import MDAnalysis as mda
 from MDAnalysis.analysis import align
@@ -40,22 +43,81 @@ def sorted_alphanumeric(data):
 
 
 def make_plots(log, bestlog):
-    print('processing evolution trajectory do make plots')
+    print('processing evolution trajectory to make plots')
     
     ms=0.5
     lw=3.0
+    dpi=500
+
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
        if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'index', 'id', 'gndx']:
            plt.plot(log[colname],'.', markersize=ms)
            plt.plot(bestlog[colname],'-', linewidth=lw)
            plt.legend([colname], loc ="upper left")
-           plt.savefig(plotdir + colname + '.png')
-           plt.close()
-
-
+           plt.savefig(plotdir + colname + '.png', dpi=dpi)
     
-    fig, axs = plt.subplots(3,2, figsize=(18, 14))
+
+    #======================= seconday structure plot =======================#
+    max_seq_len = int(max(bestlog.seq_len))
+    bestlog_len = len(bestlog)
+
+    sse = np.empty((bestlog_len, max_seq_len), dtype='U1')
+    i=0
+    for ss in bestlog.ss:
+        sse[i] = list(ss + "X"*(max_seq_len-len(ss)))
+        i+=1
+                    
+    def sse_to_num(sse):
+        num = np.empty(sse.shape, dtype=int)
+        num[sse == 'C'] = 0
+        num[sse == 'E'] = 1
+        num[sse == 'B'] = 2
+        num[sse == 'S'] = 3
+        num[sse == 'T'] = 4
+        num[sse == 'H'] = 5
+        num[sse == 'G'] = 6
+        num[sse == 'I'] = 7
+        num[sse == 'X'] = 8
+        num[sse == 'F'] = 8
+        num[sse == 'f'] = 8
+        return num
+
+    sse = sse_to_num(sse)
+
+    color_assign = {
+    r"coil": "grey",
+    r"$\beta$-sheet": "yellow",
+    r"$\beta$-bridge": "black",
+    r"bend": "cyan",
+    r"turn": "yellow",
+    r"$\alpha$-helix": "blue",
+    r"$3_{10}$-helix": "purple",
+    r"$\pi$-helix": "purple",
+    r"$dim\$": "white",
+    }
+
+    cmap = colors.ListedColormap(color_assign.values())
+    ticks = np.arange(0, len(bestlog)+1, 1000)
+
+    plt.figure(figsize=(14, 10), dpi=dpi)
+    plt.imshow(sse.T, origin='lower', cmap=cmap,  aspect=25)
+    plt.xticks(ticks, ticks.astype(int))
+    plt.xlabel("# mutations")
+    plt.ylabel("Residue")
+
+    custom_lines = [
+        Line2D([0], [0], color=cmap(i), lw=4) for i in range(len(color_assign)-1)]
+
+    plt.legend(
+        custom_lines, color_assign.keys(), loc="upper center",
+        bbox_to_anchor=(0.5, -0.15), ncol=len(color_assign), fontsize=8)
+
+    plt.savefig(os.path.join(outdir,'Secondary_structures.png'), dpi=dpi) 
+
+
+    #======================= Summary plot =======================#
+    fig, axs = plt.subplots(3,2, figsize=(14, 10))
 
     fig.suptitle(None)
     
@@ -68,10 +130,10 @@ def make_plots(log, bestlog):
         axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
         axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
         axs[0,0].set(xlabel=None, ylabel='mean_plddt')
-
-    axs[1,0].plot(log.num_conts, '.', markersize=ms)
-    axs[1,0].plot(bestlog.num_conts, '-', linewidth=lw)
-    axs[1,0].set(xlabel=None, ylabel='num_conts')
+    
+    axs[1,0].plot(log.ptm, '.', markersize=ms)
+    axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
+    axs[1,0].set(xlabel='# mutation', ylabel='ptm')
     
     axs[2,0].plot(log.score,  '.', markersize=ms)
     axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
@@ -85,10 +147,10 @@ def make_plots(log, bestlog):
     axs[1,1].plot(bestlog.prot_len_penalty, '-', linewidth=lw)
     axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
 
-    axs[2,1].plot(log.ptm, '.', markersize=ms)
-    axs[2,1].plot(bestlog.ptm, '-', linewidth=lw)
-    axs[2,1].set(xlabel='# mutation', ylabel='ptm')
-
+    axs[2,1].plot(log.num_conts, '.', markersize=ms)
+    axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
+    axs[2,1].set(xlabel=None, ylabel='num_conts')
+    
     #for ax in axs.flat:
     #   ax.set(xlabel='x-label', ylabel='y-label')
 
@@ -96,7 +158,7 @@ def make_plots(log, bestlog):
     #for ax in axs.flat:
     #   ax.label_outer()
 
-    fig.savefig(os.path.join(outdir,'summary_plot.png'))
+    fig.savefig(os.path.join(outdir,'Summary_plot.png'), dpi=dpi)
 
 
 def backbone_traj(bestlog, pdbdir):
@@ -115,7 +177,7 @@ def backbone_traj(bestlog, pdbdir):
     if os.path.isdir(bestpdb) and len(os.listdir(bestpdb)) != pfeslen:
         shutil.rmtree(bestpdb)
         os.makedirs(bestpdb, exist_ok=True)
-        print(f'Selecting best folds from {pfeslen} generations') # do not copy files, just make a list and extract BB coords from pdb dir
+        print(f'{pfeslen} uniqs sequences with the best folds are selected') # do not copy files, just make a list and extract BB coords from pdb dir
         for gndx, pdbid in tqdm(zip(bestlog.gndx, bestlog.id), total=len(bestlog)):
             try:
                 shutil.copy(pdbdir +'/' + pdbid +'.pdb', bestpdb +'/'+ gndx + '.pdb')
