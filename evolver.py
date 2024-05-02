@@ -12,7 +12,7 @@ flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
             '+' : 0.8,    #insertion
             '-' : 1,    #single deletion
             '*' : 0.3,    #partial duplication
-            '#' : 0.3,    #random insertion
+            '/' : 0.3,    #random insertion
             '%' : 1,    #partial deletion
             'd' : 0.01} #full duplication    
 
@@ -74,10 +74,10 @@ def sequence_mutator(sequence):
         sequence_mutated = sequence[:mutation_position] + sequence[mutation_position:][:insertion_len] + sequence[mutation_position:]
         mutation_info = f'{sequence[mutation_position]}{mutation_position+1}*{sequence[mutation_position:][:insertion_len]}'
 
-    elif mutation =='#': #random insertion
+    elif mutation =='/': #random insertion
         mutation = randomseq(random.choice(range(2, int(len(sequence)/2))), weights=upw) #using UP rates for random insertions
         sequence_mutated = sequence[:mutation_position + 1] + mutation + sequence[mutation_position + 1:]
-        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}#{mutation}'
+        mutation_info = f'{sequence[mutation_position]}{mutation_position+1}/{mutation}'
 
     elif mutation =='%' and len(sequence) > 5: #partial deletion
         deletion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable deletion lenght?

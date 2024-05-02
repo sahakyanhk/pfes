@@ -43,7 +43,7 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
         batch_sequences.append(seq)
         num_tokens += len(seq)
         num_sequences += 1
-        if num_sequences > args.pop_size / 2: #CHECK THIS
+        if num_sequences > args.pop_size / 2: #TODO CHECK THIS WITH args.pop_size / 4 and lartge pop size
            yield batch_headers, batch_sequences
            batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0
     yield batch_headers, batch_sequences
@@ -65,8 +65,12 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
     global new_gen #this will be modified in the fold_evolver()
     for fullID, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
         seq_len = len(seq)
-        id = fullID.split('_')[0]
-        mutation = fullID.split('_')[1]
+        
+        id_data = fullID.split('_')
+
+        id = id_data[0]
+        prev_id = id_data[1]
+        mutation = id_data[2]
 
         with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
             f.write(pdb_txt)   
@@ -83,6 +87,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
                           num_conts**(1/3)])   #[~0, inf]s
         #================================SCORING================================#
         iterlog = pd.DataFrame({'gndx': gen_i,
+                                'prev_id': prev_id,
                                 'id': id, 
                                 'seq_len': seq_len,
                                 'prot_len_penalty': round(prot_len_penalty, 3), 
@@ -118,7 +123,7 @@ def fold_evolver(args, model, loghead):
         
     if args.initial_seq == 'random':
         randomsequence = randomseq(args.random_seq_len)
-        init_gen = pd.DataFrame({'sequence': [randomsequence for i in range(args.pop_size)]})
+        init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)] ,'sequence': [randomsequence for i in range(args.pop_size)]})
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
     else: 
@@ -126,6 +131,7 @@ def fold_evolver(args, model, loghead):
 
     #creare an initial pool of sequences with pop_size
     columns=['gndx',
+             'prev_id',
              'id', 
              'seq_len', 
              'prot_len_penalty', 
@@ -150,8 +156,7 @@ def fold_evolver(args, model, loghead):
         generated_sequences = []
         mutation_collection = []
 
-        for sequence in init_gen.sequence:
-
+        for prev_id, sequence in zip(init_gen.id, init_gen.sequence):
             seq, mutation_data= sequence_mutator(sequence)
             
             #chek if the mutated seqeuece was already predicted
@@ -163,8 +168,7 @@ def fold_evolver(args, model, loghead):
                     seq, mutation_data = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            id = "g{0}seq{1}_{2}".format(gen_i, n, mutation_data); n+=1 # give an uniq id even if the same sequence already exists            
-        
+            id = "g{0}seq{1}_{2}_{3}".format(gen_i, n, prev_id, mutation_data); n+=1 # give an uniq id even if the same sequence already exists            
 
             if seqmask.any(): #if sequence already exits do not predict a structure again 
                 repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'], keep='last') 

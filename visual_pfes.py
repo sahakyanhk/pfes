@@ -51,7 +51,7 @@ def make_plots(log, bestlog):
 
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
-       if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'index', 'id', 'gndx']:
+       if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
            plt.plot(log[colname],'.', markersize=ms)
            plt.plot(bestlog[colname],'-', linewidth=lw)
            plt.legend([colname], loc ="upper left")
@@ -100,10 +100,10 @@ def make_plots(log, bestlog):
     cmap = colors.ListedColormap(color_assign.values())
     ticks = np.arange(0, len(bestlog)+1, 1000)
 
-    plt.figure(figsize=(14, 10), dpi=dpi)
-    plt.imshow(sse.T, origin='lower', cmap=cmap,  aspect=25)
+    plt.figure(figsize=(12, 8), dpi=dpi)
+    plt.imshow(sse.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
     plt.xticks(ticks, ticks.astype(int))
-    plt.xlabel("# mutations")
+    plt.xlabel("# mutations x Pop size")
     plt.ylabel("Residue")
 
     custom_lines = [
@@ -111,7 +111,7 @@ def make_plots(log, bestlog):
 
     plt.legend(
         custom_lines, color_assign.keys(), loc="upper center",
-        bbox_to_anchor=(0.5, -0.15), ncol=len(color_assign), fontsize=8)
+        bbox_to_anchor=(0.5, 1.1), ncol=len(color_assign), fontsize=8)
 
     plt.savefig(os.path.join(outdir,'Secondary_structures.png'), dpi=dpi) 
 
@@ -133,7 +133,7 @@ def make_plots(log, bestlog):
     
     axs[1,0].plot(log.ptm, '.', markersize=ms)
     axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
-    axs[1,0].set(xlabel='# mutation', ylabel='ptm')
+    axs[1,0].set(xlabel=None, ylabel='ptm')
     
     axs[2,0].plot(log.score,  '.', markersize=ms)
     axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
@@ -149,7 +149,7 @@ def make_plots(log, bestlog):
 
     axs[2,1].plot(log.num_conts, '.', markersize=ms)
     axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
-    axs[2,1].set(xlabel=None, ylabel='num_conts')
+    axs[2,1].set(xlabel='# mutation', ylabel='num_conts')
     
     #for ax in axs.flat:
     #   ax.set(xlabel='x-label', ylabel='y-label')
@@ -253,5 +253,5 @@ def backbone_traj(bestlog, pdbdir):
 
 
 make_plots(log, bestlog)
-backbone_traj(bestlog, pdbdir)
+#backbone_traj(bestlog, pdbdir)
 
