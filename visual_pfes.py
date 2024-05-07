@@ -46,17 +46,17 @@ def make_plots(log, bestlog):
     print('processing evolution trajectory to make plots')
     
     ms=0.5
-    lw=3.0
+    lw=1.0
     dpi=500
 
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
        if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
-           plt.plot(log[colname],'.', markersize=ms)
-           plt.plot(bestlog[colname],'-', linewidth=lw)
-           plt.legend([colname], loc ="upper left")
-           plt.savefig(plotdir + colname + '.png', dpi=dpi)
-    
+            plt.plot(log[colname],'.', markersize=ms)
+            plt.plot(bestlog[colname],'-', linewidth=lw)
+            plt.legend([colname], loc ="upper left")
+            plt.savefig(plotdir + colname + '.png', dpi=dpi)
+            plt.clf()
 
     #======================= seconday structure plot =======================#
     max_seq_len = int(max(bestlog.seq_len))
@@ -67,7 +67,7 @@ def make_plots(log, bestlog):
     for ss in bestlog.ss:
         sse[i] = list(ss + "X"*(max_seq_len-len(ss)))
         i+=1
-                    
+
     def sse_to_num(sse):
         num = np.empty(sse.shape, dtype=int)
         num[sse == 'C'] = 0
@@ -79,29 +79,32 @@ def make_plots(log, bestlog):
         num[sse == 'G'] = 6
         num[sse == 'I'] = 7
         num[sse == 'X'] = 8
-        num[sse == 'F'] = 8
-        num[sse == 'f'] = 8
+        num[sse == 'F'] = 9
+
         return num
 
-    sse = sse_to_num(sse)
+    sse_digit = sse_to_num(sse)
+
 
     color_assign = {
-    r"coil": "grey",
-    r"$\beta$-sheet": "yellow",
-    r"$\beta$-bridge": "black",
-    r"bend": "cyan",
-    r"turn": "yellow",
-    r"$\alpha$-helix": "blue",
-    r"$3_{10}$-helix": "purple",
-    r"$\pi$-helix": "purple",
-    r"$dim\$": "white",
-    }
+        r"coil": "grey",
+        r"$\beta$-sheet": "yellow",
+        r"$\beta$-bridge": "orange",
+        r"bend": "cyan",
+        r"turn": "brown",
+        r"$3_{10}$-helix": "purple",
+        r"$\alpha$-helix": "pink",
+        r"$\pi$-helix": "blue",
+        r"dum": "white",
+        r"dum1": "red"
+        }
+
 
     cmap = colors.ListedColormap(color_assign.values())
     ticks = np.arange(0, len(bestlog)+1, 1000)
 
     plt.figure(figsize=(12, 8), dpi=dpi)
-    plt.imshow(sse.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
+    plt.imshow(sse_digit.T, origin='lower',   interpolation='nearest', aspect='auto')
     plt.xticks(ticks, ticks.astype(int))
     plt.xlabel("# mutations x Pop size")
     plt.ylabel("Residue")
@@ -255,3 +258,48 @@ def backbone_traj(bestlog, pdbdir):
 make_plots(log, bestlog)
 #backbone_traj(bestlog, pdbdir)
 
+"""
+
+#ete3
+from ete3 import Tree
+import pandas as pd
+import numpy as np
+
+
+
+def extract_tree(head_size = 1e7, log_path = '/home/saakyanh2/WD/PFES/OUTPUTS/sft04292024/progress.log'):
+	log = pd.read_csv(log_path, comment='#', sep='\t')
+	treelog=log.head(head_size)
+	treelog = treelog.drop_duplicates(['prev_id', 'id'], keep="first")
+	parent_child_list = treelog[['prev_id', 'id']].apply(tuple, axis=1).tolist()
+	tree = Tree.from_parent_child_table(parent_child_list)
+	print(tree.write(format=1))
+	return tree 
+
+t = extract_tree(1000)
+
+print(t)
+
+
+names = [l.name for l in t]
+dists  = [t.get_distance(l, 'init') for l in t]
+
+
+
+for leaf in t:
+	if t.get_distance(leaf, 'init') < 4.1: 
+		print(leaf.name, t.get_distance(leaf.name, 'init'))
+		t.search_nodes(name=leaf.name)[0].delete() 
+
+
+print(t)
+
+
+
+
+
+
+
+	treelog.prev_id = treelog.gndx +"_"+ treelog.prev_id
+	treelog.id = treelog.gndx +"_"+ treelog.id
+    """

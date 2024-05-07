@@ -123,11 +123,16 @@ def fold_evolver(args, model, loghead):
         
     if args.initial_seq == 'random':
         randomsequence = randomseq(args.random_seq_len)
-        init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)] ,'sequence': [randomsequence for i in range(args.pop_size)]})
+        init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
+                                 'sequence': [randomsequence] * args.pop_size})
+
     elif args.initial_seq == 'randoms':
-        init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
+        init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
+                                 'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
+
     else: 
-        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq)[0] for i in range(args.pop_size)]})
+        init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
+                                 'sequence': [args.initial_seq] * args.pop_size})
 
     #creare an initial pool of sequences with pop_size
     columns=['gndx',

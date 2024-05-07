@@ -11,9 +11,9 @@ flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
             'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
             '+' : 0.8,    #insertion
             '-' : 1,    #single deletion
-            '*' : 0.3,    #partial duplication
-            '/' : 0.3,    #random insertion
-            '%' : 1,    #partial deletion
+            '*' : 0,#0.3,    #partial duplication
+            '/' : 0,#0.3,    #random insertion
+            '%' : 0,#1,    #partial deletion
             'd' : 0.01} #full duplication    
 
 

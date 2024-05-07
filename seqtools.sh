@@ -2,6 +2,9 @@
 set -e
 
 #DIR=$(cd $(dirname $0); pwd)
+#https://devhints.io/bash
+#set -euo pipefail
+#IFS=$'\n\t'
 
 #calculate AA occurance 
 #awk '$7>.80 {print $0}'  run1/progress.log |  tail -n +50000 |  awk '{print $10}' | fold -w1 | sort | uniq -c
