@@ -4,7 +4,7 @@ import sys, os
 def pypsique(input_pdb_path, chainid='A'):    
     
     cmd = "/data/saakyanh2/WD/PFES/pfes/bin/psique --format stride " +input_pdb_path+ " | awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" +chainid+ "\" {print $6}'" #udate bin path here
-    print(cmd)
+
     process = Popen(cmd, #["./sh/psique --format stride ", input_pdb_path, " | awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" , chainid,  "\" {print $6}'"], 
                     stdout=PIPE, 
                     stderr=PIPE, shell=True)

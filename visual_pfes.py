@@ -70,41 +70,43 @@ def make_plots(log, bestlog):
 
     def sse_to_num(sse):
         num = np.empty(sse.shape, dtype=int)
-        num[sse == 'C'] = 0
-        num[sse == 'E'] = 1
-        num[sse == 'B'] = 2
-        num[sse == 'S'] = 3
-        num[sse == 'T'] = 4
-        num[sse == 'H'] = 5
-        num[sse == 'G'] = 6
-        num[sse == 'I'] = 7
-        num[sse == 'X'] = 8
-        num[sse == 'F'] = 9
-
+        num[sse == 'F'] = 0
+        num[sse == 'f'] = 0
+        num[sse == 'g'] = 0
+        num[sse == 's'] = 0
+        num[sse == 'C'] = 0 
+        num[sse == 'E'] = 1 
+        num[sse == 'B'] = 2 
+        num[sse == 'S'] = 3 
+        num[sse == 'T'] = 4 
+        num[sse == 'H'] = 5 
+        num[sse == 'G'] = 6 
+        num[sse == 'I'] = 7 
+        num[sse == 'P'] = 8 
+        num[sse == 'X'] = 9 
         return num
+
 
     sse_digit = sse_to_num(sse)
 
-
     color_assign = {
-        r"coil": "grey",
+        r"coil": "darkgrey",
         r"$\beta$-sheet": "yellow",
-        r"$\beta$-bridge": "orange",
-        r"bend": "cyan",
+        r"$\beta$-bridge": "y",
+        r"bend": "orange",
         r"turn": "brown",
-        r"$3_{10}$-helix": "purple",
-        r"$\alpha$-helix": "pink",
+        r"$\alpha$-helix": "purple",
+        r"$3_{10}$-helix": "mediumpurple",
         r"$\pi$-helix": "blue",
-        r"dum": "white",
-        r"dum1": "red"
+        r"polyPro": "dimgrey",
+        r"": "white"
         }
-
 
     cmap = colors.ListedColormap(color_assign.values())
     ticks = np.arange(0, len(bestlog)+1, 1000)
 
     plt.figure(figsize=(12, 8), dpi=dpi)
-    plt.imshow(sse_digit.T, origin='lower',   interpolation='nearest', aspect='auto')
+    plt.imshow(sse_digit.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
     plt.xticks(ticks, ticks.astype(int))
     plt.xlabel("# mutations x Pop size")
     plt.ylabel("Residue")
@@ -161,7 +163,7 @@ def make_plots(log, bestlog):
     #for ax in axs.flat:
     #   ax.label_outer()
 
-    fig.savefig(os.path.join(outdir,'Summary_plot.png'), dpi=dpi)
+    fig.savefig(os.path.join(outdir,'Summary.png'), dpi=dpi)
 
 
 def backbone_traj(bestlog, pdbdir):
@@ -250,13 +252,13 @@ def backbone_traj(bestlog, pdbdir):
                     top,  # reference
                     select='chainID A',  # selection of atoms to align
                     filename=trajpath,  # file to write the trajectory to
-                ).run()
+                    ).run()
 
     os.remove(outdir+'/.tmp.pdb')
 
 
 make_plots(log, bestlog)
-#backbone_traj(bestlog, pdbdir)
+backbone_traj(bestlog, pdbdir)
 
 """
 

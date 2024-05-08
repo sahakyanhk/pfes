@@ -63,10 +63,14 @@ def esm2data(esm_out):
 
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
     global new_gen #this will be modified in the fold_evolver()
-    for fullID, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+    
+    for full_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+        all_seqs = seq.split(':')
+        num_chains = len(all_seqs)
+        seq = all_seqs[0]
         seq_len = len(seq)
         
-        id_data = fullID.split('_')
+        id_data = full_id.split('_')
 
         id = id_data[0]
         prev_id = id_data[1]
@@ -74,17 +78,25 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
 
         with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
             f.write(pdb_txt)   
+
         #================================SCORING================================# 
         num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
+        
+        if num_chains > 1: #if there are two or more chains, then calculate the number of interacting contacts
+            num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.0, 50) 
+        else:
+            num_inter_conts = 1
+
         ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
         #Rg, aspher = get_aspher(pdb_txt)
-        prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.1)) * np.tanh(seq_len*0.08)
+        prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) * np.tanh(seq_len*0.1)
         max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
         score  = np.prod([mean_plddt,           #[0, 1]
                           ptm,                  #[0, 1]
                           prot_len_penalty,     #[0, 1]
                           max_helix_penalty,    #[0, 1]
-                          num_conts**(1/3)])   #[~0, inf]s
+                          num_conts**(1/3),     #[~0, inf]
+                          num_inter_conts**(1/4)])   #[~0, inf]
         #================================SCORING================================#
         iterlog = pd.DataFrame({'gndx': gen_i,
                                 'prev_id': prev_id,
@@ -95,13 +107,15 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
                                 'ptm': round(ptm, 3), 
                                 'mean_plddt': mean_plddt, 
                                 'num_conts': num_conts, 
+                                'num_inter_conts': num_inter_conts, 
                                 'score': round(score, 3), 
                                 'sequence': seq, 
                                 'mutation': mutation,
                                 'ss': ss}, index=[0])
     
         new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
-    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))#.replace(' ', '\t'))
+    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
+
 
 
 #========================================CONCEPTS========================================# 
@@ -115,24 +129,12 @@ global new_gen #this will be modified in the extract_results()
 
 #============================================================================#
 #================================FOLD_EVOLVER================================# 
-def fold_evolver(args, model, loghead): 
+def fold_evolver(args, model, loghead, init_gen): 
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
         f.write(loghead)
-        
-    if args.initial_seq == 'random':
-        randomsequence = randomseq(args.random_seq_len)
-        init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
-                                 'sequence': [randomsequence] * args.pop_size})
 
-    elif args.initial_seq == 'randoms':
-        init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
-                                 'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
-
-    else: 
-        init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
-                                 'sequence': [args.initial_seq] * args.pop_size})
 
     #creare an initial pool of sequences with pop_size
     columns=['gndx',
@@ -144,6 +146,7 @@ def fold_evolver(args, model, loghead):
              'ptm', 
              'mean_plddt', 
              'num_conts', 
+             'num_inter_conts',
              'score', 
              'sequence', 
              'mutation',
@@ -231,7 +234,7 @@ def fold_evolver(args, model, loghead):
 #==================================================================================#
 #================================INTER_FOLD_EVOLVER================================# 
 
-def inter_fold_evolver(args, model):  
+def inter_fold_evolver(args, model, loghead, init_gen): 
 
     #evolution of an interacting chain
     PDB_6WXQ=":MKSYFVTMGFNETFLLRLLNETSAQKEDSLVIVVPSPIVSGTRAAIESLRAQISRLNYPPPRIYEIEITDFNLALSKILDIILTLPEPIISDLTMGMRMINLILLGIIVSRKRFTVYVRDE" # 6WXQ (12 to 134) 
@@ -243,21 +246,17 @@ def inter_fold_evolver(args, model):
     PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
     PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
     PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
+    
+    seq2 =  PDB_4QR02
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
-        f.write("#" + ' '.join(sys.argv[1:]) + '\n')
+        f.write(loghead)
 
-    seq2 =  PDB_4QR02
-    
-    if args.initial_seq == 'random':
-        init_gen = pd.DataFrame({'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
-    else: 
-        init_gen = pd.DataFrame({'sequence': [sequence_mutator(args.initial_seq) for i in range(args.pop_size)]})
-        
 
     #creare an initial pool of sequences with pop_size
     columns=['gndx',
+             'prev_id',
              'id', 
              'seq_len', 
              'prot_len_penalty', 
@@ -265,9 +264,10 @@ def inter_fold_evolver(args, model):
              'ptm', 
              'mean_plddt', 
              'num_conts', 
-             'num_inter_conts', 
+             'num_inter_conts',
              'score', 
              'sequence', 
+             'mutation',
              'ss']
     
     ancestral_memory = pd.DataFrame(columns=columns)
@@ -276,34 +276,41 @@ def inter_fold_evolver(args, model):
     #mutate seqs from init_gen and select the best n seqs for the next generation    
     for gen_i in range(args.num_generations):
         n = 0
+        global new_gen #this will be modified in the extract_results() 
         new_gen = pd.DataFrame(columns=columns)
+        #now = datetime.now()
         generated_sequences = []
-        for sequence in init_gen.sequence:
+        mutation_collection = []
 
-            id = "gen{0}_seq{1}".format(gen_i, n); n+=1 # give an uniq id even if the same sequence already exists            
-            seq = sequence_mutator(sequence)
+        for prev_id, sequence in zip(init_gen.id, init_gen.sequence):
+            seq, mutation_data= sequence_mutator(sequence)
             
             #chek if the mutated seqeuece was already predicted
             seqmask = ancestral_memory.sequence == seq 
-            if args.norepeat and seqmask.any(): #if seq is in the ancestral_memory mutate it again 
+            
+            #if --norepeat and seq is in the ancestral_memory mutate it again
+            if args.norepeat and seqmask.any():  
                 while seqmask.any():
-                    seq = sequence_mutator(seq)
+                    seq, mutation_data = sequence_mutator(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            generated_sequences.append((id, seq+':'+seq)) #(seq+seq2)) add a function to select the sma
-        
+            id = "g{0}seq{1}_{2}_{3}".format(gen_i, n, prev_id, mutation_data); n+=1 # give an uniq id even if the same sequence already exists            
 
-            if seqmask.any(): #if sequence already exits do not predict a strcuture again 
-                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence']) 
-                repeat.id = id #assing a new id to the already exiting sequence
-                new_gen = new_gen.append(repeat)
-                generated_sequences.remove(generated_sequences[-1])
+            if seqmask.any(): #if sequence already exits do not predict a structure again 
+                repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'], keep='last') 
                 try:
-                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id + '.pdb')  
+                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id.split('_')[0] + '.pdb')  
                 except  FileNotFoundError: 
                     pass
-                    
-            batched_sequences = create_batched_sequence_datasets(generated_sequences, args.max_tokens_per_batch)
+                repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
+                new_gen = new_gen.append(repeat)
+            else:
+                generated_sequences.append((id, seq + seq2)) #(seq+seq2)) add a function to select the sma
+                mutation_collection.append(mutation_data)    
+
+
+        batched_sequences = create_batched_sequence_datasets(generated_sequences, args.max_tokens_per_batch)
+        
 
         #predict data for the new batch
         for headers, sequences in batched_sequences:
@@ -313,51 +320,26 @@ def inter_fold_evolver(args, model):
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
+            
+            #run extract_results() in becground and imediately start next round of model.infer()
+            trd = threading.Thread(target=extract_results, args=(gen_i, headers, sequences, pdbs, ptms, mean_plddts))
+            trd.start()
 
-            for id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
-                seq = seq.split(':')[0]
-                seq_len = len(seq)
-                with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
-                    f.write(pdb_txt)   
+            # p1 = multiprocessing.Process(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
+            # p1.start()
+            # p1.join()
 
-                #================================SCORING================================# 
-                num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
-                num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.0, 50) #TODO dinamicaly change the cutoff plddt
-                ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
-
-                #Rg, aspher = get_aspher(pdb_txt)
-                prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.1)) * np.tanh(seq_len*0.05)
-                max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
-
-                score  = np.prod([mean_plddt,           #[0, 1]
-                                  ptm,                  #[0, 1]
-                                  prot_len_penalty,     #[0, 1]
-                                  max_helix_penalty,    #[0, 1]
-                                  num_conts,            #[1, inf]
-                                  num_inter_conts])     #[1, inf]
-                #================================SCORING================================#
-
-                new_gen = new_gen.append({'gndx': gen_i,
-                                        'id': id, 
-                                        'seq_len': seq_len,
-                                        'prot_len_penalty': round(prot_len_penalty, 2), 
-                                        'max_helix_penalty': round(max_helix_penalty, 2),
-                                        'ptm': round(ptm, 2), 
-                                        'mean_plddt': mean_plddt, 
-                                        'num_conts': num_conts, 
-                                        'num_inter_conts': num_inter_conts, 
-                                        'score': round(score, 2), 
-                                        'sequence': seq, 
-                                        'ss': ss
-                                        }, ignore_index=True)
-
-                print(new_gen.drop('gndx', axis=1).tail(1).to_string(index=False, header=False).replace(' ', '\t'))
-            ancestral_memory =  ancestral_memory.append(init_gen)
+        while trd.is_alive(): 
+            time.sleep(0.2)
         
+        #print(f"#GENtime {datetime.now() - now}")
+        ancestral_memory =  ancestral_memory.append(init_gen)
+
         #select the next generation 
         init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
+
 #================================INTER_FOLD_EVOLVER================================# 
 #==================================================================================#
 
@@ -486,7 +468,23 @@ if __name__ == '__main__':
 
     pdb_path = args.outpath + '/structures/' 
 
+
+    #create the initial generation
+    if args.initial_seq == 'random':
+        randomsequence = randomseq(args.random_seq_len)
+        init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
+                                 'sequence': [randomsequence] * args.pop_size})
+
+    elif args.initial_seq == 'randoms':
+        init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
+                                 'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
+
+    else: 
+        init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
+                                 'sequence': [args.initial_seq] * args.pop_size})
     
+
+
     # TODO check arguments and input paths before loading models 
     #load models
     print('\nloading esm.pretrained.esmfold_v1... \n')
@@ -495,9 +493,9 @@ if __name__ == '__main__':
 
 
     if args.evolution_mode == "single_chain":
-        fold_evolver(args, model, loghead)
+        fold_evolver(args, model, loghead, init_gen)
     elif args.evolution_mode == "inter_chain":
-        inter_fold_evolver(args, model, loghead)
+        inter_fold_evolver(args, model, loghead, init_gen)
     elif args.evolution_mode == "multimer":
         print("sorry, I am not ready yet")
     elif not args.evolution_mode in ['single_chain', 'inter_chain', 'multimer']:

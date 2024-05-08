@@ -11,24 +11,35 @@ flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
             'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
             '+' : 0.8,    #insertion
             '-' : 1,    #single deletion
-            '*' : 0,#0.3,    #partial duplication
-            '/' : 0,#0.3,    #random insertion
-            '%' : 0,#1,    #partial deletion
-            'd' : 0.01} #full duplication    
+            '*' : 0.3,    #partial duplication
+            '/' : 0.3,    #random insertion
+            '%' : 1,    #partial deletion
+            'd' : 0.01  #full duplication    
+            } 
+
+
+fr_no_dup ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
+            'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
+            'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
+            'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
+            'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
+            '+' : 0.8,    #insertion
+            '-' : 1
+            }   
 
 
 #by number of codons
-codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
-              'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
-              'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
-              'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 2,  
-              'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
-              '+' : 3,   #insertion
-              '-' : 3,   #single deletion
-              '*' : 2,   #partial duplication
-              '#' : 2,   #random insertion
-              '%' : 2,   #partial deletion
-              'd' : 0.1} #full duplication    
+#codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
+#              'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
+#              'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
+#              'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 2,  
+#              'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,  
+#              '+' : 3,   #insertion
+#              '-' : 3,   #single deletion
+#              '*' : 2,   #partial duplication
+#              '#' : 2,   #random insertion
+#              '%' : 2,   #partial deletion
+#              'd' : 0.1} #full duplication    
 
 #https://www.uniprot.org/uniprotkb/statistics#amino-acid-composition
 uniprotrates = {'A' : 0.0826, 'C' : 0.0139, 'D' : 0.0546, 'E' : 0.0672, 
