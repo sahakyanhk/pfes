@@ -65,8 +65,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
     global new_gen #this will be modified in the fold_evolver()
     
     for full_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+        
         all_seqs = seq.split(':')
-        num_chains = len(all_seqs)
         seq = all_seqs[0]
         seq_len = len(seq)
         
@@ -82,10 +82,10 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
         #================================SCORING================================# 
         num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
         
-        if num_chains > 1: #if there are two or more chains, then calculate the number of interacting contacts
-            num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.0, 50) 
-        else:
+        if args.evolution_mode == "single_chian": #if there are two or more chains, then calculate the number of interacting contacts
             num_inter_conts = 1
+        else:
+            num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.0, 50) 
 
         ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
         #Rg, aspher = get_aspher(pdb_txt)
@@ -129,11 +129,11 @@ global new_gen #this will be modified in the extract_results()
 
 #============================================================================#
 #================================FOLD_EVOLVER================================# 
-def fold_evolver(args, model, loghead, init_gen): 
+def fold_evolver(args, model, logheader, init_gen): 
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
-        f.write(loghead)
+        f.write(logheader)
 
 
     #creare an initial pool of sequences with pop_size
@@ -234,7 +234,7 @@ def fold_evolver(args, model, loghead, init_gen):
 #==================================================================================#
 #================================INTER_FOLD_EVOLVER================================# 
 
-def inter_fold_evolver(args, model, loghead, init_gen): 
+def inter_fold_evolver(args, model, logheader, init_gen): 
 
     #evolution of an interacting chain
     PDB_6WXQ=":MKSYFVTMGFNETFLLRLLNETSAQKEDSLVIVVPSPIVSGTRAAIESLRAQISRLNYPPPRIYEIEITDFNLALSKILDIILTLPEPIISDLTMGMRMINLILLGIIVSRKRFTVYVRDE" # 6WXQ (12 to 134) 
@@ -246,12 +246,13 @@ def inter_fold_evolver(args, model, loghead, init_gen):
     PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
     PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
     PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
-    
-    seq2 =  PDB_4QR02
+    PDB_5YIW=":GAMDMSWTDERVSTLKKLWLDGLSASQIAKQLGGVTRNAVIGKVHRLGL"
+
+    seq2 = PDB_5YIW
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
-        f.write(loghead)
+        f.write(logheader)
 
 
     #creare an initial pool of sequences with pop_size
@@ -429,13 +430,13 @@ if __name__ == '__main__':
     time_now = now.strftime("%H:%M:%S")
     
 
-    loghead = f'''#======================== PFESv0.1 ========================#
+    logheader = f'''#======================== PFESv0.1 ========================#
 #====================== {date_now} =======================#
 #======================== {time_now} ========================#
 #WD: {os.getcwd()}
 #$pfes.py {' '.join(sys.argv[1:])}
 #
-#====================  pfes input params ===================#
+#====================  pfes input params ==================#
 #
 #--evolution_mode, -em \t\t = {args.evolution_mode}
 #--selection_mode, -sm\t\t = {args.selection_mode}
@@ -455,7 +456,7 @@ if __name__ == '__main__':
 #==========================================================#
 '''
 
-    print(loghead)
+    print(logheader)
 
     #backup if output directory exists
     if args.nobackup:
@@ -493,11 +494,16 @@ if __name__ == '__main__':
 
 
     if args.evolution_mode == "single_chain":
-        fold_evolver(args, model, loghead, init_gen)
+        fold_evolver(args, model, logheader, init_gen)
     elif args.evolution_mode == "inter_chain":
-        inter_fold_evolver(args, model, loghead, init_gen)
+        inter_fold_evolver(args, model, logheader, init_gen)
     elif args.evolution_mode == "multimer":
         print("sorry, I am not ready yet")
     elif not args.evolution_mode in ['single_chain', 'inter_chain', 'multimer']:
         print("Unknown PFES mode: aveilable options are: single_chain, inter_chain or multimer")
+
+
+
+
+
 

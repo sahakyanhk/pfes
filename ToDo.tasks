@@ -4,7 +4,8 @@ DIR=$(cd $(dirname $0); pwd)
 TO DO:
     active:
         ✔ mutation reporte @high @done (4/26/2024, 4:07:14 PM)
-        ☐ make a tool for probability matrix calculation
+        ☐ introduce/susbtitute inter_contacts with iPLDDT
+        ☐ make a tool for AA probability matrix calculation
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
         ☐ add rosetta scoring in visual_pfes for BEST PDB @high
         ☐ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA + RETURN CONTACT QUALITY @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts

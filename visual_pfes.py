@@ -126,15 +126,10 @@ def make_plots(log, bestlog):
 
     fig.suptitle(None)
     
-    if 'num_inter_conts' in log.keys():
-        axs[0,0].plot(log.num_inter_conts, '.', markersize=ms)
-        axs[0,0].plot(bestlog.num_inter_conts, '-', linewidth=lw)
-#        axs[0,0].plot(averlog.num_inter_conts, '-', linewidth=lw)
-        axs[0,0].set(xlabel=None, ylabel='num_inter_conts')
-    else: 
-        axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
-        axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
-        axs[0,0].set(xlabel=None, ylabel='mean_plddt')
+
+    axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
+    axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
+    axs[0,0].set(xlabel=None, ylabel='mean_plddt')
     
     axs[1,0].plot(log.ptm, '.', markersize=ms)
     axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
@@ -147,10 +142,16 @@ def make_plots(log, bestlog):
     axs[0,1].plot(log.seq_len, '.', markersize=ms)
     axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
     axs[0,1].set(xlabel=None, ylabel='seq_len')
-    
-    axs[1,1].plot(log.prot_len_penalty, '.', markersize=ms)
-    axs[1,1].plot(bestlog.prot_len_penalty, '-', linewidth=lw)
-    axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
+
+    if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
+        axs[1,1].plot(log.num_inter_conts, '.', markersize=ms)
+        axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw)
+#       axs[1,1].plot(averlog.num_inter_conts, '-', linewidth=lw)
+        axs[1,1].set(xlabel=None, ylabel='num_inter_conts')
+    else:     
+        axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
+        axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
+        axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
 
     axs[2,1].plot(log.num_conts, '.', markersize=ms)
     axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
