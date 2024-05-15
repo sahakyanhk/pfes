@@ -1,11 +1,13 @@
-DIR=$(cd $(dirname $0); pwd)
+#DIR=$(cd $(dirname $0); pwd)
 
 
 TO DO:
     active:
-        ✔ mutation reporte @high @done (4/26/2024, 4:07:14 PM)
-        ☐ introduce/susbtitute inter_contacts with iPLDDT
+        ☐ ADD option to change the selection mode after n steps 
+        ☐ continue simulations (all sequences from the generation are needed)
+        ☐ introduce/susbtitute inter_contacts with iPLDDT @high 
         ☐ make a tool for AA probability matrix calculation
+        ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
         ☐ add rosetta scoring in visual_pfes for BEST PDB @high
         ☐ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA + RETURN CONTACT QUALITY @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
@@ -14,15 +16,11 @@ TO DO:
         ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ add a function to indicate only several residues in the partner protetein for contacts. \
-                        It will constrain the number of possible contacts! @high 
+        It will constrain the number of possible contacts! @high 
         ☐ add a function to save pdb (all atoms, only CA, ziped, etc) and 
-        ✔ do not wait untill files are writen to move forward @done (4/19/2024, 11:48:58 AM)
-        ☐ continue simulations (all sequences from a generation are needed)
         ☐ Consider adding new mutation types: split sequnece and join sequences
         ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
         ###add more tools for analyses###
-        ✔ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html @done (4/19/2024, 11:47:44 AM)
-        ✔ trajectory with side chains @done (4/26/2024, 4:08:28 PM)
         ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
         ☐ write an sr_filter.py?
         ☐ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py
@@ -30,6 +28,10 @@ TO DO:
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✔ mutation reporter @high @done (4/26/2024, 4:07:14 PM)
+            ✔ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html @done (4/19/2024, 11:47:44 AM)
+            ✔ trajectory with side chains @done (4/26/2024, 4:08:28 PM)
+            ✔ do not wait untill files are writen to move forward @done (4/19/2024, 11:48:58 AM)
             ✘ partial subsitutions with random sequences @cancelled (4/21/2024, 8:58:46 AM) (it is unprobable to have several adjusen mutation)
             ✔ The number contacts in alpha-helixes is higher that number of contacs in beta-hairpines that is why the genereted strucutres are biased towar alpha helixes @high @done (4/8/2024, 4:27:15 PM)
             ✔ predic all sequences in the generation in parallel @high @done (4/1/2024, 8:32:02 AM)

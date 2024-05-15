@@ -249,7 +249,7 @@ def inter_fold_evolver(args, model, logheader, init_gen):
     PDB_5YIW=":GAMDMSWTDERVSTLKKLWLDGLSASQIAKQLGGVTRNAVIGKVHRLGL"
     PDB_4OO8=":GQKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERGGL" #CAS9 HNH
     
-    seq2 = PDB_4OO8
+    seq2 = PDB_5YIW
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
