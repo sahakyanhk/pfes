@@ -187,7 +187,7 @@ def fold_evolver(args, model, logheader, init_gen):
                 repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
                 new_gen = new_gen.append(repeat)
             else:
-                generated_sequences.append((id, seq)) #(seq+seq2)) add a function to select the sma
+                generated_sequences.append((id, seq)) 
                 mutation_collection.append(mutation_data)    
 
 
@@ -246,7 +246,7 @@ def inter_fold_evolver(args, model, logheader, init_gen):
     PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
     PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
     PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
-    PDB_5YIW=":GAMDMSWTDERVSTLKKLWLDGLSASQIAKQLGGVTRNAVIGKVHRLGL"
+    PDB_5YIW=":GAMDMSWTDERVSTLKKLWLDGLSASQIAKQLGGVTRNAVIGKVHRLGL" #HTH
     PDB_4OO8=":GQKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERGGL" #CAS9 HNH
     
     seq2 = PDB_5YIW
@@ -257,21 +257,21 @@ def inter_fold_evolver(args, model, logheader, init_gen):
 
 
     #creare an initial pool of sequences with pop_size
-    columns=['gndx',
-             'prev_id',
-             'id', 
-             'seq_len', 
-             'prot_len_penalty', 
-             'max_helix_penalty',
-             'ptm', 
-             'mean_plddt', 
-             'num_conts', 
-             'num_inter_conts',
-             'score', 
-             'sequence', 
-             'mutation',
-             'ss']
-    
+    columns = ['gndx',
+               'prev_id',
+               'id', 
+               'seq_len', 
+               'prot_len_penalty', s
+               'max_helix_penalty',
+               'ptm', 
+               'mean_plddt', 
+               'num_conts', 
+               'num_inter_conts',
+               'score', 
+               'sequence', 
+               'mutation',
+               'ss'] 
+      
     ancestral_memory = pd.DataFrame(columns=columns)
     ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
     
@@ -307,7 +307,7 @@ def inter_fold_evolver(args, model, logheader, init_gen):
                 repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
                 new_gen = new_gen.append(repeat)
             else:
-                generated_sequences.append((id, seq + seq2)) #(seq+seq2)) add a function to select the sma
+                generated_sequences.append((id, seq +":"+ seq)) #(seq+seq2)) add a function to select the sma
                 mutation_collection.append(mutation_data)    
 
 
