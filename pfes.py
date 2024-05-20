@@ -261,7 +261,7 @@ def inter_fold_evolver(args, model, logheader, init_gen):
                'prev_id',
                'id', 
                'seq_len', 
-               'prot_len_penalty', s
+               'prot_len_penalty',
                'max_helix_penalty',
                'ptm', 
                'mean_plddt', 
