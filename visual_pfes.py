@@ -74,6 +74,7 @@ def make_plots(log, bestlog):
         num[sse == 'f'] = 0
         num[sse == 'g'] = 0
         num[sse == 's'] = 0
+        num[sse == 'P'] = 0 
         num[sse == 'C'] = 0 
         num[sse == 'E'] = 1 
         num[sse == 'B'] = 2 
@@ -82,8 +83,7 @@ def make_plots(log, bestlog):
         num[sse == 'H'] = 5 
         num[sse == 'G'] = 6 
         num[sse == 'I'] = 7 
-        num[sse == 'P'] = 8 
-        num[sse == 'X'] = 9 
+        num[sse == 'X'] = 8 
         return num
 
 
@@ -98,18 +98,20 @@ def make_plots(log, bestlog):
         r"$\alpha$-helix": "purple",
         r"$3_{10}$-helix": "mediumpurple",
         r"$\pi$-helix": "blue",
-        r"polyPro": "dimgrey",
         r"": "white"
         }
 
     cmap = colors.ListedColormap(color_assign.values())
-    ticks = np.arange(0, len(bestlog)+1, 1000)
+    if len(bestlog) > 2000:
+        ticks = np.arange(0, len(bestlog)+1, 1000)
+    else: 
+        ticks = np.arange(0, len(bestlog)+1, 100)
 
-    plt.figure(figsize=(12, 8), dpi=dpi)
+    plt.figure(figsize=(9, 5), dpi=dpi)
     plt.imshow(sse_digit.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
     plt.xticks(ticks, ticks.astype(int))
-    plt.xlabel("# mutations x Pop size")
-    plt.ylabel("Residue")
+    plt.xlabel("Number of generations")
+    plt.ylabel("Residues")
 
     custom_lines = [
         Line2D([0], [0], color=cmap(i), lw=4) for i in range(len(color_assign)-1)]
@@ -122,32 +124,33 @@ def make_plots(log, bestlog):
 
 
     #======================= Summary plot =======================#
-    fig, axs = plt.subplots(3,2, figsize=(14, 10))
+    fig, axs = plt.subplots(3,2, figsize=(10, 8))
 
     fig.suptitle(None)
     
 
+
     axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
     axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
-    axs[0,0].set(xlabel=None, ylabel='mean_plddt')
-    
+    axs[0,0].set(xlabel=None, ylabel='mean pLDDT')
+
     axs[1,0].plot(log.ptm, '.', markersize=ms)
     axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
-    axs[1,0].set(xlabel=None, ylabel='ptm')
+    axs[1,0].set(xlabel=None, ylabel='pTM')
     
     axs[2,0].plot(log.score,  '.', markersize=ms)
     axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
-    axs[2,0].set(xlabel='# mutation', ylabel='score')
+    axs[2,0].set(xlabel='Number of mutations', ylabel='Score')
         
     axs[0,1].plot(log.seq_len, '.', markersize=ms)
     axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
-    axs[0,1].set(xlabel=None, ylabel='seq_len')
+    axs[0,1].set(xlabel=None, ylabel='Seq len')
 
     if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
         axs[1,1].plot(log.num_inter_conts, '.', markersize=ms)
         axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw)
 #       axs[1,1].plot(averlog.num_inter_conts, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='num_inter_conts')
+        axs[1,1].set(xlabel=None, ylabel='Num of inter contacts')
     else:     
         axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
         axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
@@ -155,7 +158,7 @@ def make_plots(log, bestlog):
 
     axs[2,1].plot(log.num_conts, '.', markersize=ms)
     axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
-    axs[2,1].set(xlabel='# mutation', ylabel='num_conts')
+    axs[2,1].set(xlabel='Number of mutations', ylabel='Num of contacts')
     
     #for ax in axs.flat:
     #   ax.set(xlabel='x-label', ylabel='y-label')

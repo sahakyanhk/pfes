@@ -57,7 +57,8 @@ aa_alphabet = mutation_types[:20] #allowed substitutions for point mutations
 
 w = p[:20] #probabilities for random sequence generation
 upw = list(uniprotrates.values())
-    
+
+
 #random sequence generator
 def randomseq(nres=20, weights=w):
     return ''.join(random.choices(aa_alphabet, weights=weights, k=nres))

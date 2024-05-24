@@ -192,6 +192,18 @@ def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt
 #            prev_best_score = best_score
 
 
+# #score -in:file:s bestpdb/*pdb -out:file:scorefile score.dat -score_app:linmin  
+
+# awk -v OFS='\t'  '{print $33, $2 }' score.dat  | sed 's/_0001//g;s/gndx//g'  | tail -n +2 | sort -nk1 > score_only.dat
+# awk -v OFS='\t'  '{print $33}' score.dat  | sed 's/_0001//g' | tail -n +2  > names
+# grep -wf names bestlog.tsv  > score_log.dat
+# paste score_log.dat score_only.dat > log_with_score.dat
+# rm score_log.dat names score_only.dat
+
+
+
+
+
 input_pdb_path = str(sys.argv[1])
 
 if  os.path.isfile(input_pdb_path): 
