@@ -25,6 +25,7 @@ TO DO:
         ☐ write an sr_filter.py?
         ☐ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py
         ☐ http://etetoolkit.org/
+        ☐ develop a new optimization strategy based on plddt (mutation probability in inversely proportional to the pLDDT)
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:

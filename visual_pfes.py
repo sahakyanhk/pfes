@@ -159,7 +159,8 @@ def make_plots(log, bestlog):
     axs[2,1].plot(log.num_conts, '.', markersize=ms)
     axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
     axs[2,1].set(xlabel='Number of mutations', ylabel='Num of contacts')
-    
+    #plt.xticks(rotation=45)
+
     #for ax in axs.flat:
     #   ax.set(xlabel='x-label', ylabel='y-label')
 
@@ -262,7 +263,7 @@ def backbone_traj(bestlog, pdbdir):
 
 
 make_plots(log, bestlog)
-backbone_traj(bestlog, pdbdir)
+#backbone_traj(bestlog, pdbdir)
 
 """
 

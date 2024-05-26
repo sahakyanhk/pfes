@@ -97,6 +97,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
                           max_helix_penalty,    #[0, 1]
                           num_conts**(1/3),     #[~0, inf]
                           num_inter_conts**(1/4)])   #[~0, inf]
+        
+        #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
         #================================SCORING================================#
         iterlog = pd.DataFrame({'gndx': gen_i,
                                 'prev_id': prev_id,
