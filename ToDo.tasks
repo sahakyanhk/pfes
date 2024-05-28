@@ -3,6 +3,11 @@
 
 TO DO:
     active:
+        ☐ NEXT EPOSOD: protein fold nuctiation time.
+            Run ~100 simulations with until threy reach a certen condition (plddt70 & ptm70)
+            Do only point motations and start with ~50 residue long random sequnece.
+            How long it takes to evold a fold? How it changes with the population size
+
         ☐ ADD option to change the selection mode after n steps 
         ☐ continue simulations (all sequences from the generation are needed)
         ☐ introduce/susbtitute inter_contacts with iPLDDT @high 
@@ -25,6 +30,7 @@ TO DO:
         ☐ write an sr_filter.py?
         ☐ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py
         ☐ http://etetoolkit.org/
+        ☐ https://moviepy-tburrows13.readthedocs.io/en/improve-docs/ref/VideoClip/TextClip.html
         ☐ develop a new optimization strategy based on plddt (mutation probability in inversely proportional to the pLDDT)
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
