@@ -11,9 +11,9 @@ flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,
             'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
             '+' : 0.8,    #insertion
             '-' : 1,    #single deletion
-            '*' : 0.3,    #partial duplication
-            '/' : 0.3,    #random insertion
-            '%' : 1,    #partial deletion
+            '*' : 0.1,    #partial duplication
+            '/' : 0.1,    #random insertion
+            '%' : 0, #0.1,    #partial deletion
             'd' : 0.01  #full duplication    
             } 
 
@@ -49,7 +49,7 @@ uniprotrates = {'A' : 0.0826, 'C' : 0.0139, 'D' : 0.0546, 'E' : 0.0672,
                 'T' : 0.0536, 'V' : 0.0686, 'W' : 0.0110, 'Y' : 0.0292}
 
 
-evoldict = fr_no_dup
+evoldict = flatrates
 
 mutation_types = list(evoldict.keys())  #mutation type
 p = list(evoldict.values()) #probability for each mutation

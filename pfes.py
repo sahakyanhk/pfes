@@ -49,19 +49,7 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
     yield batch_headers, batch_sequences
 
 
-def sigmoid(x,L0=0,c=0.1):
-    return 1 / (1+2.71828182**(c * (L0-x)))
-
-
-def esm2data(esm_out):
-    output = {key: value.cpu() for key, value in esm_out.items()}
-    pdbs = model.output_to_pdb(output)
-    ptm = esm_out["ptm"].tolist()
-    mean_plddt = esm_out["mean_plddt"].tolist()
-    return(pdbs, ptm, mean_plddt)
-
-
-def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
+def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
     
     for full_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
@@ -119,6 +107,18 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts):
     print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
 
 
+def esm2data(esm_out):
+    output = {key: value.cpu() for key, value in esm_out.items()}
+    pdbs = model.output_to_pdb(output)
+    ptm = esm_out["ptm"].tolist()
+    mean_plddt = esm_out["mean_plddt"].tolist()
+    return(pdbs, ptm, mean_plddt)
+
+#to score.py
+
+def sigmoid(x,L0=0,c=0.1):
+    return 1 / (1+2.71828182**(c * (L0-x)))
+#--------------------------------------------
 
 #========================================CONCEPTS========================================# 
 def fold_evolver(args): 
