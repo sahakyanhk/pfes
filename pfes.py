@@ -209,12 +209,6 @@ def fold_evolver(args, model, logheader, init_gen):
             trd = threading.Thread(target=extract_results, args=(gen_i, headers, sequences, pdbs, ptms, mean_plddts))
             trd.start()
 
-
-            #extract_results(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts)
-            # p1 = multiprocessing.Process(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
-            # p1.start()
-            # p1.join()
-
         while trd.is_alive(): 
             time.sleep(0.2)
         
@@ -236,7 +230,7 @@ def fold_evolver(args, model, logheader, init_gen):
 #==================================================================================#
 #================================INTER_FOLD_EVOLVER================================# 
 
-def inter_fold_evolver(args, model, logheader, init_gen): 
+def inter_fold_evolver(args, model, logheader, init_gen) -> None: 
 
     #evolution of an interacting chain
     PDB_6WXQ=":MKSYFVTMGFNETFLLRLLNETSAQKEDSLVIVVPSPIVSGTRAAIESLRAQISRLNYPPPRIYEIEITDFNLALSKILDIILTLPEPIISDLTMGMRMINLILLGIIVSRKRFTVYVRDE" # 6WXQ (12 to 134) 

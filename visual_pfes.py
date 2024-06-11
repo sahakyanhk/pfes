@@ -27,6 +27,7 @@ log = pd.read_csv(args.log, sep='\t', comment='#')
 
 bestlog = log.groupby('gndx').head(1)
 
+
 outdir = args.outdir 
 pdbdir = os.path.join(args.pdbdir)
 plotdir = os.path.join(outdir, 'plots/')
@@ -35,6 +36,24 @@ trajpath = os.path.join(outdir, args.traj)
 os.makedirs(outdir, exist_ok=True)
 bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
 
+def extract_lineage(log):
+	lineage = log.drop_duplicates('gndx').tail(1)
+	df = lineage
+	ndx = df.id.to_string(index=False)
+	def return_ancestor(log, node):
+		parent = log[log.id == node]
+		parent = parent.drop_duplicates('sequence')
+		return parent
+	while not df.empty:
+		ndx = return_ancestor(log, ndx)
+		df = ndx
+		#print(df)
+		lineage = pd.concat([lineage, df], axis=0)
+		ndx = ndx.prev_id.to_string(index=False)
+		lineage = lineage.sort_index()
+	return lineage
+
+lineage = extract_lineage(log)
 
 def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -42,7 +61,8 @@ def sorted_alphanumeric(data):
     return sorted(data, key=alphanum_key)
 
 
-def make_plots(log, bestlog):
+
+def make_plots(log, bestlog, lineage):
     print('processing evolution trajectory to make plots')
     
     ms=0.5
@@ -122,6 +142,7 @@ def make_plots(log, bestlog):
 
     plt.savefig(os.path.join(outdir,'Secondary_structures.png'), dpi=dpi) 
 
+    
 
     #======================= Summary plot =======================#
     fig, axs = plt.subplots(3,2, figsize=(10, 8))
@@ -140,6 +161,7 @@ def make_plots(log, bestlog):
     
     axs[2,0].plot(log.score,  '.', markersize=ms)
     axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
+    axs[2,0].plot(lineage.score, '-', linewidth=lw)
     axs[2,0].set(xlabel='Number of mutations', ylabel='Score')
         
     axs[0,1].plot(log.seq_len, '.', markersize=ms)
@@ -262,8 +284,8 @@ def backbone_traj(bestlog, pdbdir):
     os.remove(outdir+'/.tmp.pdb')
 
 
-make_plots(log, bestlog)
-backbone_traj(bestlog, pdbdir)
+make_plots(log, bestlog, lineage)
+backbone_traj(bestlog, lineage)
 
 """
 

@@ -5,59 +5,63 @@ import typing as T
 
 
 
-class evolver():
+class Evolver():
+
+    flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
+                'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
+                'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
+                'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
+                'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1
+                }
     
-    def __init__(self, evoldict: dict):
-        flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
-                    'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
-                    'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
-                    'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
-                    'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
-                    '+' : 0.8,    #insertion
-                    '-' : 1,    #single deletion
-                    '*' : 0.3,    #partial duplication
-                    '/' : 0.3,    #random insertion
-                    '%' : 1,    #partial deletion
-                    'd' : 0.01  #full duplication    
-                    } 
+    non_point_mutations = {'+' : 0.8,    #insertion
+                           '-' : 1,    #single deletion
+                           '*' : 0.3,    #partial duplication
+                           '/' : 0.3,    #random insertion
+                           '%' : 1,    #partial deletion
+                           'd' : 0.01  #full duplication    
+                           } 
 
+    #by number of codons
+    codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
+                  'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
+                  'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
+                  'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 6,  
+                  'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2
+                  }
 
-        fr_no_dup ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
-                    'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
-                    'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
-                    'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
-                    'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,  
-                    #'+' : 0.8,    #insertion
-                    #'-' : 1
-                    }   
-
-
-        #https://www.uniprot.org/uniprotkb/statistics#amino-acid-composition
-        uniprotrates = {'A' : 0.0826, 'C' : 0.0139, 'D' : 0.0546, 'E' : 0.0672, 
-                        'F' : 0.0387, 'G' : 0.0707, 'H' : 0.0228, 'I' : 0.0591, 
-                        'K' : 0.0580, 'L' : 0.0965, 'M' : 0.0241, 'N' : 0.0406, 
-                        'P' : 0.0475, 'Q' : 0.0393, 'R' : 0.0553, 'S' : 0.0665, 
-                        'T' : 0.0536, 'V' : 0.0686, 'W' : 0.0110, 'Y' : 0.0292}
+    #https://www.uniprot.org/uniprotkb/statistics#amino-acid-composition
+    uniprotrates = {'A' : 0.0826, 'C' : 0.0139, 'D' : 0.0546, 'E' : 0.0672, 
+                    'F' : 0.0387, 'G' : 0.0707, 'H' : 0.0228, 'I' : 0.0591, 
+                    'K' : 0.0580, 'L' : 0.0965, 'M' : 0.0241, 'N' : 0.0406, 
+                    'P' : 0.0475, 'Q' : 0.0393, 'R' : 0.0553, 'S' : 0.0665, 
+                    'T' : 0.0536, 'V' : 0.0686, 'W' : 0.0110, 'Y' : 0.0292}
+    
+    three2one = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
+                 'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
+                 'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
+                 'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
         
-        evoldicts = {'flatrates': flatrates, 'fr_no_dup': fr_no_dup, 'uniprotrates': uniprotrates} 
+    evoldicts = {'flatrates': flatrates, 'codontrates': codontrates, 'uniprotrates': uniprotrates} 
+
+    def __init__(self, evoldict: str):
+        
         try:
-            if evoldict in evoldicts.keys():
-                evoldict = evoldicts[evoldict]
-        except  NameError:
-            pass 
-            print(f'WARNING! unknown evoldict "{evoldict}", "flatrates" will be used. \n Available options are {list(evoldicts.keys())}' )
+            self.evoldict = Evolver.evoldicts[evoldict]
+            self.evoldict.update(self.non_point_mutations) # add non point mutations 
+        except: 
+            print(f'WARNING! unknown evoldict "{evoldict}", "flatrates" will be used. \n Available evoldicts are {list(Evolver.evoldicts.keys())}' )
 
 
-        self.mutation_types = list(evoldict.keys())  #mutation type
-        self.p = list(evoldict.values()) #probability for each mutation
+        self.mutation_types = list(self.evoldict.keys())  #mutation type
+        self.p = list(self.evoldict.values()) #probability for each mutation
         self.aa_alphabet = self.mutation_types[:20] #allowed substitutions for point mutations 
         self.w = self.p[:20] #probabilities for random sequence generation
-        pass
+
 
     #random sequence generator
-    def randomseq(self, nres=24) -> str:
+    def randomseq(self, nres=24, weights = None ) -> str:
         return ''.join(random.choices(self.aa_alphabet, weights=self.w, k=nres))
-
 
     def mutate(self, sequence: str) -> T.Tuple[str, str]:  
         mutation_position = random.choice(range(len(sequence)))
@@ -82,7 +86,7 @@ class evolver():
             mutation_info = f'{sequence[mutation_position]}{mutation_position+1}*{sequence[mutation_position:][:insertion_len]}'
 
         elif mutation =='/': #random insertion
-            mutation = self.randomseq(random.choice(range(2, int(len(sequence)/2))), weights=self.w) 
+            mutation = self.randomseq(random.choice(range(2, int(len(sequence)/2)))) 
             sequence_mutated = sequence[:mutation_position + 1] + mutation + sequence[mutation_position + 1:]
             mutation_info = f'{sequence[mutation_position]}{mutation_position+1}/{mutation}'
 
@@ -108,7 +112,7 @@ class evolver():
 
 
 
-    def selec(self, input_new_gen, input_init_gen, pop_size, selection_mode, norepeat): 
+    def selec(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool): 
         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
         
         if norepeat:

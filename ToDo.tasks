@@ -13,7 +13,7 @@ TO DO:
         ☐ continue simulations (all sequences from the generation are needed)
         ☐ introduce/susbtitute inter_contacts with iPLDDT @high 
         ☐ make a tool for AA probability matrix calculation
-        ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes
+        ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes 
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
         ☐ add rosetta scoring in visual_pfes for BEST PDB @high
         ☐ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA + RETURN CONTACT QUALITY @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
