@@ -14,13 +14,14 @@ class Evolver():
                 'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1
                 }
     
-    non_point_mutations = {'+' : 0.8,    #insertion
-                           '-' : 1,    #single deletion
+    non_point_mutations = {'+' : 0.8,    #single residue insertion
+                           '-' : 1,    #single residue deletion
                            '*' : 0.3,    #partial duplication
-                           '/' : 0.3,    #random insertion
+                           '/' : 0.3,    #random insertion 
                            '%' : 1,    #partial deletion
                            'd' : 0.01  #full duplication    
                            } 
+
 
     #by number of codons
     codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  

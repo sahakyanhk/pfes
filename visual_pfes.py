@@ -22,69 +22,131 @@ parser.add_argument('-o', '--outdir', type=str, help='output directory name', de
 
 args = parser.parse_args()
 
-log = pd.read_csv(args.log, sep='\t', comment='#')
-#log['ndx']  = log.index
 
-bestlog = log.groupby('gndx').head(1)
+#class VisualPFES():
 
-
-outdir = args.outdir 
-pdbdir = os.path.join(args.pdbdir)
-plotdir = os.path.join(outdir, 'plots/')
-trajpath = os.path.join(outdir, args.traj)
-
-os.makedirs(outdir, exist_ok=True)
-bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
-
-def extract_lineage(log):
-	lineage = log.drop_duplicates('gndx').tail(1)
-	df = lineage
-	ndx = df.id.to_string(index=False)
-	def return_ancestor(log, node):
-		parent = log[log.id == node]
-		parent = parent.drop_duplicates('sequence')
-		return parent
-	while not df.empty:
-		ndx = return_ancestor(log, ndx)
-		df = ndx
-		#print(df)
-		lineage = pd.concat([lineage, df], axis=0)
-		ndx = ndx.prev_id.to_string(index=False)
-		lineage = lineage.sort_index()
-	return lineage
-
-lineage = extract_lineage(log)
 
 def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(data, key=alphanum_key)
 
-
-
-def make_plots(log, bestlog, lineage):
-    print('processing evolution trajectory to make plots')
+def extract_lineage(log):
+    lineage = log.drop_duplicates('gndx').tail(1)
+    df = lineage
+    ndx = df.id.to_string(index=False)
+        
+    def return_ancestor(log, node):
+        parent = log[log.id == node]
+        parent = parent.drop_duplicates('sequence')
+        return parent
     
+    pbar = tqdm(desc='while loop')
+    i=0
+    while not df.empty:
+        ndx = return_ancestor(log, ndx)
+        df = ndx
+        lineage = pd.concat([lineage, df], axis=0)
+        ndx = ndx.prev_id.to_string(index=False)
+        i=+1
+        pbar.update(i)
+    pbar.close()
+    lineage = lineage.sort_index()
+
+    return lineage
+
+
+#======================= make separate plots =======================#
+def make_plots(log, bestlog, lineage):
+
     ms=0.5
     lw=1.0
     dpi=500
 
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
-       if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
-            plt.plot(log[colname],'.', markersize=ms)
-            plt.plot(bestlog[colname],'-', linewidth=lw)
-            plt.legend([colname], loc ="upper left")
-            plt.savefig(plotdir + colname + '.png', dpi=dpi)
-            plt.clf()
+        if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
+                plt.plot(log[colname],'.', markersize=ms)
+                plt.plot(bestlog[colname],'-', linewidth=lw)
+                plt.plot(lineage[colname],'-', linewidth=lw, color='red')
+                plt.grid(True, which="both")        
+                plt.legend([colname], loc ="upper left")
+                plt.savefig(plotdir + colname + '.png', dpi=dpi)
+                plt.clf()
 
-    #======================= seconday structure plot =======================#
-    max_seq_len = int(max(bestlog.seq_len))
-    bestlog_len = len(bestlog)
+#======================= Summary plot =======================#
+def make_summary_plot(log, bestlog, lineage):
+    
+    ms=0.5
+    lw=1.0
+    dpi=500
 
-    sse = np.empty((bestlog_len, max_seq_len), dtype='U1')
+    fig, axs = plt.subplots(3,2, figsize=(10, 8))
+
+    fig.suptitle(None)
+
+
+    axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
+    axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
+    axs[0,0].plot(lineage.mean_plddt, '-', linewidth=lw)
+    axs[0,0].set(xlabel=None, ylabel='mean pLDDT')
+
+    axs[1,0].plot(log.ptm, '.', markersize=ms)
+    axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
+    axs[1,0].plot(lineage.ptm, '-', linewidth=lw)
+    axs[1,0].set(xlabel=None, ylabel='pTM')
+    
+    axs[2,0].plot(log.score,  '.', markersize=ms)
+    axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
+    axs[2,0].plot(lineage.score, '-', linewidth=lw)
+    axs[2,0].set(xlabel='Number of mutations', ylabel='Score')
+        
+    axs[0,1].plot(log.seq_len, '.', markersize=ms)
+    axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
+    axs[0,1].plot(lineage.seq_len, '-', linewidth=lw)
+    axs[0,1].set(xlabel=None, ylabel='Seq len')
+
+    if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
+        axs[1,1].plot(log.num_inter_conts, '.', markersize=ms)
+        axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw)
+        axs[1,1].plot(lineage.num_inter_conts, '-', linewidth=lw)
+        axs[1,1].set(xlabel=None, ylabel='Num of inter contacts')
+    else:     
+        axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
+        axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
+        axs[1,1].plot(lineage.max_helix_penalty, '-', linewidth=lw)
+        axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
+
+    axs[2,1].plot(log.num_conts, '.', markersize=ms)
+    axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
+    axs[2,1].plot(lineage.num_conts, '-', linewidth=lw)
+    axs[2,1].set(xlabel='Number of mutations', ylabel='Num of contacts')
+    #plt.xticks(rotation=45)
+
+    #for ax in axs.flat:
+    #   ax.set(xlabel='x-label', ylabel='y-label')
+
+    # Hide x labels and tick labels for top plots and y ticks for right plots.
+    #for ax in axs.flat:
+    #   ax.label_outer()
+
+    fig.savefig(os.path.join(outdir,'Summary.png'), dpi=dpi)
+
+
+
+#======================= seconday structure plot =======================#
+def make_ss_plot(lineage):
+
+    ms=0.5
+    lw=1.0
+    dpi=500
+
+    max_seq_len = int(max(lineage.seq_len))
+    lineage_len = len(lineage)
+
+    sse = np.empty((lineage_len, max_seq_len), dtype='U1')
     i=0
-    for ss in bestlog.ss:
+    for ss in lineage.ss:
         sse[i] = list(ss + "X"*(max_seq_len-len(ss)))
         i+=1
 
@@ -122,10 +184,10 @@ def make_plots(log, bestlog, lineage):
         }
 
     cmap = colors.ListedColormap(color_assign.values())
-    if len(bestlog) > 2000:
-        ticks = np.arange(0, len(bestlog)+1, 1000)
+    if len(lineage) > 2000:
+        ticks = np.arange(0, len(lineage)+1, 1000)
     else: 
-        ticks = np.arange(0, len(bestlog)+1, 100)
+        ticks = np.arange(0, len(lineage)+1, 100)
 
     plt.figure(figsize=(9, 5), dpi=dpi)
     plt.imshow(sse_digit.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
@@ -142,58 +204,7 @@ def make_plots(log, bestlog, lineage):
 
     plt.savefig(os.path.join(outdir,'Secondary_structures.png'), dpi=dpi) 
 
-    
-
-    #======================= Summary plot =======================#
-    fig, axs = plt.subplots(3,2, figsize=(10, 8))
-
-    fig.suptitle(None)
-    
-
-
-    axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
-    axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
-    axs[0,0].set(xlabel=None, ylabel='mean pLDDT')
-
-    axs[1,0].plot(log.ptm, '.', markersize=ms)
-    axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
-    axs[1,0].set(xlabel=None, ylabel='pTM')
-    
-    axs[2,0].plot(log.score,  '.', markersize=ms)
-    axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
-    axs[2,0].plot(lineage.score, '-', linewidth=lw)
-    axs[2,0].set(xlabel='Number of mutations', ylabel='Score')
-        
-    axs[0,1].plot(log.seq_len, '.', markersize=ms)
-    axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
-    axs[0,1].set(xlabel=None, ylabel='Seq len')
-
-    if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
-        axs[1,1].plot(log.num_inter_conts, '.', markersize=ms)
-        axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw)
-#       axs[1,1].plot(averlog.num_inter_conts, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='Num of inter contacts')
-    else:     
-        axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
-        axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
-
-    axs[2,1].plot(log.num_conts, '.', markersize=ms)
-    axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
-    axs[2,1].set(xlabel='Number of mutations', ylabel='Num of contacts')
-    #plt.xticks(rotation=45)
-
-    #for ax in axs.flat:
-    #   ax.set(xlabel='x-label', ylabel='y-label')
-
-    # Hide x labels and tick labels for top plots and y ticks for right plots.
-    #for ax in axs.flat:
-    #   ax.label_outer()
-
-    fig.savefig(os.path.join(outdir,'Summary.png'), dpi=dpi)
-
-
-def backbone_traj(bestlog, pdbdir):
+def backbone_traj(trajlog, pdbdir):
     """
     make trajectory from C-alpha atoms
     TO DO: 
@@ -201,18 +212,18 @@ def backbone_traj(bestlog, pdbdir):
     Make it initial topology that should be uploaded first or append in in the begining of the trajectory file
     2. save trajectory in xyz format to save space. 
     """
-    bestpdb = os.path.join(outdir, 'bestpdb/')
-    bestlog = bestlog.drop_duplicates(subset = 'sequence')
-    pfeslen = len(bestlog)
+    trajpdb = os.path.join(outdir, 'trajpdb/')
+    trajlog = trajlog.drop_duplicates(subset = 'sequence')
+    pfeslen = len(trajlog)
 
-    os.makedirs(bestpdb, exist_ok=True)
-    if os.path.isdir(bestpdb) and len(os.listdir(bestpdb)) != pfeslen:
-        shutil.rmtree(bestpdb)
-        os.makedirs(bestpdb, exist_ok=True)
+    os.makedirs(trajpdb, exist_ok=True)
+    if os.path.isdir(trajpdb) and len(os.listdir(trajpdb)) != pfeslen:
+        shutil.rmtree(trajpdb)
+        os.makedirs(trajpdb, exist_ok=True)
         print(f'{pfeslen} uniqs sequences with the best folds are selected') # do not copy files, just make a list and extract BB coords from pdb dir
-        for gndx, pdbid in tqdm(zip(bestlog.gndx, bestlog.id), total=len(bestlog)):
+        for gndx, pdbid in tqdm(zip(trajlog.gndx, trajlog.id), total=len(trajlog)):
             try:
-                shutil.copy(pdbdir +'/' + pdbid +'.pdb', bestpdb +'/'+ gndx + '.pdb')
+                shutil.copy(pdbdir +'/' + pdbid +'.pdb', trajpdb +'/'+ gndx + '.pdb')
             except FileNotFoundError:
                 print(pdbid +'.pdb is missing' )
                 pass
@@ -223,8 +234,8 @@ def backbone_traj(bestlog, pdbdir):
     print("extracting backbone coordinates...")
     i=0
     PDB_A, PDB_B, lastBB_A, lastBB_B = [], [], [], []
-    for pdb in tqdm(sorted_alphanumeric(os.listdir(bestpdb))):
-        with open(os.path.join(bestpdb, pdb), 'r') as file:
+    for pdb in tqdm(sorted_alphanumeric(os.listdir(trajpdb))):
+        with open(os.path.join(trajpdb, pdb), 'r') as file:
             pdb_txt = file.read()
         bb_chain_A, bb_chain_B = [], []
         for line in pdb_txt.splitlines():
@@ -284,51 +295,33 @@ def backbone_traj(bestlog, pdbdir):
     os.remove(outdir+'/.tmp.pdb')
 
 
+
+
+outdir = args.outdir 
+os.makedirs(outdir, exist_ok=True)
+
+pdbdir = args.pdbdir
+plotdir = os.path.join(outdir, 'plots/')
+trajpath = os.path.join(outdir, args.traj)
+
+log = pd.read_csv(args.log, sep='\t', comment='#')
+
+bestlog = log.groupby('gndx').head(1)
+bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
+
+
+print('processing evolution trajectory')
+
+lineage = extract_lineage(log)
+lineage.to_csv(os.path.join(outdir, 'lineage.tsv'), sep='\t', index=False, header=True)
+
+print('making plots')
 make_plots(log, bestlog, lineage)
-backbone_traj(bestlog, lineage)
 
-"""
+print('making summary plot')
+make_summary_plot(log, bestlog, lineage)
 
-#ete3
-from ete3 import Tree
-import pandas as pd
-import numpy as np
+print('making summary plot')
+make_ss_plot(lineage)
+backbone_traj(lineage, pdbdir)
 
-
-
-def extract_tree(head_size = 1e7, log_path = '/home/saakyanh2/WD/PFES/OUTPUTS/sft04292024/progress.log'):
-	log = pd.read_csv(log_path, comment='#', sep='\t')
-	treelog=log.head(head_size)
-	treelog = treelog.drop_duplicates(['prev_id', 'id'], keep="first")
-	parent_child_list = treelog[['prev_id', 'id']].apply(tuple, axis=1).tolist()
-	tree = Tree.from_parent_child_table(parent_child_list)
-	print(tree.write(format=1))
-	return tree 
-
-t = extract_tree(1000)
-
-print(t)
-
-
-names = [l.name for l in t]
-dists  = [t.get_distance(l, 'init') for l in t]
-
-
-
-for leaf in t:
-	if t.get_distance(leaf, 'init') < 4.1: 
-		print(leaf.name, t.get_distance(leaf.name, 'init'))
-		t.search_nodes(name=leaf.name)[0].delete() 
-
-
-print(t)
-
-
-
-
-
-
-
-	treelog.prev_id = treelog.gndx +"_"+ treelog.prev_id
-	treelog.id = treelog.gndx +"_"+ treelog.id
-    """
