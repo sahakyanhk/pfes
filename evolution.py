@@ -115,10 +115,10 @@ class Evolver():
 
 
 
-    def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool): 
+    def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, allowrepeats:bool): 
         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
         
-        if norepeat:
+        if not allowrepeats:
             mixed_pop = mixed_pop.drop_duplicates(subset=['sequence'])
 
         if selection_mode == "strong":
@@ -127,7 +127,7 @@ class Evolver():
         if selection_mode == "weak":
             weights = np.array(mixed_pop.score / mixed_pop.score.sum())
             weights[np.isnan(weights)] = 1e-100
-            new_init_gen = mixed_pop.sample(n=pop_size, weights=weights).sort_values('score', ascending=False)
+            new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=allowrepeats).sort_values('score', ascending=False)
 
         return new_init_gen
 

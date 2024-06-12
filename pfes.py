@@ -184,8 +184,8 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
             #check if the mutated seqeuece was already predicted
             seqmask = ancestral_memory.sequence == seq 
             
-            #if --norepeat and seq is in the ancestral_memory mutate it again
-            if args.norepeat and seqmask.any():  
+            #if --allowrepeats and seq is in the ancestral_memory mutate it again
+            if args.allowrepeats and seqmask.any():  
                 while seqmask.any():
                     seq, mutation_data = evolver.mutate(seq)
                     seqmask = ancestral_memory.sequence == seq 
@@ -228,7 +228,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         ancestral_memory =  ancestral_memory.append(init_gen)
 
         #select the next generation 
-        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
+        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.allowrepeats)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
@@ -298,8 +298,8 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
             #chek if the mutated seqeuece was already predicted
             seqmask = ancestral_memory.sequence == seq 
             
-            #if --norepeat and seq is in the ancestral_memory mutate it again
-            if args.norepeat and seqmask.any():  
+            #if --allowrepeats and seq is in the ancestral_memory mutate it again
+            if args.allowrepeats and seqmask.any():  
                 while seqmask.any():
                     seq, mutation_data = evolver.mutate(seq)
                     seqmask = ancestral_memory.sequence == seq 
@@ -346,7 +346,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         ancestral_memory =  ancestral_memory.append(init_gen)
 
         #select the next generation 
-        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
+        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.allowrepeats)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
@@ -414,7 +414,7 @@ if __name__ == '__main__':
             default=18,
     )
     parser.add_argument(                      
-            '--norepeat', action='store_true', 
+            '--allowrepeats', action='store_true', 
             help='do not allow to generate the same sequences', 
     )
     parser.add_argument(
@@ -462,7 +462,7 @@ if __name__ == '__main__':
 #--num_generations, -ng\t\t = {args.num_generations}
 #--pop_size, -ps\t\t = {args.pop_size}
 #--random_seq_len\t\t = {args.random_seq_len}
-#--norepeat\t\t\t = {args.norepeat}
+#--allowrepeats\t\t\t = {args.allowrepeats}
 #--nobackup\t\t\t = {args.nobackup}
 #--num-recycles\t\t\t = {args.num_recycles}
 #--max-tokens-per-batch\t\t = {args.max_tokens_per_batch}
