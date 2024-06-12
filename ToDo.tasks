@@ -10,32 +10,31 @@ TO DO:
         ☐ weak simulation with norepeat fails @bag
         ☐ ADD option to change the selection mode after n steps @high
         ☐ Add a new mutation type: circular permutation
-        ☐ continue simulations (all sequences from the generation are needed)
+        ☐ write checkpoint file and continue simulations (all sequences from the generation are needed)
         ☐ introduce/susbtitute inter_contacts with iPLDDT @high 
         ☐ make a tool for AA probability matrix calculation
         ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes 
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
         ☐ add rosetta scoring in visual_pfes for BEST PDB @high
-        ☐ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA + RETURN CONTACT QUALITY @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts
         ☐ add a new scoring term based of fold density volume/number of atoms https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1301551/pdf/11463623.pdf
         ☐ why some strucutres are missing when running visual_pfes? @bag  
         ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ add a function to indicate only several residues in the partner protetein for contacts. \
         It will constrain the number of possible contacts! @high 
-        ☐ add a function to save pdb (all atoms, only CA, ziped, etc) and 
+        ☐ add a function to save pdb (all atoms, only CA, ziped, etc) 
         ☐ Consider adding new mutation types: split sequnece and join sequences
         ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
         ###add more tools for analyses###
         ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
         ☐ write an sr_filter.py?
-        ☐ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py
-        ☐ http://etetoolkit.org/
         ☐ https://moviepy-tburrows13.readthedocs.io/en/improve-docs/ref/VideoClip/TextClip.html
         ☐ develop a new optimization strategy based on plddt (mutation probability in inversely proportional to the pLDDT)
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✔ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py @done (6/11/2024, 4:52:13 PM)
+            ✔ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA + RETURN CONTACT QUALITY @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts @done (6/11/2024, 4:50:49 PM)
             ✔ mutation reporter @high @done (4/26/2024, 4:07:14 PM)
             ✔ trajectory alingment #https://docs.mdanalysis.org/1.1.0/documentation_pages/analysis/align.html @done (4/19/2024, 11:47:44 AM)
             ✔ trajectory with side chains @done (4/26/2024, 4:08:28 PM)

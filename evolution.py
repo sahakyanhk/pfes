@@ -13,18 +13,10 @@ class Evolver():
                 'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
                 'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1
                 }
-    
-    non_point_mutations = {'+' : 0.8,    #single residue insertion
-                           '-' : 1,    #single residue deletion
-                           '*' : 0.3,    #partial duplication
-                           '/' : 0.3,    #random insertion 
-                           '%' : 1,    #partial deletion
-                           'd' : 0.01  #full duplication    
-                           } 
 
 
     #by number of codons
-    codontrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
+    codonrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
                   'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
                   'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
                   'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 6,  
@@ -37,13 +29,23 @@ class Evolver():
                     'K' : 0.0580, 'L' : 0.0965, 'M' : 0.0241, 'N' : 0.0406, 
                     'P' : 0.0475, 'Q' : 0.0393, 'R' : 0.0553, 'S' : 0.0665, 
                     'T' : 0.0536, 'V' : 0.0686, 'W' : 0.0110, 'Y' : 0.0292}
-    
+
+
+    non_point_mutations = {'+' : 0.8,    #single residue insertion
+                           '-' : 1,    #single residue deletion
+                           '*' : 0.3,    #partial duplication
+                           '/' : 0.3,    #random insertion 
+                           '%' : 1,    #partial deletion
+                           'd' : 0.01  #full duplication    
+                           } 
+
     three2one = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
                  'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
                  'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
                  'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
-        
-    evoldicts = {'flatrates': flatrates, 'codontrates': codontrates, 'uniprotrates': uniprotrates} 
+
+
+    evoldicts = {'flatrates': flatrates, 'codontrates': codonrates, 'uniprotrates': uniprotrates} 
 
     def __init__(self, evoldict: str):
         

@@ -9,12 +9,13 @@ import time
 import torch
 import esm
 
-from evolver import sequence_mutator, selector, randomseq
+from evolution import Evolver
 from score import get_nconts, get_inter_nconts
 from psique import pypsique
 from datetime import datetime
 
 
+#class PFEStools():
 
 def backup_output(outpath):
     print(f'\nSaving output files to {args.outpath}')
@@ -112,7 +113,7 @@ def esm2data(esm_out):
     pdbs = model.output_to_pdb(output)
     ptm = esm_out["ptm"].tolist()
     mean_plddt = esm_out["mean_plddt"].tolist()
-    return(pdbs, ptm, mean_plddt)
+    return(pdbs, ptm, mean_plddt) #score
 
 #to score.py
 
@@ -120,9 +121,9 @@ def sigmoid(x,L0=0,c=0.1):
     return 1 / (1+2.71828182**(c * (L0-x)))
 #--------------------------------------------
 
+
+
 #========================================CONCEPTS========================================# 
-def fold_evolver(args): 
-    print('not ready yet')
 def multimer_evolver(model, args):  
     print("evolution of interacting dimers")
 #========================================CONCEPTS========================================# 
@@ -130,8 +131,11 @@ def multimer_evolver(model, args):
 global new_gen #this will be modified in the extract_results() 
 
 #============================================================================#
+
+
+
 #================================FOLD_EVOLVER================================# 
-def fold_evolver(args, model, logheader, init_gen): 
+def fold_evolver(args, model, evolver, logheader, init_gen) -> None: 
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
@@ -154,6 +158,7 @@ def fold_evolver(args, model, logheader, init_gen):
              'mutation',
              'ss']
     
+
     ancestral_memory = pd.DataFrame(columns=columns)
     ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
     
@@ -167,15 +172,15 @@ def fold_evolver(args, model, logheader, init_gen):
         mutation_collection = []
 
         for prev_id, sequence in zip(init_gen.id, init_gen.sequence):
-            seq, mutation_data= sequence_mutator(sequence)
+            seq, mutation_data= evolver.mutate(sequence)
             
-            #chek if the mutated seqeuece was already predicted
+            #check if the mutated seqeuece was already predicted
             seqmask = ancestral_memory.sequence == seq 
             
             #if --norepeat and seq is in the ancestral_memory mutate it again
             if args.norepeat and seqmask.any():  
                 while seqmask.any():
-                    seq, mutation_data = sequence_mutator(seq)
+                    seq, mutation_data = evolver.mutate(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
             id = "g{0}seq{1}_{2}_{3}".format(gen_i, n, prev_id, mutation_data); n+=1 # give an uniq id even if the same sequence already exists            
@@ -216,7 +221,7 @@ def fold_evolver(args, model, logheader, init_gen):
         ancestral_memory =  ancestral_memory.append(init_gen)
 
         #select the next generation 
-        init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
+        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
@@ -230,7 +235,7 @@ def fold_evolver(args, model, logheader, init_gen):
 #==================================================================================#
 #================================INTER_FOLD_EVOLVER================================# 
 
-def inter_fold_evolver(args, model, logheader, init_gen) -> None: 
+def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None: 
 
     #evolution of an interacting chain
     PDB_6WXQ=":MKSYFVTMGFNETFLLRLLNETSAQKEDSLVIVVPSPIVSGTRAAIESLRAQISRLNYPPPRIYEIEITDFNLALSKILDIILTLPEPIISDLTMGMRMINLILLGIIVSRKRFTVYVRDE" # 6WXQ (12 to 134) 
@@ -281,7 +286,7 @@ def inter_fold_evolver(args, model, logheader, init_gen) -> None:
         mutation_collection = []
 
         for prev_id, sequence in zip(init_gen.id, init_gen.sequence):
-            seq, mutation_data= sequence_mutator(sequence)
+            seq, mutation_data= evolver.mutate(sequence)
             
             #chek if the mutated seqeuece was already predicted
             seqmask = ancestral_memory.sequence == seq 
@@ -289,7 +294,7 @@ def inter_fold_evolver(args, model, logheader, init_gen) -> None:
             #if --norepeat and seq is in the ancestral_memory mutate it again
             if args.norepeat and seqmask.any():  
                 while seqmask.any():
-                    seq, mutation_data = sequence_mutator(seq)
+                    seq, mutation_data = evolver.mutate(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
             id = "g{0}seq{1}_{2}_{3}".format(gen_i, n, prev_id, mutation_data); n+=1 # give an uniq id even if the same sequence already exists            
@@ -334,7 +339,7 @@ def inter_fold_evolver(args, model, logheader, init_gen) -> None:
         ancestral_memory =  ancestral_memory.append(init_gen)
 
         #select the next generation 
-        init_gen = selector(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
+        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
@@ -380,6 +385,11 @@ if __name__ == '__main__':
             '-ps', '--pop_size', type=int,
             help='population size',
             default=10,
+    )
+    parser.add_argument(
+            '-ed', '--evoldict', type=str,
+            help='population size',
+            default='codontrates',
     )
     parser.add_argument(
             '-pl0', '--prot_len_penalty', type=int,
@@ -452,7 +462,7 @@ if __name__ == '__main__':
 #
 #==========================================================#
 '''
-
+    
     print(logheader)
 
     #backup if output directory exists
@@ -466,16 +476,17 @@ if __name__ == '__main__':
 
     pdb_path = args.outpath + '/structures/' 
 
+    evolver = Evolver(args.evoldict)
 
     #create the initial generation
     if args.initial_seq == 'random':
-        randomsequence = randomseq(args.random_seq_len)
+        randomsequence = evolver.randomseq(args.random_seq_len)
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
                                  'sequence': [randomsequence] * args.pop_size})
 
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
-                                 'sequence': [randomseq(args.random_seq_len) for i in range(args.pop_size)]})
+                                 'sequence': [evolver.randomseq(args.random_seq_len) for i in range(args.pop_size)]})
 
     else: 
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
@@ -491,9 +502,9 @@ if __name__ == '__main__':
 
 
     if args.evolution_mode == "single_chain":
-        fold_evolver(args, model, logheader, init_gen)
+        fold_evolver(args, model, evolver, logheader, init_gen)
     elif args.evolution_mode == "inter_chain":
-        inter_fold_evolver(args, model, logheader, init_gen)
+        inter_fold_evolver(args, model, evolver, logheader, init_gen)
     elif args.evolution_mode == "multimer":
         print("sorry, I am not ready yet")
     elif not args.evolution_mode in ['single_chain', 'inter_chain', 'multimer']:

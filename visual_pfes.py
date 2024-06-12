@@ -137,8 +137,6 @@ def make_summary_plot(log, bestlog, lineage):
 #======================= seconday structure plot =======================#
 def make_ss_plot(lineage):
 
-    ms=0.5
-    lw=1.0
     dpi=500
 
     max_seq_len = int(max(lineage.seq_len))
@@ -310,8 +308,7 @@ bestlog = log.groupby('gndx').head(1)
 bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
 
 
-print('processing evolution trajectory')
-
+print('Extracting evolution trajectory')
 lineage = extract_lineage(log)
 lineage.to_csv(os.path.join(outdir, 'lineage.tsv'), sep='\t', index=False, header=True)
 
@@ -321,7 +318,9 @@ make_plots(log, bestlog, lineage)
 print('making summary plot')
 make_summary_plot(log, bestlog, lineage)
 
-print('making summary plot')
+print('making secondary structure plot')
 make_ss_plot(lineage)
+
+print('making backbone trajectory')
 backbone_traj(lineage, pdbdir)
 
