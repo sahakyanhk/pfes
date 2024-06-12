@@ -235,7 +235,7 @@ def backbone_traj(trajlog, pdbdir):
     PDB_A, PDB_B, lastBB_A, lastBB_B = [], [], [], []
     for pdb in tqdm(sorted_alphanumeric(os.listdir(trajpdb))):
         with gzip.open(os.path.join(trajpdb, pdb), 'rb') as file:
-            pdb_txt = file.read()
+            pdb_txt = file.read().decode()
         bb_chain_A, bb_chain_B = [], []
         for line in pdb_txt.splitlines():
             col = line.split()
