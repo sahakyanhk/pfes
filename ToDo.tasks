@@ -7,6 +7,7 @@ TO DO:
             Run ~100 simulations with until threy reach a certen condition (plddt70 & ptm70)
             Do only point motations and start with ~50 residue long random sequnece.
             How long it takes to evold a fold? How it changes with the population size
+        Write each generation in a tar.gz archive to save space
         ☐ weak simulation with norepeat fails @bag
         ☐ ADD option to change the selection mode after n steps @high
         ☐ Add a new mutation type: circular permutation

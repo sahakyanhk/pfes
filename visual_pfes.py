@@ -3,6 +3,7 @@ import os, re
 import pandas as pd
 import numpy as np
 import shutil
+import gzip
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -221,9 +222,9 @@ def backbone_traj(trajlog, pdbdir):
         print(f'{pfeslen} uniqs sequences with the best folds are selected') # do not copy files, just make a list and extract BB coords from pdb dir
         for gndx, pdbid in tqdm(zip(trajlog.gndx, trajlog.id), total=len(trajlog)):
             try:
-                shutil.copy(pdbdir +'/' + pdbid +'.pdb', trajpdb +'/'+ gndx + '.pdb')
+                shutil.copy(pdbdir +'/' + pdbid +'.pdb.gz', trajpdb +'/'+ gndx + '.pdb.gz')
             except FileNotFoundError:
-                print(pdbid +'.pdb is missing' )
+                print(pdbid +'.pdb.gz is missing' )
                 pass
     else: 
         print(f'The best folds from {pfeslen} generations are selected')
@@ -233,7 +234,7 @@ def backbone_traj(trajlog, pdbdir):
     i=0
     PDB_A, PDB_B, lastBB_A, lastBB_B = [], [], [], []
     for pdb in tqdm(sorted_alphanumeric(os.listdir(trajpdb))):
-        with open(os.path.join(trajpdb, pdb), 'r') as file:
+        with gzip.open(os.path.join(trajpdb, pdb), 'rb') as file:
             pdb_txt = file.read()
         bb_chain_A, bb_chain_B = [], []
         for line in pdb_txt.splitlines():
@@ -312,14 +313,14 @@ print('Extracting evolution trajectory')
 lineage = extract_lineage(log)
 lineage.to_csv(os.path.join(outdir, 'lineage.tsv'), sep='\t', index=False, header=True)
 
-print('making plots')
-make_plots(log, bestlog, lineage)
-
-print('making summary plot')
-make_summary_plot(log, bestlog, lineage)
-
-print('making secondary structure plot')
-make_ss_plot(lineage)
+# print('making plots')
+# make_plots(log, bestlog, lineage)
+# 
+# print('making summary plot')
+# make_summary_plot(log, bestlog, lineage)
+# 
+# print('making secondary structure plot')
+# make_ss_plot(lineage)
 
 print('making backbone trajectory')
 backbone_traj(lineage, pdbdir)

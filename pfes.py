@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import typing as T
 import threading
-import multiprocessing
+import gzip
 import time
 import torch
 import esm
@@ -65,8 +65,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         prev_id = id_data[1]
         mutation = id_data[2]
 
-        with open(pdb_path + id + '.pdb', 'w') as f: # TODO conver this into a function
-            f.write(pdb_txt)   
+        with open(pdb_path + id + '.pdb', 'wb') as f: # TODO conver this into a function
+            f.write(pdb_txt.encode())   
 
         #================================SCORING================================# 
         num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
@@ -103,8 +103,15 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'sequence': seq, 
                                 'mutation': mutation,
                                 'ss': ss}, index=[0])
-    
+        
         new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
+        os.system(f"gzip {pdb_path}{id}'.pdb' ")
+
+        # with open(pdb_path + id + '.pdb', 'rb') as f_pdb:
+        #     with gzip.open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
+        #         shutil.copyfileobj(f_pdb, f_pdb_gz)
+        #         shutil
+
     print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
 
 
@@ -389,7 +396,7 @@ if __name__ == '__main__':
     parser.add_argument(
             '-ed', '--evoldict', type=str,
             help='population size',
-            default='codontrates',
+            default='codonrates',
     )
     parser.add_argument(
             '-pl0', '--prot_len_penalty', type=int,

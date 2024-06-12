@@ -7,16 +7,16 @@ import typing as T
 
 class Evolver():
 
-    flatrates ={'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
-                'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
-                'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
-                'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
-                'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1
-                }
+    flatrates = {'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
+                 'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
+                 'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
+                 'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
+                 'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1
+                 }
 
 
     #by number of codons
-    codonrates ={'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
+    codonrates = {'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
                   'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
                   'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
                   'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 6,  
@@ -33,10 +33,10 @@ class Evolver():
 
     non_point_mutations = {'+' : 0.8,    #single residue insertion
                            '-' : 1,    #single residue deletion
-                           '*' : 0.3,    #partial duplication
-                           '/' : 0.3,    #random insertion 
-                           '%' : 1,    #partial deletion
-                           'd' : 0.01  #full duplication    
+                           '*' : 0.1,    #partial duplication
+                           '/' : 0.1,    #random insertion 
+                           '%' : 0.5,    #partial deletion
+                           'd' : 0.001  #full duplication    
                            } 
 
     three2one = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
@@ -45,7 +45,7 @@ class Evolver():
                  'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
 
 
-    evoldicts = {'flatrates': flatrates, 'codontrates': codonrates, 'uniprotrates': uniprotrates} 
+    evoldicts = {'flatrates': flatrates, 'codonrates': codonrates, 'uniprotrates': uniprotrates} 
 
     def __init__(self, evoldict: str):
         
@@ -115,7 +115,7 @@ class Evolver():
 
 
 
-    def selec(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool): 
+    def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool): 
         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
         
         if norepeat:
