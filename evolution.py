@@ -39,6 +39,12 @@ class Evolver():
                            'd' : 0.001  #full duplication    
                            } 
 
+    one2three = {'C': 'CYS', 'D': 'ASP', 'S': 'SER', 'Q': 'GLN', 'K': 'LYS',
+                 'I': 'ILE', 'P': 'PRO', 'T': 'THR', 'F': 'PHE', 'N': 'ASN', 
+                 'G': 'GLY', 'H': 'HIS', 'L': 'LEU', 'R': 'ARG', 'W': 'TRP', 
+                 'A': 'ALA', 'V': 'VAL', 'E': 'GLU', 'Y': 'TYR', 'M': 'MET'}
+
+
     three2one = {'CYS': 'C', 'ASP': 'D', 'SER': 'S', 'GLN': 'Q', 'LYS': 'K',
                  'ILE': 'I', 'PRO': 'P', 'THR': 'T', 'PHE': 'F', 'ASN': 'N', 
                  'GLY': 'G', 'HIS': 'H', 'LEU': 'L', 'ARG': 'R', 'TRP': 'W', 
@@ -98,16 +104,16 @@ class Evolver():
             sequence_mutated = sequence[:mutation_position] + sequence[mutation_position + deletion_len:]
             mutation_info = f'{sequence[mutation_position]}{mutation_position+1}%{deletion_len}'
 
-        elif mutation =='d':
+        elif mutation =='p' and len(sequence) > 5: #permutation 
+            sequence_mutated =  sequence[mutation_position:] + sequence[:mutation_position]
+            mutation_info = f'{sequence[mutation_position]}{mutation_position+1}p{mutation}'
+
+        elif mutation =='d': #full duplication
             linker = self.randomseq(4)
             sequence_mutated = sequence + linker + sequence     
             mutation_info = f'd{linker}'
             
         elif mutation =='r' and len(sequence) > 5: #TODO recombination 
-            sequence_mutated = sequence
-            mutation_info = f'{mutation_position+1}'
-
-        elif mutation =='p' and len(sequence) > 5: #TODO permutation 
             sequence_mutated = sequence
             mutation_info = f'{mutation_position+1}'
 

@@ -7,14 +7,13 @@ TO DO:
             Run ~100 simulations with until threy reach a certen condition (plddt70 & ptm70)
             Do only point motations and start with ~50 residue long random sequnece.
             How long it takes to evold a fold? How it changes with the population size
-        ☐ Write each generation in a tar.gz archive to save space
-        ☐ @critical the same sequence reported with different mutations
+        ✔ Write each generation in a .gz archive to save space @done (6/13/2024, 9:03:25 AM)
+        ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
         ☐ @critical weak simulation with norepeat fails
         ☐ ADD option to change the selection mode after n steps @high
         ☐ Add a new mutation type: circular permutation
         ☐ write checkpoint file and continue simulations (all sequences from the generation are needed)
         ☐ introduce/susbtitute inter_contacts with iPLDDT @high 
-        ☐ make a tool for AA probability matrix calculation
         ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes 
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
         ☐ add rosetta scoring in visual_pfes for BEST PDB @high
@@ -35,6 +34,7 @@ TO DO:
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✔ make a tool for AA probability matrix calculation @done (6/13/2024, 9:03:59 AM)
             ✔ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py @done (6/11/2024, 4:52:13 PM)
             ✔ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA + RETURN CONTACT QUALITY @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts @done (6/11/2024, 4:50:49 PM)
             ✔ mutation reporter @high @done (4/26/2024, 4:07:14 PM)

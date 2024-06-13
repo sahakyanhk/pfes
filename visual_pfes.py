@@ -20,6 +20,9 @@ parser.add_argument('-l', '--log', type=str, help='log file name', default='prog
 parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='structures')
 parser.add_argument('-t', '--traj', type=str, help='make backbone trajectory', default='pfestraj.pdb')
 parser.add_argument('-o', '--outdir', type=str, help='output directory name', default='visual_pfes_results')
+parser.add_argument('--notraj', action='store_false', )
+parser.add_argument('--noplots', action='store_false', )
+
 
 args = parser.parse_args()
 
@@ -313,15 +316,19 @@ print('Extracting evolution trajectory')
 lineage = extract_lineage(log)
 lineage.to_csv(os.path.join(outdir, 'lineage.tsv'), sep='\t', index=False, header=True)
 
-# print('making plots')
-# make_plots(log, bestlog, lineage)
-# 
-# print('making summary plot')
-# make_summary_plot(log, bestlog, lineage)
-# 
-# print('making secondary structure plot')
-# make_ss_plot(lineage)
 
-print('making backbone trajectory')
-backbone_traj(lineage, pdbdir)
+
+if args.noplots:
+    print('making plots')
+    make_plots(log, bestlog, lineage)
+
+    print('making summary plot')
+    make_summary_plot(log, bestlog, lineage)
+
+    print('making secondary structure plot')
+    make_ss_plot(lineage)
+
+if args.notraj:
+    print('making backbone trajectory')
+    backbone_traj(lineage, pdbdir)
 

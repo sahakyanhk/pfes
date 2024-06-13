@@ -401,17 +401,17 @@ if __name__ == '__main__':
     parser.add_argument(
             '-pl0', '--prot_len_penalty', type=int,
             help='population size',
-            default=100,
+            default=200,
     )
     parser.add_argument(
             '-hl0', '--helix_len_penalty', type=int,
             help='population size',
-            default=25,
+            default=40,
     )
     parser.add_argument(
             '--random_seq_len', type=int,
             help='a sequence to initiate with',
-            default=18,
+            default=24,
     )
     parser.add_argument(                      
             '--norepeat', action='store_true', 
@@ -422,18 +422,18 @@ if __name__ == '__main__':
             help='owerride files if exists',
     )
     parser.add_argument(
-        '--num-recycles',
-        type=int,
-        default=4,
-        help="Number of recycles to run. Defaults to number used in training (4).",
+            '--num-recycles',
+            type=int,
+            default=16,
+            help="Number of recycles to run. Defaults to number used in training (4).",
     )
     parser.add_argument(
-        '--max-tokens-per-batch',
-        type=int,
-        default=1024,
-        help="Maximum number of tokens per gpu forward-pass. This will group shorter sequences together "
-        "for batched prediction. Lowering this can help with out of memory issues, if these occur on "
-        "short sequences.",
+            '--max-tokens-per-batch',
+            type=int,
+            default=5120,
+            help="Maximum number of tokens per gpu forward-pass. This will group shorter sequences together "
+            "for batched prediction. Lowering this can help with out of memory issues, if these occur on "
+            "short sequences.",
     )
 
     args = parser.parse_args()
