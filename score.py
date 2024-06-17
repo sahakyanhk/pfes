@@ -165,9 +165,9 @@ def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt
         for i in range(n_atoms_A):
             for j in range(i + 1, n_atoms_B):
                 if distances_matrix[i, j] < distance_cutoff:
-                    pairs_data = np.append(pairs_data, [[row, ca_data_A[i][0], ca_data_B[j][0], distances_matrix[i, j]]], axis=0)
+                    #pairs_data = np.append(pairs_data, [[row, ca_data_A[i][0], ca_data_B[j][0], distances_matrix[i, j]]], axis=0)
                     row += 1 
-        return(len(pairs_data)+1, round(CA_pLDDT_A * 0.01, 3))
+        return(len(row)+1, round(CA_pLDDT_A * 0.01, 3))
 
 
 # for rosetta 

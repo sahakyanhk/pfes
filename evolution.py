@@ -36,7 +36,8 @@ class Evolver():
                            '*' : 0.1,    #partial duplication
                            '/' : 0.1,    #random insertion 
                            '%' : 0.5,    #partial deletion
-                           'd' : 0.001  #full duplication    
+                           'p' : 0.1,   #cyrcular permutation
+                           'd' : 0.05  #full duplication    
                            } 
 
     one2three = {'C': 'CYS', 'D': 'ASP', 'S': 'SER', 'Q': 'GLN', 'K': 'LYS',
@@ -116,6 +117,9 @@ class Evolver():
         elif mutation =='r' and len(sequence) > 5: #TODO recombination 
             sequence_mutated = sequence
             mutation_info = f'{mutation_position+1}'
+
+        #random change for a chanck of the sequence. (imitation of a frameshift)
+
 
         return sequence_mutated, mutation_info
 

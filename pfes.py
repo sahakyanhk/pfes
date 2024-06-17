@@ -8,6 +8,8 @@ import gzip
 import time
 import torch
 import esm
+from scipy.special import softmax
+
 
 from evolution import Evolver
 from score import get_nconts, get_inter_nconts
@@ -50,6 +52,31 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
     yield batch_headers, batch_sequences
 
 
+def esm2data(esm_out):
+    output = {key: value.cpu() for key, value in esm_out.items()}
+    pdbs = model.output_to_pdb(output)
+    ptm = esm_out["ptm"].tolist()
+    mean_plddt = esm_out["mean_plddt"].tolist()
+    plddt = np.array(output["plddt"][0,:,1].tolist())/100
+    #calculate the numbe of contacts
+    bins = np.append(0,np.linspace(2.3125,21.6875,63))
+    #you do not need softmax to keep the actual values! 
+    sm_contacts = softmax(output["distogram_logits"],-1)
+    sm_contacts = sm_contacts[...,bins<8].sum(-1)
+    mask = output["atom37_atom_exists"][0,:,1] == 1
+    contact_map = sm_contacts[0][mask,:][:,mask]
+    num_conts = []
+    return(pdbs, ptm, mean_plddt, contact_map) #score
+
+def esm2contact(esm_out):
+    return
+
+#to score.py
+
+def sigmoid(x,L0=0,c=0.1):
+    return 1 / (1+2.71828182**(c * (L0-x)))
+#--------------------------------------------
+
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
     
@@ -84,13 +111,13 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           ptm,                  #[0, 1]
                           prot_len_penalty,     #[0, 1]
                           max_helix_penalty,    #[0, 1]
+#                          (num_conts + seq_len) / seq_len,     #[~0, inf]
                           num_conts**(1/3),     #[~0, inf]
                           num_inter_conts**(1/4)])   #[~0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
         #================================SCORING================================#
         iterlog = pd.DataFrame({'gndx': gen_i,
-                                'prev_id': prev_id,
                                 'id': id, 
                                 'seq_len': seq_len,
                                 'prot_len_penalty': round(prot_len_penalty, 3), 
@@ -102,6 +129,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'score': round(score, 3), 
                                 'sequence': seq, 
                                 'mutation': mutation,
+                                'prev_id': prev_id,
                                 'ss': ss}, index=[0])
         
         new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
@@ -113,20 +141,6 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         #         shutil
 
     print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
-
-
-def esm2data(esm_out):
-    output = {key: value.cpu() for key, value in esm_out.items()}
-    pdbs = model.output_to_pdb(output)
-    ptm = esm_out["ptm"].tolist()
-    mean_plddt = esm_out["mean_plddt"].tolist()
-    return(pdbs, ptm, mean_plddt) #score
-
-#to score.py
-
-def sigmoid(x,L0=0,c=0.1):
-    return 1 / (1+2.71828182**(c * (L0-x)))
-#--------------------------------------------
 
 
 
@@ -151,7 +165,6 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
     #creare an initial pool of sequences with pop_size
     columns=['gndx',
-             'prev_id',
              'id', 
              'seq_len', 
              'prot_len_penalty', 
@@ -163,6 +176,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
              'score', 
              'sequence', 
              'mutation',
+             'prev_id',
              'ss']
     
 
@@ -194,11 +208,11 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
             if seqmask.any(): #if sequence already exits do not predict a structure again 
                 repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'], keep='last') 
-                try:
-                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id.split('_')[0] + '.pdb')  
-                except  FileNotFoundError: 
-                    pass
-                repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
+                #try:
+                #    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id.split('_')[0] + '.pdb')  
+                #except  FileNotFoundError: 
+                #    pass
+                #repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
                 new_gen = new_gen.append(repeat)
             else:
                 generated_sequences.append((id, seq)) 
@@ -212,7 +226,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         for headers, sequences in batched_sequences:
             pdbs, ptms, mean_plddts = [], [], []
             with torch.no_grad(): 
-                pdbs, ptms, mean_plddts = esm2data(model.infer(sequences, 
+                pdbs, ptms, mean_plddts, num_contacts = esm2data(model.infer(sequences, 
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
@@ -233,12 +247,30 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
 #================================FOLD_EVOLVER================================# 
-#============================================================================# 
-
-
-
-
-
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
 #==================================================================================#
 #================================INTER_FOLD_EVOLVER================================# 
 
@@ -266,7 +298,6 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
     #creare an initial pool of sequences with pop_size
     columns = ['gndx',
-               'prev_id',
                'id', 
                'seq_len', 
                'prot_len_penalty',
@@ -278,6 +309,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                'score', 
                'sequence', 
                'mutation',
+               'prev_id',
                'ss'] 
       
     ancestral_memory = pd.DataFrame(columns=columns)
@@ -308,14 +340,14 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
             if seqmask.any(): #if sequence already exits do not predict a structure again 
                 repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'], keep='last') 
-                try:
-                    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id.split('_')[0] + '.pdb')  
-                except  FileNotFoundError: 
-                    pass
-                repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
+                #try:
+                #    shutil.copyfile(pdb_path + repeat.id.values[0] + '.pdb', pdb_path + id.split('_')[0] + '.pdb')  
+                #except  FileNotFoundError: 
+                #    pass
+                #repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
                 new_gen = new_gen.append(repeat)
             else:
-                generated_sequences.append((id, seq +":"+ seq)) #(seq+seq2)) add a function to select the sma
+                generated_sequences.append((id, seq +":"+ seq2)) #(seq+seq2)) add a function to select the sma
                 mutation_collection.append(mutation_data)    
 
 
@@ -326,7 +358,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         for headers, sequences in batched_sequences:
             pdbs, ptms, mean_plddts = [], [], []
             with torch.no_grad(): 
-                pdbs, ptms, mean_plddts = esm2data(model.infer(sequences, 
+                pdbs, ptms, mean_plddts, num_contacts = esm2data(model.infer(sequences, 
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
@@ -406,7 +438,7 @@ if __name__ == '__main__':
     parser.add_argument(
             '-hl0', '--helix_len_penalty', type=int,
             help='population size',
-            default=40,
+            default=20,
     )
     parser.add_argument(
             '--random_seq_len', type=int,
@@ -419,6 +451,10 @@ if __name__ == '__main__':
     )
     parser.add_argument(
             '--nobackup', action='store_true', 
+            help='owerride files if exists',
+    )
+    parser.add_argument(
+            '--continue', action='store_true', 
             help='owerride files if exists',
     )
     parser.add_argument(
@@ -437,12 +473,13 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
-    
+    evolver = Evolver(args.evoldict)
 
     now = datetime.now() # current date and time
     date_now = now.strftime("%d-%b-%Y")
     time_now = now.strftime("%H:%M:%S")
     
+
 
     logheader = f'''#======================== PFESv0.1 ========================#
 #====================== {date_now} =======================#
@@ -467,7 +504,7 @@ if __name__ == '__main__':
 #--nobackup\t\t\t = {args.nobackup}
 #--num-recycles\t\t\t = {args.num_recycles}
 #--max-tokens-per-batch\t\t = {args.max_tokens_per_batch}
-#
+# evolution dictionary = {evolver.evoldict}
 #==========================================================#
 '''
     
@@ -483,8 +520,6 @@ if __name__ == '__main__':
         backup_output(args.outpath)
 
     pdb_path = args.outpath + '/structures/' 
-
-    evolver = Evolver(args.evoldict)
 
     #create the initial generation
     if args.initial_seq == 'random':

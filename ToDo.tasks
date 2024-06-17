@@ -7,9 +7,15 @@ TO DO:
             Run ~100 simulations with until threy reach a certen condition (plddt70 & ptm70)
             Do only point motations and start with ~50 residue long random sequnece.
             How long it takes to evold a fold? How it changes with the population size
+
+            Allow all mutationsstart with ~24 residue long random sequnece.
+            How long it takes to evold a fold? How it changes with the population size
+
+
         ✔ Write each generation in a .gz archive to save space @done (6/13/2024, 9:03:25 AM)
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
         ☐ @critical weak simulation with norepeat fails
+        ☐ calculate the number of ss elements in pfes
         ☐ ADD option to change the selection mode after n steps @high
         ☐ Add a new mutation type: circular permutation
         ☐ write checkpoint file and continue simulations (all sequences from the generation are needed)
