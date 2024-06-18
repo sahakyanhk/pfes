@@ -1,4 +1,3 @@
-#DIR=$(cd $(dirname $0); pwd)
 
 
 TO DO:
@@ -37,6 +36,7 @@ TO DO:
         ☐ write an sr_filter.py?
         ☐ https://moviepy-tburrows13.readthedocs.io/en/improve-docs/ref/VideoClip/TextClip.html
         ☐ develop a new optimization strategy based on plddt (mutation probability in inversely proportional to the pLDDT)
+        ☐ add absolute stability scoring using ESM-IF https://github.com/KULL-Centre/_2024_cagiada_stability/blob/main/stab_ESM_IF.ipynb @high
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:

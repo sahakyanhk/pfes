@@ -312,7 +312,7 @@ bestlog = log.groupby('gndx').head(1)
 bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
 
 
-print('Extracting evolution trajectory')
+print('Extracting lineage')
 lineage = extract_lineage(log)
 lineage.to_csv(os.path.join(outdir, 'lineage.tsv'), sep='\t', index=False, header=True)
 

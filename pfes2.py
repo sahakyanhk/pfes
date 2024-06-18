@@ -66,10 +66,14 @@ def esm2data(esm_out):
     mask = output["atom37_atom_exists"][0,:,1] == 1
     contact_map = sm_contacts[0][mask,:][:,mask]
     num_conts = []
+    """
+    Return the number of contact and individual plddts (write it in the log). 
+    In the case of dimers, return also the number of interchain interaction with indexes. 
+    Use indexes to calculate iPLDDT
+
+    """
     return(pdbs, ptm, mean_plddt, contact_map) #score
 
-def esm2contact(esm_out):
-    return
 
 #to score.py
 
@@ -248,10 +252,12 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
+        #write init_gen as a checkpoit file to continue the simulation
+
         #STOPPER
-        #df = init_gen.groupby('gndx').head(1)
-        #if (df['mean_plddt'] > 0.8) & (df['ptm'] > 0.7) & (df['seq_len'] > 50):
-        #   break
+        if ((init_gen['mean_plddt'] > 0.9) & (init_gen['ptm'] > 0.8)).any():
+            print(f'gndx={gen_i}; the condition reached, breaking!')
+            break
 
 
 #================================FOLD_EVOLVER================================# 
