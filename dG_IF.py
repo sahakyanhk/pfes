@@ -1,5 +1,8 @@
+#https://github.com/KULL-Centre/_2024_cagiada_stability/blob/main/stab_ESM_IF.ipynb
+
+
+
 import os,time,subprocess,re,sys,shutil
-from google.colab import files
 import torch
 import numpy as np
 import pandas as pd
@@ -10,6 +13,7 @@ import esm
 from esm.inverse_folding.util import load_structure, extract_coords_from_structure,CoordBatchConverter
 from esm.inverse_folding.multichain_util import extract_coords_from_complex,_concatenate_coords,load_complex_coords
 
+IF_model_name = "esm_if1_gvp4_t16_142M_UR50.pt"
 
 print("importing the model")
 
@@ -18,7 +22,6 @@ model.eval().cuda().requires_grad_(False)
 
 
 #@title PRELIMINARY OPERATIONS: Load EXTRA functions
-#@markdown Run the cell to load the required functions
 
 def run_model(coords,sequence,model,cmplx=False,chain_target='A'):
 

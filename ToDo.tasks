@@ -14,6 +14,7 @@ TO DO:
         ✔ Write each generation in a .gz archive to save space @done (6/13/2024, 9:03:25 AM)
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
         ☐ @critical weak simulation with norepeat fails
+        ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB or here https://www.rcsb.org/structure/7EL1
         ☐ calculate the number of ss elements in pfes
         ☐ ADD option to change the selection mode after n steps @high
         ☐ Add a new mutation type: circular permutation

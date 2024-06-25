@@ -56,7 +56,6 @@ rm *_all_seqs.fasta *_cluster.tsv
 ################clust80################
 $muscle5 -align c90_rep_seq.fasta -output c90_aln.afa
 $reformat fas a3m c90_aln.afa c90_aln.a3m
-plt.xticks(rotation=90)
 
 cat c90_aln.afa |\
  awk '/^>/ {printf("\n%s\n",$0);next; } { printf("%s",$0);}  END {printf("\n");}' |\
