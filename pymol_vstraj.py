@@ -53,19 +53,19 @@ n = len(pdbs)
 
 print(f'{n} structures will be rendered')
 
-cmd.load(f'{pdb_dir}/gndx0.pdb', 'pdb_0')
+cmd.load(f'{pdb_dir}/gndx0.pdb.gz', 'pdb_0')
 cmd.orient()
 # cmd.color("grey", 'pdb_0' and "chain B")
 # cmd.spectrum("b", "blue_white_red",  'pdb_0' and "chain A")
 #view = cmd.get_view(0) # or set view from pymol
 
 view = (\
-    -0.662288547,    0.279547274,   -0.695146739,\
-    -0.258334965,   -0.956097603,   -0.138361573,\
-    -0.703303277,    0.087945201,    0.705426872,\
-     0.000000000,    0.000000000, -118.980194092,\
-     1.166843414,   -0.236452103,    0.641117096,\
-    91.269935608,  146.690429688,  -20.000000000 )
+    -0.598387778,   -0.758106351,   -0.259237885,\
+    -0.801203966,    0.565543413,    0.195526391,\
+    -0.001619424,    0.324702770,   -0.945814610,\
+     0.000000000,    0.000000000, -211.443313599,\
+    -0.207395554,   -1.007884979,   -0.246271133,\
+   177.428543091,  245.458114624,  -20.000000000 )
 
 # cmd.set_view(view)
 # cmd.png('frames/frame_0.png', width=800, height=600, dpi=30)
@@ -86,6 +86,7 @@ for pdb in pdbs:
     cmd.color("white", q and "chain B")
     cmd.spectrum("b", "red_yellow_blue",  q and "chain A", minimum=0, maximum=100)
     cmd.show("sticks",  q and "chain A")
+    cmd.set("stick_radius", 0.15)
     cmd.set("ray_shadows", 1)
     cmd.set("ray_trace_mode", 0)
     cmd.set("ray_trace_gain", 25)
