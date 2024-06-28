@@ -11,13 +11,12 @@ TO DO:
             How long it takes to evold a fold? How it changes with the population size
 
 
-        ✔ Write each generation in a .gz archive to save space @done (6/13/2024, 9:03:25 AM)
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
         ☐ @critical weak simulation with norepeat fails
-        ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB or here https://www.rcsb.org/structure/7EL1
+        ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB  or here https://www.rcsb.org/structure/7EL1
         ☐ calculate the number of ss elements in pfes
         ☐ ADD option to change the selection mode after n steps @high
-        ☐ Add a new mutation type: circular permutation
+        ✔ Add a new mutation type: circular permutation @done (6/27/2024, 9:55:24 PM)
         ☐ write checkpoint file and continue simulations (all sequences from the generation are needed)
         ☐ introduce/susbtitute inter_contacts with iPLDDT @high 
         ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes 
@@ -41,6 +40,7 @@ TO DO:
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✔ Write each generation in a .gz archive to save space @done (6/13/2024, 9:03:25 AM)
             ✔ make a tool for AA probability matrix calculation @done (6/13/2024, 9:03:59 AM)
             ✔ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py @done (6/11/2024, 4:52:13 PM)
             ✔ Score testing and adjusting, MAKE NUMBER OF CONTACTS IN HELIX 1/AA + RETURN CONTACT QUALITY @high  https://mdadocs.minium.com.au/2.0.0-dev0/documentation_pages/analysis/contacts.html#module-MDAnalysis.analysis.contacts @done (6/11/2024, 4:50:49 PM)

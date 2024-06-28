@@ -46,7 +46,7 @@ pdbs=sorted_alphanumeric(os.listdir(pdb_dir))
 #     pdbid = gen1[gen1.score == gen1.score.max()].head(1).id.item()
 #     pdbs.append(pdbid +'.pdb')
 
-pdbs = pdbs[0:len(pdbs):1] #selec every one change 1 to 2 to select every 2th
+pdbs = pdbs[0:len(pdbs):2] #selec every one change 1 to 2 to select every 2th
 
 n = len(pdbs)
 
@@ -60,12 +60,12 @@ cmd.orient()
 #view = cmd.get_view(0) # or set view from pymol
 
 view = (\
-    -0.598387778,   -0.758106351,   -0.259237885,\
-    -0.801203966,    0.565543413,    0.195526391,\
-    -0.001619424,    0.324702770,   -0.945814610,\
-     0.000000000,    0.000000000, -211.443313599,\
-    -0.207395554,   -1.007884979,   -0.246271133,\
-   177.428543091,  245.458114624,  -20.000000000 )
+    -0.187737256,    0.912775278,   -0.362755269,\
+     0.289764911,    0.404352784,    0.867484272,\
+     0.938501596,    0.057745360,   -0.340403259,\
+     0.000000000,    0.000000000, -231.963638306,\
+     0.568006516,    0.961885452,   -0.382167816,\
+   180.984054565,  282.943267822,  -20.000000000 )
 
 # cmd.set_view(view)
 # cmd.png('frames/frame_0.png', width=800, height=600, dpi=30)
