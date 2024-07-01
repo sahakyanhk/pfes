@@ -58,28 +58,41 @@ def esm2data(esm_out):
     ptm = esm_out["ptm"].tolist()
     mean_plddt = esm_out["mean_plddt"].tolist()
     plddt = np.array(output["plddt"][0,:,1].tolist())/100
+    
     #calculate the numbe of contacts
-    bins = np.append(0,np.linspace(2.3125,21.6875,63))
-    #you do not need softmax to keep the actual values! 
-    sm_contacts = softmax(output["distogram_logits"],-1)
-    sm_contacts = sm_contacts[...,bins<8].sum(-1)
-    mask = output["atom37_atom_exists"][0,:,1] == 1
-    contact_map = sm_contacts[0][mask,:][:,mask]
-    num_conts = []
-    return(pdbs, ptm, mean_plddt, contact_map) #score
+    # bins = np.append(0,np.linspace(2.3125,21.6875,63))
+    # #you do not need softmax to keep the actual values! 
+    # sm_contacts = softmax(output["distogram_logits"],-1)
+    # sm_contacts = sm_contacts[...,bins<8].sum(-1)
+    # mask = output["atom37_atom_exists"][0,:,1] == 1
+    # contact_map = sm_contacts[0][mask,:][:,mask]
+    # num_conts = []
+    """
+    Return the number of contact and individual plddts (write it in the log). 
+    In the case of dimers, return also the number of interchain interaction with indexes. 
+    Use indexes to calculate iPLDDT
 
-def esm2contact(esm_out):
-    return
+    """
+    return(pdbs, ptm, mean_plddt) #return score instead
+
+
+
+def selection_mode_changer(plddt:float, ptm:float) -> str:
+    if ((init_gen['mean_plddt'] > plddt) & (init_gen['ptm'] > ptm)).any():
+        return 'strong'
 
 #to score.py
 
 def sigmoid(x,L0=0,c=0.1):
     return 1 / (1+2.71828182**(c * (L0-x)))
+
+
+
 #--------------------------------------------
 
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
-    
+
     for full_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
         
         all_seqs = seq.split(':')
@@ -112,7 +125,6 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           prot_len_penalty,     #[0, 1]
                           max_helix_penalty,    #[0, 1]
                           (num_conts + seq_len) / seq_len,     #[~0, inf]
-#                          num_conts**(1/3),     #[~0, inf]
                           num_inter_conts**(1/4)])   #[~0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
@@ -162,7 +174,8 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     with open(os.path.join(args.outpath, args.log), 'w') as f:
         f.write(logheader)
 
-
+    condition = True
+    
     #creare an initial pool of sequences with pop_size
     columns=['gndx',
              'id', 
@@ -226,7 +239,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         for headers, sequences in batched_sequences:
             pdbs, ptms, mean_plddts = [], [], []
             with torch.no_grad(): 
-                pdbs, ptms, mean_plddts, num_contacts = esm2data(model.infer(sequences, 
+                pdbs, ptms, mean_plddts  = esm2data(model.infer(sequences, 
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
@@ -240,18 +253,38 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         
         #print(f"#GENtime {datetime.now() - now}")
         ancestral_memory =  ancestral_memory.append(init_gen)
-        
-
-
         #select the next generation 
         init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
+        #write init_gen as a checkpoit file to continue the simulation
+
+
+        #if condition:
+            #then the rest here
+        #Change the selection with a condition (plddt, ptm)
+        if args.strong_sm_by_condition:
+            if (init_gen['mean_plddt'] > 0.6) & (init_gen['ptm'] > 0.5).any() & condition:
+                args.selection_mode = 'strong'
+                condition = False #do not change args.selection_mode anymore
+                with open(os.path.join(args.outpath, args.log), mode='a') as f:
+                    f.write("#changing the selection mode to strong")
+
+        #Change the selection mode after n generations
+        if args.strong_sm_after_n_steps > 0:
+            if (gen_i > args.strong_sm_after_n_steps) & condition:
+                args.selection_mode = 'strong'
+                condition = False #do not change args.selection_mode anymore
+                print("#changing the selection mode to strong")
+                with open(os.path.join(args.outpath, args.log), mode='a') as f:
+                    f.write("#changing the selection mode to strong")
+
         #STOPPER
-        #df = init_gen.groupby('gndx').head(1)
-        #if (df['mean_plddt'] > 0.8) & (df['ptm'] > 0.7) & (df['seq_len'] > 50):
-        #   break
+        if args.stop_by_condition:
+            if (init_gen['mean_plddt'] > 0.9) & (init_gen['ptm'] > 0.8).any():
+                print(f'gndx={gen_i}; the condition reached, breaking!')
+                break
 
 
 #================================FOLD_EVOLVER================================# 
@@ -459,12 +492,25 @@ if __name__ == '__main__':
     )
     parser.add_argument(
             '--nobackup', action='store_true', 
-            help='owerride files if exists',
+            help='overwrite files if exists',
     )
     parser.add_argument(
-            '--continue', action='store_true', 
-            help='owerride files if exists',
+            '--stop_by_condition', action='store_true', 
+            help='',
     )
+    parser.add_argument(
+            '--strong_sm_by_condition', action='store_true', 
+            help='',
+    )
+    parser.add_argument(
+            '--strong_sm_after_n_steps', type=int,
+            help='',
+            default=0,
+    )
+    # parser.add_argument(
+    #         '--continue', action='store_true', 
+    #         help='owerride files if exists',
+    # )
     parser.add_argument(
             '--num-recycles',
             type=int,

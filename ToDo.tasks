@@ -13,6 +13,8 @@ TO DO:
 
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
         ☐ @critical weak simulation with norepeat fails
+        ☐ download a domain database, calculate C-beta distances for a big set to adjust you cutoff in gen_nconts()
+        ☐ use codone probabilities from Igor's set
         ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB  or here https://www.rcsb.org/structure/7EL1
         ☐ calculate the number of ss elements in pfes
         ☐ ADD option to change the selection mode after n steps @high
@@ -33,7 +35,6 @@ TO DO:
         ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
         ###add more tools for analyses###
         ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
-        ☐ write an sr_filter.py?
         ☐ https://moviepy-tburrows13.readthedocs.io/en/improve-docs/ref/VideoClip/TextClip.html
         ☐ develop a new optimization strategy based on plddt (mutation probability in inversely proportional to the pLDDT)
         ☐ add absolute stability scoring using ESM-IF https://github.com/KULL-Centre/_2024_cagiada_stability/blob/main/stab_ESM_IF.ipynb @high
@@ -69,7 +70,7 @@ TO DO:
             ✔ add partial duplication e.g partial insertion deletion @done (2/17/2024, 7:14:06 PM)
 
     The questions we are trying to answer:
-            * ramdome intergenic regions evolve faster than random sequences?
+            * randome intergenic regions evolve faster than random sequences?
             * If there is a random sequence, how many random mutations are needed to get a stable protein fold? (or how much time is necessary for a de novo gene birth)?
             * How many mutations are needed for large changes in a protein fold, and are there specific patterns in these changes?
             * How does a protein fold complexity change? Can a protein grow with single insertions, or is it the result of duplications?

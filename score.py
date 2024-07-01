@@ -3,7 +3,6 @@ import sys, os
 import math
 
 
-
 def get_aspher(pdb_txt):
 
     #from DOI: 10.1016/j.bpj.2018.01.002 (HullRad)
@@ -91,14 +90,14 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
     # Get all C-alpha atoms with specific pLDDT cutoff
     ca_data, plddt = [],[]
     for line in pdb_txt.splitlines():
-        col = line.split()
-        if col[0] == 'ATOM'and col[4] == chain:
-            plddt.append(float(col[10]))
-        if (col[0] == 'ATOM' and col[2] == 'CB' and float(col[10]) > plddt_cutoff and col[4] == chain) :
+        atom_array = line.split()
+        if atom_array[0] == 'ATOM'and atom_array[4] == chain:
+            plddt.append(float(atom_array[10]))
+        if (atom_array[0] == 'ATOM' and atom_array[2] == 'CB' and float(atom_array[10]) > plddt_cutoff and atom_array[4] == chain) :
             ca_data.append([
-            int(col[5]), # residue index 
-            np.array(list(map(float, col[6:9]))), #xyz
-            float(col[10]) #pLDDT   
+            int(atom_array[5]), # residue index 
+            np.array(list(map(float, atom_array[6:9]))), #xyz
+            float(atom_array[10]) #pLDDT   
             ])
     
     if len(ca_data) == 0:
@@ -117,9 +116,8 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
                 if distances_matrix[i, j] < distance_cutoff:
                     #pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], np.mean([ca_data[i][2], ca_data[j][2]]), distances_matrix[i, j]]], axis=0)
                     row += 1
+        
         return(row+1, round(CA_pLDDT * 0.01, 3))
-
-
 
 
 
@@ -131,75 +129,90 @@ def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt
     """
 
     # Get all C-beta atoms with specific pLDDT cutoff
-    ca_data_A, ca_data_B, = [], []
+    cb_data_A, cb_data_B, = [], []
     for line in pdb_txt.splitlines():
-        col = line.split()
-        if (col[0] == 'ATOM' and col[2] == 'CB' and float(col[10]) > plddt_cutoff and col[4] == chainA) :
-            ca_data_A.append([
-            int(col[5]), # residue index 
-            np.array(list(map(float, col[6:9]))), #xyz
-            float(col[10]) #pLDDT   
+        atom_array = line.split()
+        if (atom_array[0] == 'ATOM' and atom_array[2] == 'CB' and float(atom_array[10]) > plddt_cutoff and atom_array[4] == chainA) :
+            cb_data_A.append([
+            int(atom_array[5]), # residue index 
+            np.array(list(map(float, atom_array[6:9]))), #xyz
+            float(atom_array[10]) #pLDDT   
             ])
-        if (col[0] == 'ATOM' and col[2] == 'CB' and float(col[10]) > plddt_cutoff and col[4] == chainB) :
-            ca_data_B.append([
-            int(col[5]), # residue index 
-            np.array(list(map(float, col[6:9]))), #xyz
-            float(col[10]) #pLDDT   
+        if (atom_array[0] == 'ATOM' and atom_array[2] == 'CB' and float(atom_array[10]) > plddt_cutoff and atom_array[4] == chainB) :
+            cb_data_B.append([
+            int(atom_array[5]), # residue index 
+            np.array(list(map(float, atom_array[6:9]))), #xyz
+            float(atom_array[10]) #pLDDT   
             ])
 
-
-    if len(ca_data_A) == 0 or len(ca_data_B) == 0: 
+    if len(cb_data_A) == 0 or len(cb_data_B) == 0: 
         return(1, 1)
     else:    
-        coords_A = np.array([item[1] for item in ca_data_A])
-        coords_B = np.array([item[1] for item in ca_data_B])
-        CA_pLDDT_A = np.mean(np.array([item[2] for item in ca_data_A]))
+        Acoords = np.array([item[1] for item in cb_data_A])
+        Bcoords = np.array([item[1] for item in cb_data_B])
+        CA_pLDDT_A = np.mean(np.array([item[2] for item in cb_data_A]))
 
         #make pairs of coordinates and calculate distace between them
-        n_atoms_A = len(ca_data_A)
-        n_atoms_B = len(ca_data_B)
+        n_atoms_A = len(cb_data_A)
+        n_atoms_B = len(cb_data_B)
         pairs_data = np.zeros((0, 4))
 
-        distances_matrix = np.linalg.norm(coords_A[:, None] - coords_B, axis=2)
-        row = 0
-        for i in range(n_atoms_A):
-            for j in range(i + 1, n_atoms_B):
-                if distances_matrix[i, j] < distance_cutoff:
-                    #pairs_data = np.append(pairs_data, [[row, ca_data_A[i][0], ca_data_B[j][0], distances_matrix[i, j]]], axis=0)
-                    row += 1 
-        return(len(row)+1, round(CA_pLDDT_A * 0.01, 3))
+        distances_matrix = np.linalg.norm(Acoords[:, None] - Bcoords, axis=2)
+        contact_map = distances_matrix.copy()
+        contact_map[contact_map <= distance_cutoff] = 1
+        contact_map[contact_map > distance_cutoff] = 0
+        n_contacts = contact_map.sum()
+        return(n_contacts, round(CA_pLDDT_A * 0.01, 3))
 
 
-# for rosetta 
-# def get_best_score(score_file_path):
-#     score_dict = {}    
-#     f=open(score_file_path, 'r').readlines()
-#     for i in range(1,len(f)):
-#         score_id = f[i].split()[-1][:-5] 
-#         score = float(f[i].split()[1]) 
-#         score_dict[score_id] = score
-#     best_score_seq_id = min(score_dict, key=score_dict.get)
-#     best_score = score_dict[best_score_seq_id]
-#     return(best_score_seq_id, best_score)
 
-#        cmd = "score -in:file:s {0} -out:file:scorefile {1} -score_app:linmin > /dev/null".format\
-#                            (pdb_path + id + '.pdb', data_path + f'/gen_{num_gen}.dat') 
-#        os.system(cmd)            
-#        best_seq_id, best_score = get_best_score(data_path + f'/gen_{num_gen}.dat')
-#        print(best_seq_id, tmp_d[best_seq_id], best_score)
-#        if best_score < prev_best_score:
-#            seq_init = tmp_d[best_seq_id][0]
-#            prev_best_score = best_score
+def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=0):
+    """
+    Calculates number of contaict between two protein chains and iPLDDT
+    """
+
+    # Get all C-beta atoms with specific pLDDT cutoff
+    cbeta_atom = []
+    for line in pdb_txt.splitlines():
+            if line[:4] == 'ATOM' and line[13:15] == "CB":
+                cbeta_atom.append(line)
+    cbeta_array = [['X' for j in range(8)] for i in range(len(cbeta_atom))]
+    for row in range(len(cbeta_atom)):
+        cbeta_array[row]
+        cbeta_array[row][0] = row					#Index
+        cbeta_array[row][1] = (cbeta_atom[row][17:20]).strip()	#Residue Name
+        cbeta_array[row][2] = (cbeta_atom[row][20:22]).strip()	#ChainID
+        cbeta_array[row][3] = (cbeta_atom[row][22:26]).strip()	#Residue Number
+        cbeta_array[row][4] = (cbeta_atom[row][30:38]).strip()	#xyz
+        cbeta_array[row][5] = (cbeta_atom[row][38:46]).strip()	#xyz
+        cbeta_array[row][6] = (cbeta_atom[row][46:54]).strip()	#xyz
+        cbeta_array[row][7] = (cbeta_atom[row][61:66]).strip()	#pLDDT 
+
+    cb_data_A, cb_data_B, = [], []
+    for row in range(len(cbeta_array)):
+        if (cbeta_array[row][2] == chainA and float(cbeta_array[row][7]) > plddt_cutoff):
+            cb_data_A.append(cbeta_array[row])
+        if (cbeta_array[row][2] == chainB and float(cbeta_array[row][7]) > plddt_cutoff):
+            cb_data_B.append(cbeta_array[row])
+    if len(cb_data_A) == 0 or len(cb_data_B) == 0: 
+        return(1, 1)
+    else:    
+        Acoords = np.array([item[4:7] for item in cb_data_A], dtype="float32")
+        Bcoords = np.array([item[4:7] for item in cb_data_B], dtype="float32")
+        CA_pLDDT_A = np.array([item[7] for item in cb_data_A], dtype="float32").mean()
+        distances_matrix = np.linalg.norm(Acoords[:, None] - Bcoords, axis=2)
+        contact_map = distances_matrix.copy()
+        contact_map[contact_map <= distance_cutoff] = 1
+        contact_map[contact_map > distance_cutoff] = 0
+        n_contacts = contact_map.sum()
+        inteface_ndx = np.where(contact_map)
+
+        return(n_contacts, round(CA_pLDDT_A * 0.01, 3), inteface_ndx)
 
 
-# #score -in:file:s bestpdb/*pdb -out:file:scorefile score.dat -score_app:linmin  
-
-# awk -v OFS='\t'  '{print $33, $2 }' score.dat  | sed 's/_0001//g;s/gndx//g'  | tail -n +2 | sort -nk1 > score_only.dat
-# awk -v OFS='\t'  '{print $33}' score.dat  | sed 's/_0001//g' | tail -n +2  > names
-# grep -wf names bestlog.tsv  > score_log.dat
-# paste score_log.dat score_only.dat > log_with_score.dat
-# rm score_log.dat names score_only.dat
-
+def iplddt_all_atom(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0,):
+    iplddt_all_atom = 'not ready yet'
+    return iplddt_all_atom
 
 
 

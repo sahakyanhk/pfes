@@ -15,13 +15,33 @@ class Evolver():
                  }
 
 
-    #by number of codons
-    codonrates = {'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
-                  'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
-                  'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
-                  'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 6,  
-                  'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2
+    #by number of codons. 
+    # Calculated as (Codon_i/sum(all codons)) * 20
+    # so the mean probability is 1. 
+    # This makes it easier to optimize probability of non point mutations
+
+    codonrates = {'A' : 1.311475, #4 
+                  'C' : 0.655738, #2
+                  'D' : 0.655738, #2
+                  'E' : 0.655738, #2
+                  'F' : 0.655738, #2
+                  'G' : 1.311475, #4
+                  'H' : 0.655738, #2
+                  'I' : 0.983607, #3
+                  'K' : 0.655738, #2
+                  'L' : 1.967213, #6
+                  'M' : 0.327869, #1
+                  'N' : 0.655738, #2
+                  'P' : 1.311475, #4
+                  'Q' : 0.655738, #2
+                  'R' : 1.967213, #6
+                  'S' : 1.967213, #6
+                  'T' : 1.311475, #4
+                  'V' : 1.311475, #4
+                  'W' : 0.327869, #1
+                  'Y' : 0.655738 #2
                   }
+
 
 
     #https://www.uniprot.org/uniprotkb/statistics#amino-acid-composition
@@ -32,23 +52,38 @@ class Evolver():
                     'T' : 0.0536, 'V' : 0.0686, 'W' : 0.0110, 'Y' : 0.0292}
 
 
-    codonrates_opm = {'A' : 4,  'C' : 2,  'D' : 2,  'E' : 2,  
-                      'F' : 2,  'G' : 4,  'H' : 2,  'I' : 3,  
-                      'K' : 2,  'L' : 6,  'M' : 1,  'N' : 2,  
-                      'P' : 4,  'Q' : 2,  'R' : 6,  'S' : 6,  
-                      'T' : 4,  'V' : 4,  'W' : 1,  'Y' : 2,
-                      '+' : 1.0,
-                      '-' : 1.0,
+    codonrates_opm = {'A' : 1.311475, #4
+                      'C' : 0.655738, #2 
+                      'D' : 0.655738, #2 
+                      'E' : 0.655738, #2 
+                      'F' : 0.655738, #2 
+                      'G' : 1.311475, #4 
+                      'H' : 0.655738, #2 
+                      'I' : 0.983607, #3 
+                      'K' : 0.655738, #2 
+                      'L' : 1.967213, #6 
+                      'M' : 0.327869, #1 
+                      'N' : 0.655738, #2 
+                      'P' : 1.311475, #4 
+                      'Q' : 0.655738, #2 
+                      'R' : 1.967213, #6 
+                      'S' : 1.967213, #6 
+                      'T' : 1.311475, #4 
+                      'V' : 1.311475, #4 
+                      'W' : 0.327869, #1 
+                      'Y' : 0.655738, #2        
+                      '+' : 1,
+                      '-' : 1,
                       }
 
 
     non_point_mutations = {'+' : 1.0,   #single residue insertion
                            '-' : 1.0,   #single residue deletion
-                           '*' : 0.3,   #partial duplication
-                           '/' : 0.2,   #random insertion 
-                           '%' : 0.8,   #partial deletion
-                           'p' : 0.1,   #Circular permutation
-                           'd' : 0.01   #full duplication    
+                           '*' : 0.4,   #partial duplication
+                           '/' : 0.4,   #random insertion 
+                           '%' : 0.9,   #partial deletion
+                           'p' : 0.1,   #circular permutation
+                           'd' : 0.05   #full duplication    
                            } 
 
 
