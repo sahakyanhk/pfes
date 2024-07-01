@@ -180,35 +180,44 @@ def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=
     for row in range(len(cbeta_atom)):
         cbeta_array[row]
         cbeta_array[row][0] = row					#Index
-        cbeta_array[row][1] = (cbeta_atom[row][17:20]).strip()	#Residue Name
-        cbeta_array[row][2] = (cbeta_atom[row][20:22]).strip()	#ChainID
-        cbeta_array[row][3] = (cbeta_atom[row][22:26]).strip()	#Residue Number
-        cbeta_array[row][4] = (cbeta_atom[row][30:38]).strip()	#xyz
-        cbeta_array[row][5] = (cbeta_atom[row][38:46]).strip()	#xyz
-        cbeta_array[row][6] = (cbeta_atom[row][46:54]).strip()	#xyz
-        cbeta_array[row][7] = (cbeta_atom[row][61:66]).strip()	#pLDDT 
+        cbeta_array[row][1] = (cbeta_atom[row][22:26]).strip()	#Residue Number
+        cbeta_array[row][2] = (cbeta_atom[row][30:38]).strip()	#xyz
+        cbeta_array[row][3] = (cbeta_atom[row][38:46]).strip()	#xyz
+        cbeta_array[row][4] = (cbeta_atom[row][46:54]).strip()	#xyz
+        cbeta_array[row][5] = (cbeta_atom[row][61:66]).strip()	#pLDDT 
+        cbeta_array[row][6] = (cbeta_atom[row][20:22]).strip()	#ChainID
+        cbeta_array[row][7] = (cbeta_atom[row][17:20]).strip()	#Residue Name
 
     cb_data_A, cb_data_B, = [], []
     for row in range(len(cbeta_array)):
-        if (cbeta_array[row][2] == chainA and float(cbeta_array[row][7]) > plddt_cutoff):
-            cb_data_A.append(cbeta_array[row])
-        if (cbeta_array[row][2] == chainB and float(cbeta_array[row][7]) > plddt_cutoff):
-            cb_data_B.append(cbeta_array[row])
+        if cbeta_array[row][6] == chainA and float(cbeta_array[row][5]) > plddt_cutoff:
+            cb_data_A.append(cbeta_array[row][0:6])
+        if cbeta_array[row][6] == chainB and float(cbeta_array[row][5]) > plddt_cutoff:
+            cb_data_B.append(cbeta_array[row][0:6])
+            #cb_data_A = np.array(cb_data_A, dtype='float32')
+            #cb_data_B = np.array(cb_data_B, dtype='float32')
     if len(cb_data_A) == 0 or len(cb_data_B) == 0: 
         return(1, 1)
     else:    
-        Acoords = np.array([item[4:7] for item in cb_data_A], dtype="float32")
-        Bcoords = np.array([item[4:7] for item in cb_data_B], dtype="float32")
-        CA_pLDDT_A = np.array([item[7] for item in cb_data_A], dtype="float32").mean()
+        #Acoords = cb_data_A[:,2:5]
+        
+        #Bcoords = cb_data_B[:,2:5]
+        Acoords = np.array([item[2:5] for item in cb_data_A], dtype="float32")
+        Bcoords = np.array([item[2:5] for item in cb_data_B], dtype="float32")
+        CB_pLDDT_A = np.array([item[5] for item in cb_data_A], dtype="float32").mean()
         distances_matrix = np.linalg.norm(Acoords[:, None] - Bcoords, axis=2)
-        contact_map = distances_matrix.copy()
-        contact_map[contact_map <= distance_cutoff] = 1
-        contact_map[contact_map > distance_cutoff] = 0
-        n_contacts = contact_map.sum()
-        inteface_ndx = np.where(contact_map)
-
-        return(n_contacts, round(CA_pLDDT_A * 0.01, 3), inteface_ndx)
-
+        #contact_map = distances_matrix.copy()
+        #contact_map[contact_map <= distance_cutoff] = 1
+        #contact_map[contact_map > distance_cutoff] = 0
+        matrix_mask = distances_matrix <= distance_cutoff
+        n_contacts = matrix_mask.sum()
+        inteface_ndx = np.where(matrix_mask)
+        AiPLDDT = np.array([cb_data_A[i][5] for i in np.unique(inteface_ndx[0])],dtype=float)
+        BiPLDDT = np.array([cb_data_B[i][5] for i in np.unique(inteface_ndx[1])],dtype=float)
+        iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
+        return(n_contacts, round(iPLDDT,3))
+    
+    
 
 def iplddt_all_atom(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0,):
     iplddt_all_atom = 'not ready yet'

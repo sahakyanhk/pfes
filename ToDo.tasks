@@ -12,27 +12,24 @@ TO DO:
 
 
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
+        ☐ why some strucutres are missing when running visual_pfes? @bag  
         ☐ @critical weak simulation with norepeat fails
+        ☐ save individual plddt in traj
         ☐ download a domain database, calculate C-beta distances for a big set to adjust you cutoff in gen_nconts()
         ☐ use codone probabilities from Igor's set
         ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB  or here https://www.rcsb.org/structure/7EL1
         ☐ calculate the number of ss elements in pfes
-        ☐ ADD option to change the selection mode after n steps @high
-        ✔ Add a new mutation type: circular permutation @done (6/27/2024, 9:55:24 PM)
+        ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ write checkpoint file and continue simulations (all sequences from the generation are needed)
-        ☐ introduce/susbtitute inter_contacts with iPLDDT @high 
         ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes 
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
         ☐ add rosetta scoring in visual_pfes for BEST PDB @high
         ☐ add a new scoring term based of fold density volume/number of atoms https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1301551/pdf/11463623.pdf
-        ☐ why some strucutres are missing when running visual_pfes? @bag  
-        ☐ add a secondary structure score in the main score, that will also include the long helix penalty
         ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ add a function to indicate only several residues in the partner protetein for contacts. \
         It will constrain the number of possible contacts! @high 
         ☐ add a function to save pdb (all atoms, only CA, ziped, etc) 
         ☐ Consider adding new mutation types: split sequnece and join sequences
-        ☐ inproduce a new component in the scoring function plddt on interaction surface from both A and B (or ipTM+pTM), substitute current plldt with it from both
         ###add more tools for analyses###
         ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
         ☐ https://moviepy-tburrows13.readthedocs.io/en/improve-docs/ref/VideoClip/TextClip.html
@@ -41,6 +38,9 @@ TO DO:
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✔ Add a new mutation type: circular permutation @done (6/27/2024, 9:55:24 PM)
+            ✔ ADD option to change the selection mode after n steps @high @done (7/1/2024, 3:29:25 PM)
+            ✔ introduce/susbtitute inter_contacts with iPLDDT @high @done (7/1/2024, 3:29:33 PM)
             ✔ Write each generation in a .gz archive to save space @done (6/13/2024, 9:03:25 AM)
             ✔ make a tool for AA probability matrix calculation @done (6/13/2024, 9:03:59 AM)
             ✔ secondary structure plot in visual_pfes #https://www.biotite-python.org/examples/gallery/structure/trajectory_sse.html#sphx-glr-examples-gallery-structure-trajectory-sse-py @done (6/11/2024, 4:52:13 PM)

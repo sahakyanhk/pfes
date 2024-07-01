@@ -12,7 +12,7 @@ from scipy.special import softmax
 
 
 from evolution import Evolver
-from score import get_nconts, get_inter_nconts
+from score import get_nconts, cbiplddt
 from psique import pypsique
 from datetime import datetime
 
@@ -112,9 +112,9 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
         
         if args.evolution_mode == "single_chian": #if there are two or more chains, then calculate the number of interacting contacts
-            num_inter_conts = 1
+            num_inter_conts, iplddt = 1,1
         else:
-            num_inter_conts, _ = get_inter_nconts(pdb_txt, 'A', 'B', 6.0, 50) 
+            num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 50) 
 
         ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
         #Rg, aspher = get_aspher(pdb_txt)
@@ -124,8 +124,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           ptm,                  #[0, 1]
                           prot_len_penalty,     #[0, 1]
                           max_helix_penalty,    #[0, 1]
-                          (num_conts + seq_len) / seq_len,     #[~0, inf]
-                          num_inter_conts**(1/4)])   #[~0, inf]
+                          iplddt,               #[0, 1]
+                          (num_conts + 2*seq_len) / seq_len])     #[~0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
         #================================SCORING================================#
@@ -137,6 +137,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'ptm': round(ptm, 3), 
                                 'mean_plddt': mean_plddt, 
                                 'num_conts': num_conts, 
+                                'iplddt': iplddt,
                                 'num_inter_conts': num_inter_conts, 
                                 'score': round(score, 3), 
                                 'sequence': seq, 
@@ -145,7 +146,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'ss': ss}, index=[0])
         
         new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
-        os.system(f"gzip {pdb_path}{id}'.pdb' ")
+        os.system(f"gzip {pdb_path}{id}'.pdb' &")
 
         # with open(pdb_path + id + '.pdb', 'rb') as f_pdb:
         #     with gzip.open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
@@ -185,6 +186,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
              'ptm', 
              'mean_plddt', 
              'num_conts', 
+             'iplddt',
              'num_inter_conts',
              'score', 
              'sequence', 
@@ -346,6 +348,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                'ptm', 
                'mean_plddt', 
                'num_conts', 
+               'iplddt',
                'num_inter_conts',
                'score', 
                'sequence', 

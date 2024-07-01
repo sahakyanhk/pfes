@@ -16,7 +16,7 @@ import warnings
 
 
 parser = argparse.ArgumentParser(description="Analyse PFES")
-parser.add_argument('-l', '--log', type=str, help='log file name', default='progress.log', required=True) #rename log to pfes traj
+parser.add_argument('-l', '--log', type=str, help='log file name', default='progress.log') #rename log to pfes traj
 parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='structures')
 parser.add_argument('-t', '--traj', type=str, help='make backbone trajectory', default='pfestraj.pdb')
 parser.add_argument('-o', '--outdir', type=str, help='output directory name', default='visual_pfes_results')
