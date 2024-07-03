@@ -217,12 +217,11 @@ def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=
         iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
         return(n_contacts, round(iPLDDT,3))
     
-    
+
 
 def iplddt_all_atom(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0,):
     iplddt_all_atom = 'not ready yet'
     return iplddt_all_atom
-
 
 
 

@@ -1,29 +1,40 @@
 #https://github.com/KULL-Centre/_2024_cagiada_stability/blob/main/stab_ESM_IF.ipynb
 
-
-
 import os,time,subprocess,re,sys,shutil
 import torch
 import numpy as np
 import pandas as pd
-
 
 import esm
 
 from esm.inverse_folding.util import load_structure, extract_coords_from_structure,CoordBatchConverter
 from esm.inverse_folding.multichain_util import extract_coords_from_complex,_concatenate_coords,load_complex_coords
 
-IF_model_name = "esm_if1_gvp4_t16_142M_UR50.pt"
+#IF_model_name = "esm_if1_gvp4_t16_142M_UR50.pt"
 
 print("importing the model")
 
-model, alphabet = esm.pretrained.load_model_and_alphabet(IF_model_name)
+model, alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
 model.eval().cuda().requires_grad_(False)
+
+#@title <b><font color='#56b4e9'> DATA UPLOADING</font>
+#@markdown Fill in the fields and run the cell to set up the job name, import the structure, select the chain and upload an alternative sequence (not mandatory).
+jobname='lys_ecoly'#@param {type:"string"}
+
+#@markdown Choose between <b><font color='#d55c00'> ONE</font></b> of the possible input sources for the target pdb and <b><font color='#d55c00'>leave the other cells empty or unmarked</font></b>
+#@markdown - AlphaFold2 PDB (v4) via Uniprot ID:
+AF_ID ='P78285'#@param {type:"string"}
+#@markdown - Upload custom PDB
+AF_custom =False#@param {type:"boolean"}
+
+
+#@markdown Select target chain (default A)
+chain_id='A' #@param {type:'string'}
 
 
 #@title PRELIMINARY OPERATIONS: Load EXTRA functions
 
-def run_model(coords,sequence,model,cmplx=False,chain_target='A'):
+def run_model(coords, sequence, model, cmplx=False, chain_target='A'):
 
     device = next(model.parameters()).device
 
@@ -79,19 +90,27 @@ def masked_absolute(mut, idx, token_probs, alphabet):
 a=0.10413378327743603 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 b=0.6162549378400894 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 
-prob_tokens = run_model(coords_structure,sequence_structure,model,chain_target=chain_id)
-aa_list, wt_scores = score_variants(sequence_structure,prob_tokens,alphabet)
+pdbpath = '/home/saakyanh2/WD/PFES/SFE_RESULTS/SFpfes3_optimization/visual_pfes_results/bestpdb/'
 
-dg_IF= np.nansum(wt_scores)
-print('ΔG predicted (likelihoods sum): ',dg_IF)
+for pdb in os.listdir(pdbpath):
 
-dg_kcalmol= a * dg_IF + b
+    structure = load_structure(pdbpath + pdb, chain_id)
+    coords_structure, sequence_structure = extract_coords_from_structure(structure)
 
-print('ΔG predicted (kcal/mol): ', dg_kcalmol)
 
-aa_list_export=aa_list+['dG_IF','dG_kcalmol']
-wt_scores_export=wt_scores+[dg_IF,dg_kcalmol]
+    prob_tokens = run_model(coords_structure,sequence_structure,model,chain_target=chain_id)
+    aa_list, wt_scores = score_variants(sequence_structure,prob_tokens,alphabet)
 
-df_export=pd.DataFrame({'Residue':aa_list_export,'score':wt_scores_export})
+    dg_IF= np.nansum(wt_scores)
+    #print('ΔG predicted (likelihoods sum): ',dg_IF)
 
-df_export.to_csv(f"outputs/"+f"{jobname}_dG_pos_scores_and_total.csv",sep=',')
+    dg_kcalmol= a * dg_IF + b
+
+    print(f'ΔG predicted (kcal/mol) for {pdb}: ', dg_IF, dg_kcalmol)
+
+    # aa_list_export=aa_list+['dG_IF','dG_kcalmol']
+    # wt_scores_export=wt_scores+[dg_IF,dg_kcalmol]
+
+    # df_export=pd.DataFrame({'Residue':aa_list_export,'score':wt_scores_export})
+
+    # df_export.to_csv(f"{jobname}_dG_pos_scores_and_total.csv",sep=',')

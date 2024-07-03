@@ -51,6 +51,14 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
            batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0
     yield batch_headers, batch_sequences
 
+def pdbtxt2bbcoord(pdb_txt, chain):
+    coords3 = np.array([line[30:54].split()  for line in pdb_txt.splitlines() if line[:4] == "ATOM" and 
+                        line[20:22].strip() == chain and 
+                        ((line[11:16].strip() == "N") | 
+                         (line[11:16].strip()== "CA") | 
+                         (line[11:16].strip() == "C"))], dtype='float32')
+    coords33 = coords3.reshape(int(coords3.shape[0]/3),3,3)
+    return(coords33)
 
 def esm2data(esm_out):
     output = {key: value.cpu() for key, value in esm_out.items()}

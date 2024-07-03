@@ -72,8 +72,8 @@ def make_plots(log, bestlog, lineage):
         if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
                 plt.plot(log[colname],'.', markersize=ms)
                 plt.plot(bestlog[colname],'-', linewidth=lw)
-                plt.plot(lineage[colname],'-', linewidth=lw, color='red')
-                plt.grid(True, which="both")        
+                plt.plot(lineage[colname],'-', linewidth=lw, color='green')
+                plt.grid(True, which="both",linestyle='--', linewidth=1)
                 plt.legend([colname], loc ="upper left")
                 plt.savefig(plotdir + colname + '.png', dpi=dpi)
                 plt.clf()
@@ -94,37 +94,46 @@ def make_summary_plot(log, bestlog, lineage):
     axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
     axs[0,0].plot(lineage.mean_plddt, '-', linewidth=lw)
     axs[0,0].set(xlabel=None, ylabel='mean pLDDT')
+    axs[0,0].grid(True, which="both",linestyle='--', linewidth=0.5)
+
 
     axs[1,0].plot(log.ptm, '.', markersize=ms)
     axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
     axs[1,0].plot(lineage.ptm, '-', linewidth=lw)
     axs[1,0].set(xlabel=None, ylabel='pTM')
-    
+    axs[1,0].grid(True, which="both",linestyle='--', linewidth=0.5)
+
     axs[2,0].plot(log.score,  '.', markersize=ms)
     axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
     axs[2,0].plot(lineage.score, '-', linewidth=lw)
     axs[2,0].set(xlabel='Number of mutations', ylabel='Score')
+    axs[2,0].grid(True, which="both",linestyle='--', linewidth=0.5)
         
     axs[0,1].plot(log.seq_len, '.', markersize=ms)
     axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
     axs[0,1].plot(lineage.seq_len, '-', linewidth=lw)
     axs[0,1].set(xlabel=None, ylabel='Seq len')
+    axs[0,1].grid(True, which="both",linestyle='--', linewidth=0.5)
 
     if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
         axs[1,1].plot(log.num_inter_conts, '.', markersize=ms)
         axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw)
         axs[1,1].plot(lineage.num_inter_conts, '-', linewidth=lw)
         axs[1,1].set(xlabel=None, ylabel='Num of inter contacts')
+        axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
     else:     
         axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
         axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
         axs[1,1].plot(lineage.max_helix_penalty, '-', linewidth=lw)
         axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
+        axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
 
     axs[2,1].plot(log.num_conts, '.', markersize=ms)
     axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
     axs[2,1].plot(lineage.num_conts, '-', linewidth=lw)
     axs[2,1].set(xlabel='Number of mutations', ylabel='Num of contacts')
+    axs[2,1].grid(True, which="both",linestyle='--', linewidth=0.5)
+
     #plt.xticks(rotation=45)
 
     #for ax in axs.flat:
@@ -133,9 +142,8 @@ def make_summary_plot(log, bestlog, lineage):
     # Hide x labels and tick labels for top plots and y ticks for right plots.
     #for ax in axs.flat:
     #   ax.label_outer()
-
+    fig.tight_layout()
     fig.savefig(os.path.join(outdir,'Summary.png'), dpi=dpi)
-
 
 
 #======================= seconday structure plot =======================#
