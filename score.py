@@ -197,7 +197,7 @@ def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=
             #cb_data_A = np.array(cb_data_A, dtype='float32')
             #cb_data_B = np.array(cb_data_B, dtype='float32')
     if len(cb_data_A) == 0 or len(cb_data_B) == 0: 
-        return(1, 1)
+        return(1, 0.01)
     else:    
         #Acoords = cb_data_A[:,2:5]
         

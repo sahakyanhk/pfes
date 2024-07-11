@@ -22,8 +22,9 @@ model_if_if.eval().cuda().requires_grad_(False)
 
 
 
-def dGscore(model_if_if, coord:np.array, sequence:str, chainID) -> float:
+def dGscore(model_if_if, pdb_txt:str, sequence:str, chainID) -> float:
     
+
     a=0.10413378327743603 ## fitting param from the manuscript to convert IF score scale to kcal/mol
     b=0.6162549378400894 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 

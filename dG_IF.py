@@ -83,10 +83,6 @@ def masked_absolute(mut, idx, token_probs, alphabet):
     return score.item()
 
 
-#@title  MODEL RUN
-#@markdown Run this cell to evaluate the ΔG for the selected structure and sequence
-
-#@markdown **N.B:** the ΔG value will be output in the scale of the chosen metric and also in kcal/mol (see the manuscript for how we converted the scale)
 a=0.10413378327743603 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 b=0.6162549378400894 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 

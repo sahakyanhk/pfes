@@ -52,6 +52,9 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
     yield batch_headers, batch_sequences
 
 def pdbtxt2bbcoord(pdb_txt, chain):
+    # you can extract this directly from eso output
+    # positions contains coordinates, and aatype contains the sequence
+    #  
     coords3 = np.array([line[30:54].split()  for line in pdb_txt.splitlines() if line[:4] == "ATOM" and 
                         line[20:22].strip() == chain and 
                         ((line[11:16].strip() == "N") | 
@@ -101,13 +104,13 @@ def sigmoid(x,L0=0,c=0.1):
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
 
-    for full_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+    for meta_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
         
         all_seqs = seq.split(':')
         seq = all_seqs[0]
         seq_len = len(seq)
         
-        id_data = full_id.split('_')
+        id_data = meta_id.split('_')
 
         id = id_data[0]
         prev_id = id_data[1]
@@ -122,9 +125,9 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         if args.evolution_mode == "single_chian": #if there are two or more chains, then calculate the number of interacting contacts
             num_inter_conts, iplddt = 1,1
         else:
-            num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 50) 
+            num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 0) 
 
-        ss, max_helix = pypsique(pdb_path + id + '.pdb', 'A')
+        ss, max_helix = pypsique(pdb_txt, 'A')
         #Rg, aspher = get_aspher(pdb_txt)
         prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) * np.tanh(seq_len*0.1)
         max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
@@ -133,7 +136,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           prot_len_penalty,     #[0, 1]
                           max_helix_penalty,    #[0, 1]
                           iplddt,               #[0, 1]
-                          (num_conts + 2*seq_len) / seq_len])     #[~0, inf]
+                          (num_conts + 2*seq_len) / seq_len])  #TODO replace with dG   #[~0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
         #================================SCORING================================#
@@ -175,7 +178,11 @@ global new_gen #this will be modified in the extract_results()
 #============================================================================#
 
 
-
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
+#==================================================================================================================================================================# 
 #================================FOLD_EVOLVER================================# 
 def fold_evolver(args, model, evolver, logheader, init_gen) -> None: 
 
@@ -310,6 +317,27 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 #==================================================================================================================================================================# 
 #==================================================================================================================================================================# 
 #==================================================================================================================================================================# 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #==================================================================================================================================================================# 
 #==================================================================================================================================================================# 
 #==================================================================================================================================================================# 
@@ -410,7 +438,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         for headers, sequences in batched_sequences:
             pdbs, ptms, mean_plddts = [], [], []
             with torch.no_grad(): 
-                pdbs, ptms, mean_plddts, num_contacts = esm2data(model.infer(sequences, 
+                pdbs, ptms, mean_plddts = esm2data(model.infer(sequences, 
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
@@ -609,7 +637,7 @@ if __name__ == '__main__':
     model = esm.pretrained.esmfold_v1()
     model = model.eval().cuda()
 
-
+    print('running PFES... \n')
     if args.evolution_mode == "single_chain":
         fold_evolver(args, model, evolver, logheader, init_gen)
     elif args.evolution_mode == "inter_chain":
