@@ -70,7 +70,8 @@ def esm2data(esm_out):
     mean_plddt = esm_out["mean_plddt"].tolist()
     plddt = np.array(output["plddt"][0,:,1].tolist())/100
     
-    #calculate the numbe of contacts
+    #calculate the number of contacts
+    # 
     # bins = np.append(0,np.linspace(2.3125,21.6875,63))
     # #you do not need softmax to keep the actual values! 
     # sm_contacts = softmax(output["distogram_logits"],-1)
@@ -104,7 +105,7 @@ def sigmoid(x,L0=0,c=0.1):
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
 
-    for meta_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts):
+    for meta_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts): #which plddt is better?
         
         all_seqs = seq.split(':')
         seq = all_seqs[0]
@@ -120,15 +121,16 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
             f.write(pdb_txt.encode())   
 
         #================================SCORING================================# 
-        num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50)
+        num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50) #which plddt is better?
         
         if args.evolution_mode == "single_chian": #if there are two or more chains, then calculate the number of interacting contacts
-            num_inter_conts, iplddt = 1,1
+            num_inter_conts, iplddt = 1, 1
         else:
-            num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 0) 
+            num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 50) 
 
         ss, max_helix = pypsique(pdb_txt, 'A')
         #Rg, aspher = get_aspher(pdb_txt)
+        # dG = dGcore(coords, seq) 
         prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) * np.tanh(seq_len*0.1)
         max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
         score  = np.prod([mean_plddt,           #[0, 1]
@@ -136,6 +138,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           prot_len_penalty,     #[0, 1]
                           max_helix_penalty,    #[0, 1]
                           iplddt,               #[0, 1]
+                          #dG,
                           (num_conts + 2*seq_len) / seq_len])  #TODO replace with dG   #[~0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
@@ -143,9 +146,9 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         iterlog = pd.DataFrame({'gndx': gen_i,
                                 'id': id, 
                                 'seq_len': seq_len,
-                                'prot_len_penalty': round(prot_len_penalty, 3), 
-                                'max_helix_penalty': round(max_helix_penalty, 3),
-                                'ptm': round(ptm, 3), 
+                                'prot_len_penalty': round(prot_len_penalty, 2), 
+                                'max_helix_penalty': round(max_helix_penalty, 2),
+                                'ptm': round(ptm, 2), 
                                 'mean_plddt': mean_plddt, 
                                 'num_conts': num_conts, 
                                 'iplddt': iplddt,
@@ -270,6 +273,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         
         #print(f"#GENtime {datetime.now() - now}")
         ancestral_memory =  ancestral_memory.append(init_gen)
+
         #select the next generation 
         init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
@@ -368,7 +372,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     PDB_5YIW=":GAMDMSWTDERVSTLKKLWLDGLSASQIAKQLGGVTRNAVIGKVHRLGL" #HTH
     PDB_4OO8=":GQKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERGGL" #CAS9 HNH
     
-    seq2 = PDB_5YIW
+    seq2 = PDB_6SVE
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
@@ -427,7 +431,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                 #repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
                 new_gen = new_gen.append(repeat)
             else:
-                generated_sequences.append((id, seq +":"+ seq2)) #(seq+seq2)) add a function to select the sma
+                generated_sequences.append((id, seq + seq2)) #(seq+seq2)) add a function to select the sma
                 mutation_collection.append(mutation_data)    
 
 
@@ -446,10 +450,6 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
             #run extract_results() in becground and imediately start next round of model.infer()
             trd = threading.Thread(target=extract_results, args=(gen_i, headers, sequences, pdbs, ptms, mean_plddts))
             trd.start()
-
-            # p1 = multiprocessing.Process(target=extract_results, args=(gen_i, id, headers, sequences, pdbs, ptms, mean_plddts))
-            # p1.start()
-            # p1.join()
 
         while trd.is_alive(): 
             time.sleep(0.2)

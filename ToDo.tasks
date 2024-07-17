@@ -10,7 +10,7 @@ TO DO:
             Allow all mutationsstart with ~24 residue long random sequnece.
             How long it takes to evold a fold? How it changes with the population size
 
-
+        ☐ MEASURE the indels lenght
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
         ☐ why some strucutres are missing when running visual_pfes? @bag  
         ☐ @critical weak simulation with norepeat fails

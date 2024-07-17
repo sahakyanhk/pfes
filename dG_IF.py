@@ -17,20 +17,6 @@ print("importing the model")
 model, alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
 model.eval().cuda().requires_grad_(False)
 
-#@title <b><font color='#56b4e9'> DATA UPLOADING</font>
-#@markdown Fill in the fields and run the cell to set up the job name, import the structure, select the chain and upload an alternative sequence (not mandatory).
-jobname='lys_ecoly'#@param {type:"string"}
-
-#@markdown Choose between <b><font color='#d55c00'> ONE</font></b> of the possible input sources for the target pdb and <b><font color='#d55c00'>leave the other cells empty or unmarked</font></b>
-#@markdown - AlphaFold2 PDB (v4) via Uniprot ID:
-AF_ID ='P78285'#@param {type:"string"}
-#@markdown - Upload custom PDB
-AF_custom =False#@param {type:"boolean"}
-
-
-#@markdown Select target chain (default A)
-chain_id='A' #@param {type:'string'}
-
 
 #@title PRELIMINARY OPERATIONS: Load EXTRA functions
 
@@ -86,27 +72,36 @@ def masked_absolute(mut, idx, token_probs, alphabet):
 a=0.10413378327743603 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 b=0.6162549378400894 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 
-pdbpath = '/home/saakyanh2/WD/PFES/SFE_RESULTS/SFpfes3_optimization/visual_pfes_results/bestpdb/'
+
+pdbpath = str(sys.argv[1])
+outfile = str(sys.argv[2])
+
+chain_id = 'A'
+
+with open(f'{outfile}', 'w') as f:
+   f.write('id,dG_IF,dG_kcalmol\n')
+
 
 for pdb in os.listdir(pdbpath):
+    metapdb = pdb.split('.')
+    if metapdb[1]=="pdb":
+        id = metapdb[0]
+        structure = load_structure(pdbpath + '/' + pdb, chain_id)
+        coords_structure, sequence_structure = extract_coords_from_structure(structure)
 
-    structure = load_structure(pdbpath + pdb, chain_id)
-    coords_structure, sequence_structure = extract_coords_from_structure(structure)
 
+        prob_tokens = run_model(coords_structure,sequence_structure,model,chain_target=chain_id)
+        aa_list, wt_scores = score_variants(sequence_structure,prob_tokens,alphabet)
 
-    prob_tokens = run_model(coords_structure,sequence_structure,model,chain_target=chain_id)
-    aa_list, wt_scores = score_variants(sequence_structure,prob_tokens,alphabet)
+        dg_IF= np.nansum(wt_scores)
+        dg_kcalmol= a * dg_IF + b
+        print(f'ΔG for {id}: {round(dg_IF,3)}, {round(dg_kcalmol,3)} (kcal/mol)')
+        with open(f'{outfile}', 'a') as f:
+           f.write(f"{id},{round(dg_IF,3)},{round(dg_kcalmol,3)}\n")
 
-    dg_IF= np.nansum(wt_scores)
-    #print('ΔG predicted (likelihoods sum): ',dg_IF)
+        # aa_list_export=aa_list+['dG_IF','dG_kcalmol']
+        # wt_scores_export=wt_scores+[dg_IF,dg_kcalmol]
 
-    dg_kcalmol= a * dg_IF + b
+        # df_export=pd.DataFrame({'Residue':aa_list_export,'score':wt_scores_export})
 
-    print(f'ΔG predicted (kcal/mol) for {pdb}: ', dg_IF, dg_kcalmol)
-
-    # aa_list_export=aa_list+['dG_IF','dG_kcalmol']
-    # wt_scores_export=wt_scores+[dg_IF,dg_kcalmol]
-
-    # df_export=pd.DataFrame({'Residue':aa_list_export,'score':wt_scores_export})
-
-    # df_export.to_csv(f"{jobname}_dG_pos_scores_and_total.csv",sep=',')
+        # df_export.to_csv(f"{jobname}_dG_pos_scores_and_total.csv",sep=',')
