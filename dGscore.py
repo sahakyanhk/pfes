@@ -1,34 +1,19 @@
 #https://github.com/KULL-Centre/_2024_cagiada_stability/blob/main/stab_ESM_IF.ipynb
-
-
-
-import os,time,subprocess,re,sys,shutil
-import torch
 import numpy as np
 import pandas as pd
 
 
+import torch
 import esm
 
-from esm.inverse_folding.util import load_structure, extract_coords_from_structure,CoordBatchConverter
-from esm.inverse_folding.multichain_util import extract_coords_from_complex,_concatenate_coords,load_complex_coords
+from esm.inverse_folding.util import CoordBatchConverter
 
-#IF_model_if_name = "esm_if1_gvp4_t16_142M_UR50.pt"
+model_if, alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
+model_if.eval().cuda().requires_grad_(False)
 
-print("importing the model_if")
+def dGscore(coord:np.array, sequence:str):
 
-model_if_if, alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
-model_if_if.eval().cuda().requires_grad_(False)
-
-
-
-def dGscore(model_if_if, pdb_txt:str, sequence:str, chainID) -> float:
-    
-
-    a=0.10413378327743603 ## fitting param from the manuscript to convert IF score scale to kcal/mol
-    b=0.6162549378400894 ## fitting param from the manuscript to convert IF score scale to kcal/mol
-
-    def run_model_if(coords:np.array, sequence:str, model_if, cmplx=False, chain_target='A'):
+    def run_model_if(coords, sequence, model_if, cmplx=False, chain_target='A'):
 
         device = next(model_if.parameters()).device
 
@@ -48,7 +33,7 @@ def dGscore(model_if_if, pdb_txt:str, sequence:str, chainID) -> float:
 
         return token_probs
 
-    def score_variants(sequence,token_probs,alphabet):
+    def score_variants(sequence, token_probs, alphabet):
 
         aa_list=[]
         wt_scores=[]
@@ -58,12 +43,12 @@ def dGscore(model_if_if, pdb_txt:str, sequence:str, chainID) -> float:
         alphabetAA_D_L={v: k for k, v in alphabetAA_L_D.items()}
 
         for i,n in enumerate(sequence):
-        aa_list.append(n+str(i+1))
-        score_pos=[]
-        for j in range(1,21):
-            score_pos.append(masked_absolute(alphabetAA_D_L[j],i, token_probs, alphabet))
-            if n == alphabetAA_D_L[j]:
-                WT_score_pos=score_pos[-1]
+            aa_list.append(n+str(i+1))
+            score_pos=[]
+            for j in range(1,21):
+                score_pos.append(masked_absolute(alphabetAA_D_L[j],i, token_probs, alphabet))
+                if n == alphabetAA_D_L[j]:
+                    WT_score_pos=score_pos[-1]
 
         wt_scores.append(WT_score_pos)
 
@@ -76,25 +61,24 @@ def dGscore(model_if_if, pdb_txt:str, sequence:str, chainID) -> float:
         score = token_probs[0,idx, mt_encoded]
         return score.item()
 
-    prob_tokens = run_model_if(coord, sequence, model_if_if,chain_target=chain_id)
-    aa_list, wt_scores = score_variants(sequence_structure,prob_tokens,alphabet)
 
+    prob_tokens = run_model_if(coord, sequence, model_if)
+    aa_list, wt_scores = score_variants(sequence, prob_tokens, alphabet)
 
-#@title  model_if RUN
-#@markdown Run this cell to evaluate the ΔG for the selected structure and sequence
+    a=0.10413378327743603 ## fitting param from the manuscript to convert IF score scale to kcal/mol
+    b=0.6162549378400894 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 
-#@markdown **N.B:** the ΔG value will be output in the scale of the chosen metric and also in kcal/mol (see the manuscript for how we converted the scale)
+    dg_IF= np.nansum(wt_scores)
+    #print('ΔG predicted (likelihoods sum): ',dg_IF)
 
-dg_IF= np.nansum(wt_scores)
-print('ΔG predicted (likelihoods sum): ',dg_IF)
+    dg_kcalmol= a * dg_IF + b
+    #print('ΔG predicted (kcal/mol): ', dg_kcalmol)
 
-dg_kcalmol= a * dg_IF + b
+    return(dg_kcalmol)
 
-print('ΔG predicted (kcal/mol): ', dg_kcalmol)
+    # aa_list_export=aa_list+['dG_IF','dG_kcalmol']
+    # wt_scores_export=wt_scores+[dg_IF,dg_kcalmol]
 
-aa_list_export=aa_list+['dG_IF','dG_kcalmol']
-wt_scores_export=wt_scores+[dg_IF,dg_kcalmol]
+    # df_export=pd.DataFrame({'Residue':aa_list_export,'score':wt_scores_export})
 
-df_export=pd.DataFrame({'Residue':aa_list_export,'score':wt_scores_export})
-
-df_export.to_csv(f"{jobname}_dG_pos_scores_and_total.csv",sep=',')
+    # df_export.to_csv(f"{jobname}_dG_pos_scores_and_total.csv",sep=',')

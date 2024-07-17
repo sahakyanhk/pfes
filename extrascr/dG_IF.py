@@ -83,9 +83,8 @@ with open(f'{outfile}', 'w') as f:
 
 
 for pdb in os.listdir(pdbpath):
-    metapdb = pdb.split('.')
-    if metapdb[1]=="pdb":
-        id = metapdb[0]
+    if pdb.endswith("pdb"):
+        id = pdb.split('.')[0]
         structure = load_structure(pdbpath + '/' + pdb, chain_id)
         coords_structure, sequence_structure = extract_coords_from_structure(structure)
 

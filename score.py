@@ -198,34 +198,54 @@ def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=
         if cbeta_array[row][6] == chainB and float(cbeta_array[row][5]) > plddt_cutoff:
             cb_data_B.append(cbeta_array[row][0:6])
             #cb_data_A = np.array(cb_data_A, dtype='float32')
-            #cb_data_B = np.array(cb_data_B, dtype='float32')
-    if len(cb_data_A) == 0 or len(cb_data_B) == 0: 
-        return(1, 0.01)
-    else:    
-        #Acoords = cb_data_A[:,2:5]        
-        #Bcoords = cb_data_B[:,2:5]
-        Acoords = np.array([item[2:5] for item in cb_data_A], dtype="float32")
-        Bcoords = np.array([item[2:5] for item in cb_data_B], dtype="float32")
-        CB_pLDDT_A = np.array([item[5] for item in cb_data_A], dtype="float32").mean()
-        distances_matrix = np.linalg.norm(Acoords[:, None] - Bcoords, axis=2)
-        #contact_map = distances_matrix.copy()
-        #contact_map[contact_map <= distance_cutoff] = 1
-        #contact_map[contact_map > distance_cutoff] = 0
-        matrix_mask = distances_matrix <= distance_cutoff
-        n_contacts = matrix_mask.sum()
-        if n_contacts == 0:
-            return(1,0.01)
-        else:
-            inteface_ndx = np.where(matrix_mask)
-            AiPLDDT = np.array([cb_data_A[i][5] for i in np.unique(inteface_ndx[0])],dtype=float)
-            BiPLDDT = np.array([cb_data_B[i][5] for i in np.unique(inteface_ndx[1])],dtype=float)
-            iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
-            return(n_contacts, round(iPLDDT * 0.01,2))
+            #cb_data_B = np.array(cb_data_B, dtype='float32') 
+    #Acoords = cb_data_A[:,2:5]        
+    #Bcoords = cb_data_B[:,2:5]
+    Acoords = np.array([item[2:5] for item in cb_data_A], dtype="float32")
+    Bcoords = np.array([item[2:5] for item in cb_data_B], dtype="float32")
+    CB_pLDDT_A = np.array([item[5] for item in cb_data_A], dtype="float32").mean()
+    distances_matrix = np.linalg.norm(Acoords[:, None] - Bcoords, axis=2)
+    #contact_map = distances_matrix.copy()
+    #contact_map[contact_map <= distance_cutoff] = 1
+    #contact_map[contact_map > distance_cutoff] = 0
+    matrix_mask = distances_matrix <= distance_cutoff
+    n_contacts = matrix_mask.sum()
+    if n_contacts == 0:
+        return(1,0.01)
+    else:
+        inteface_ndx = np.where(matrix_mask)
+        AiPLDDT = np.array([cb_data_A[i][5] for i in np.unique(inteface_ndx[0])],dtype=float)
+        BiPLDDT = np.array([cb_data_B[i][5] for i in np.unique(inteface_ndx[1])],dtype=float)
+        iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
+        return(n_contacts, round(iPLDDT * 0.01, 2))
 
 
 def iplddt_all_atom(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0,):
     iplddt_all_atom = 'not ready yet'
     return iplddt_all_atom
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
