@@ -50,7 +50,7 @@ def dGscore(coord:np.array, sequence:str):
                 if n == alphabetAA_D_L[j]:
                     WT_score_pos=score_pos[-1]
 
-        wt_scores.append(WT_score_pos)
+            wt_scores.append(WT_score_pos)
 
         return aa_list, wt_scores
 
@@ -69,10 +69,7 @@ def dGscore(coord:np.array, sequence:str):
     b=0.6162549378400894 ## fitting param from the manuscript to convert IF score scale to kcal/mol
 
     dg_IF= np.nansum(wt_scores)
-    #print('ΔG predicted (likelihoods sum): ',dg_IF)
-
     dg_kcalmol= a * dg_IF + b
-    #print('ΔG predicted (kcal/mol): ', dg_kcalmol)
 
     return(dg_kcalmol)
 

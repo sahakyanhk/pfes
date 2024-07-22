@@ -13,7 +13,7 @@ from scipy.special import softmax
 
 from evolution import Evolver
 from score import get_nconts, cbiplddt
-from dGscore import dGscore
+#from dGscore import dGscore
 from psique import pypsique
 from datetime import datetime
 
@@ -143,7 +143,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
 
         ss, max_helix = pypsique(pdb_txt, 'A')
         #Rg, aspher = get_aspher(pdb_txt)
-        dG = dGscore(pdbtxt2bbcoord(pdb_txt), seq) # calculate dG if plddt > cat to save time
+        #dG = dGscore(pdbtxt2bbcoord(pdb_txt), seq) # calculate dG if plddt > cat to save time
         prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) * np.tanh(seq_len*0.1)
         max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
         score  = np.prod([mean_plddt,           #[0, 1]
@@ -151,8 +151,10 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           prot_len_penalty,     #[0, 1]
                           max_helix_penalty,    #[0, 1]
                           iplddt,               #[0, 1]
-                          dG, #~[0, inf]
-                          (num_conts + 2*seq_len) / seq_len])  #TODO replace with dG   #~[0, inf]
+                          #dG, #~[0, inf]
+#                         (num_conts + 2*seq_len) / seq_le
+                          (num_conts + seq_len)/ seq_len
+                          ])  #TODO replace with dG   #~[0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
         #================================SCORING================================#
@@ -166,7 +168,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'num_conts': num_conts, 
                                 'iplddt': iplddt,
                                 'num_inter_conts': num_inter_conts, 
-                                'dG': round(dG, 3),
+                                #'dG': round(dG, 3),
                                 'score': round(score, 3), 
                                 'sequence': seq, 
                                 'mutation': mutation,
@@ -218,7 +220,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
              'num_conts', 
              'iplddt',
              'num_inter_conts',
-             'dG',
+             #'dG',
              'score', 
              'sequence', 
              'mutation',
@@ -403,7 +405,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                'num_conts', 
                'iplddt',
                'num_inter_conts',
-               'dG',
+               #'dG',
                'score', 
                'sequence', 
                'mutation',

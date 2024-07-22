@@ -122,10 +122,10 @@ def make_summary_plot(log, bestlog, lineage):
         axs[1,1].set(xlabel=None, ylabel='Num of inter contacts')
         axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
     else:     
-        axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
-        axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
-        axs[1,1].plot(lineage.max_helix_penalty, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
+        axs[1,1].plot(log.dG, '.', markersize=ms)
+        axs[1,1].plot(bestlog.dG, '-', linewidth=lw)
+        axs[1,1].plot(lineage.dG, '-', linewidth=lw)
+        axs[1,1].set(xlabel=None, ylabel='dG')
         axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
 
     axs[2,1].plot(log.num_conts, '.', markersize=ms)
