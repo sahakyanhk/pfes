@@ -10,9 +10,11 @@ def pypsique(pdb_txt, chainid='A'):
                     stderr=PIPE, shell=True)
     stdout, stderr = process.communicate()
     SSstring = stdout.decode('ascii')
-    maxhelix = len(max(SSstring.replace('G', 'C').replace('F', 'C').replace('T', 'C').replace('P', 'C').split('C')))
+    simplestring = SSstring.replace('G', 'C').replace('F', 'C').replace('T', 'C').replace('P', 'C')
+    maxhelix = len(max(simplestring.replace('E', 'C').split('C')))
+    maxbeta = len(max(simplestring.replace('H', 'C').split('C')))
     
-    return SSstring, int(maxhelix)
+    return SSstring, int(maxhelix), int(maxbeta)
 
 
 # input_pdb_path = str(sys.argv[1])

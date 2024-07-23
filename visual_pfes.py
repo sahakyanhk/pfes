@@ -20,6 +20,8 @@ parser.add_argument('-l', '--log', type=str, help='log file name', default='prog
 parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='structures')
 parser.add_argument('-t', '--traj', type=str, help='make backbone trajectory', default='pfestraj.pdb')
 parser.add_argument('-o', '--outdir', type=str, help='output directory name', default='visual_pfes_results')
+parser.add_argument('-b', '--start', type=int, help='first point to read from trajectory', default=0)
+parser.add_argument('-e', '--end', type=int, help='last point to read from trajectory', default=99999999)
 parser.add_argument('--notraj', action='store_false', )
 parser.add_argument('--noplots', action='store_false', )
 
@@ -45,7 +47,7 @@ def extract_lineage(log):
         parent = parent.drop_duplicates('sequence')
         return parent
     
-    pbar = tqdm(desc='while loop')
+    pbar = tqdm(desc='Extracting lineage')
     i=0
     while not df.empty:
         ndx = return_ancestor(log, ndx)
@@ -63,20 +65,26 @@ def extract_lineage(log):
 #======================= make separate plots =======================#
 def make_plots(log, bestlog, lineage):
 
-    ms=0.5
-    lw=1.0
+    ms=0.1
+    lw=1.4
     dpi=500
 
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
         if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
-                plt.plot(log[colname],'.', markersize=ms)
-                plt.plot(bestlog[colname],'-', linewidth=lw)
-                plt.plot(lineage[colname],'-', linewidth=lw, color='green')
-                plt.grid(True, which="both",linestyle='--', linewidth=1)
-                plt.legend([colname], loc ="upper left")
-                plt.savefig(plotdir + colname + '.png', dpi=dpi)
-                plt.clf()
+                fig, ax1 = plt.subplots(figsize=(9, 3))
+                ax1.plot(log[colname],'o', markersize=ms,    color='silver', label='all mutations')
+                ax1.plot(bestlog[colname],'-', linewidth=lw, label='best of the generation')
+                ax1.plot(lineage[colname],'-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={len(lineage[colname])})')
+                ax1.legend(loc ="lower right")
+                ax1.grid(True, which="both",linestyle='--', linewidth=0.3)
+                ax1.set(xlabel="Total number of mutations", ylabel=colname.capitalize())
+                #ax2 = ax1.twiny()
+                #ax2.plot(lineage[colname].tolist(),'-', linewidth=lw, color='mediumslateblue')
+                #ax2.set(xlabel="Lineage length")
+                fig.tight_layout()
+                fig.savefig(plotdir + colname + '.png', dpi=dpi)
+                fig.clf()
 
 #======================= Summary plot =======================#
 def make_summary_plot(log, bestlog, lineage):
@@ -89,49 +97,55 @@ def make_summary_plot(log, bestlog, lineage):
 
     fig.suptitle(None)
 
-
-    axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
-    axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
-    axs[0,0].plot(lineage.mean_plddt, '-', linewidth=lw)
+    L = len(lineage)
+    axs[0,0].plot(log.mean_plddt, '.', markersize=ms,    color='silver', label='all mutations')
+    axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw, label='best of the generation')
+    axs[0,0].plot(lineage.mean_plddt, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
     axs[0,0].set(xlabel=None, ylabel='mean pLDDT')
     axs[0,0].grid(True, which="both",linestyle='--', linewidth=0.5)
+    axs[0,0].set_xticklabels([])
 
-
-    axs[1,0].plot(log.ptm, '.', markersize=ms)
-    axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
-    axs[1,0].plot(lineage.ptm, '-', linewidth=lw)
+    axs[1,0].plot(log.ptm, '.', markersize=ms,    color='silver', label='all mutations')
+    axs[1,0].plot(bestlog.ptm, '-', linewidth=lw, label='best of the generation')
+    axs[1,0].plot(lineage.ptm, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
     axs[1,0].set(xlabel=None, ylabel='pTM')
     axs[1,0].grid(True, which="both",linestyle='--', linewidth=0.5)
+    axs[1,0].set_xticklabels([])
 
-    axs[2,0].plot(log.score,  '.', markersize=ms)
-    axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
-    axs[2,0].plot(lineage.score, '-', linewidth=lw)
-    axs[2,0].set(xlabel='Number of mutations', ylabel='Score')
+    axs[2,0].plot(log.score,  '.', markersize=ms,    color='silver', label='all mutations')
+    axs[2,0].plot(lineage.score, '-', linewidth=lw,  label='best of the generation')
+    axs[2,0].plot(bestlog.score,  '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+    axs[2,0].set(xlabel='Total number of mutations', ylabel='Score')
     axs[2,0].grid(True, which="both",linestyle='--', linewidth=0.5)
-        
-    axs[0,1].plot(log.seq_len, '.', markersize=ms)
-    axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
-    axs[0,1].plot(lineage.seq_len, '-', linewidth=lw)
+    axs[2,0].legend(loc ="lower right")
+
+    axs[0,1].plot(log.seq_len, '.', markersize=ms,    color='silver', label='all mutations')
+    axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw, label='best of the generation')
+    axs[0,1].plot(lineage.seq_len, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
     axs[0,1].set(xlabel=None, ylabel='Seq len')
     axs[0,1].grid(True, which="both",linestyle='--', linewidth=0.5)
+    axs[0,1].set_xticklabels([])
 
     if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
-        axs[1,1].plot(log.num_inter_conts, '.', markersize=ms)
-        axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw)
-        axs[1,1].plot(lineage.num_inter_conts, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='Num of inter contacts')
+        axs[1,1].plot(log.num_inter_conts, '.', markersize=ms,    color='silver', label='all mutations')
+        axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw, label='best of the generation')
+        axs[1,1].plot(lineage.num_inter_conts, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+        axs[1,1].set(xlabel=None, ylabel='Number of inter contacts')
         axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
-    else:     
-        axs[1,1].plot(log.dG, '.', markersize=ms)
-        axs[1,1].plot(bestlog.dG, '-', linewidth=lw)
-        axs[1,1].plot(lineage.dG, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='dG')
-        axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
+        axs[1,1].set_xticklabels([])
 
-    axs[2,1].plot(log.num_conts, '.', markersize=ms)
-    axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
-    axs[2,1].plot(lineage.num_conts, '-', linewidth=lw)
-    axs[2,1].set(xlabel='Number of mutations', ylabel='Num of contacts')
+    else:     
+        axs[1,1].plot(log.max_beta_penalty, '.', markersize=ms,    color='silver', label='all mutations')
+        axs[1,1].plot(bestlog.max_beta_penalty, '-', linewidth=lw, label='best of the generation')
+        axs[1,1].plot(lineage.max_beta_penalty, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+        axs[1,1].set(xlabel=None, ylabel='SS penalty')
+        axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
+        axs[1,1].set_xticklabels([])
+
+    axs[2,1].plot(log.num_conts, '.', markersize=ms,  color='silver', label='all mutations')
+    axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw, label='best of the generation')
+    axs[2,1].plot(lineage.num_conts, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+    axs[2,1].set(xlabel='Total number of mutations', ylabel='Num of contacts')
     axs[2,1].grid(True, which="both",linestyle='--', linewidth=0.5)
 
     #plt.xticks(rotation=45)
@@ -199,10 +213,10 @@ def make_ss_plot(lineage):
     else: 
         ticks = np.arange(0, len(lineage)+1, 100)
 
-    plt.figure(figsize=(9, 5), dpi=dpi)
+    plt.figure(figsize=(9, 3), dpi=dpi)
     plt.imshow(sse_digit.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
     plt.xticks(ticks, ticks.astype(int))
-    plt.xlabel("Number of generations")
+    plt.xlabel("Lineage evolution")
     plt.ylabel("Residues")
 
     custom_lines = [
@@ -210,8 +224,8 @@ def make_ss_plot(lineage):
 
     plt.legend(
         custom_lines, color_assign.keys(), loc="upper center",
-        bbox_to_anchor=(0.5, 1.1), ncol=len(color_assign), fontsize=8)
-
+        bbox_to_anchor=(0.5, 1.15), ncol=len(color_assign), fontsize=8)
+    plt.tight_layout()
     plt.savefig(os.path.join(outdir,'Secondary_structures.png'), dpi=dpi) 
 
 def backbone_traj(trajlog, pdbdir):
@@ -316,11 +330,13 @@ trajpath = os.path.join(outdir, args.traj)
 
 log = pd.read_csv(args.log, sep='\t', comment='#')
 
+log = log.iloc[args.start:args.end]
+
 bestlog = log.groupby('gndx').head(1)
 bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
 
 
-print('Extracting lineage')
+print('==================================')
 lineage = extract_lineage(log)
 lineage.to_csv(os.path.join(outdir, 'lineage.tsv'), sep='\t', index=False, header=True)
 

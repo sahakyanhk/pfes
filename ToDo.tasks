@@ -2,32 +2,21 @@
 
 TO DO:
     active:
-        ☐ NEXT EPOSOD: protein fold nuctiation time.
-            Run ~100 simulations with until threy reach a certen condition (plddt70 & ptm70)
-            Do only point motations and start with ~50 residue long random sequnece.
-            How long it takes to evold a fold? How it changes with the population size
-
-            Allow all mutationsstart with ~24 residue long random sequnece.
-            How long it takes to evold a fold? How it changes with the population size
-
         ☐ MEASURE the indels lenght
-        ☐ @critical the same sequence in testrun1 lineage is reported with different mutations
-        ☐ why some strucutres are missing when running visual_pfes? @bag  
+        ☐ @critical the same sequence in testrun1 lineage is reported with different mutations. Chec
+                    mutation can be the same residue, e.g. the sequeces will not change. Add an if condition in evolover to check in mutation will change the sequence and only then mutate.
+        ☐ why some strucutres are missing when running visual_pfes? @bag  might be because of above problem
         ☐ @critical weak simulation with norepeat fails
         ☐ save individual plddt in traj
         ☐ download a domain database, calculate C-beta distances for a big set to adjust you cutoff in gen_nconts()
         ☐ use codone probabilities from Igor's set
         ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB  or here https://www.rcsb.org/structure/7EL1
-        ☐ calculate the number of ss elements in pfes
-        ☐ add a secondary structure score in the main score, that will also include the long helix penalty
-        ☐ write checkpoint file and continue simulations (all sequences from the generation are needed)
-        ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes 
+        ☐ write checkpoint file and continue simulations (all sequences from the generation are needed) #added a beta sheet penalty
+        ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes  
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
         ☐ add rosetta scoring in visual_pfes for BEST PDB @high
-        ☐ add a new scoring term based of fold density volume/number of atoms https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1301551/pdf/11463623.pdf
-        ☐ extrax xyz from esm_out use it instead of pdb_txt
         ☐ add a function to indicate only several residues in the partner protetein for contacts. \
-        It will constrain the number of possible contacts! @high 
+                 It will constrain the number of possible contacts! @high 
         ☐ add a function to save pdb (all atoms, only CA, ziped, etc) 
         ☐ Consider adding new mutation types: split sequnece and join sequences
         ###add more tools for analyses###
@@ -38,6 +27,11 @@ TO DO:
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
+            ✘ calculate the number of ss elements in pfes @cancelled (7/23/2024, 11:05:33 AM)
+            ✘ add a secondary structure score in the main score, that will also include the long helix penalty @cancelled (7/23/2024, 11:05:42 AM)
+            ✔ add a new scoring term based of fold density volume/number of atoms https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1301551/pdf/11463623.pdf @done (7/23/2024, 11:06:41 AM)
+            ✘ extrax xyz from esm_out use it instead of pdb_txt @cancelled (7/23/2024, 11:06:56 AM)
+            ✔ NEXT EPOSOD: protein fold nuctiation time. @done (7/23/2024, 11:07:23 AM)
             ✔ Add a new mutation type: circular permutation @done (6/27/2024, 9:55:24 PM)
             ✔ ADD option to change the selection mode after n steps @high @done (7/1/2024, 3:29:25 PM)
             ✔ introduce/susbtitute inter_contacts with iPLDDT @high @done (7/1/2024, 3:29:33 PM)

@@ -141,15 +141,18 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         else:
             num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 40) 
 
-        ss, max_helix = pypsique(pdb_txt, 'A')
+        ss, max_helix, max_beta = pypsique(pdb_txt, 'A')
         #Rg, aspher = get_aspher(pdb_txt)
         #dG = dGscore(pdbtxt2bbcoord(pdb_txt), seq) # calculate dG if plddt > cat to save time
         prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) * np.tanh(seq_len*0.1)
-        max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
+        max_alpha_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
+        max_beta_penalty = 1 - sigmoid(max_beta, args.beta_len_penalty, 0.6)
+        
         score  = np.prod([mean_plddt,           #[0, 1]
                           ptm,                  #[0, 1]
                           prot_len_penalty,     #[0, 1]
-                          max_helix_penalty,    #[0, 1]
+                          max_beta_penalty,     #[0, 1]
+                          max_alpha_penalty,    #[0, 1]
                           iplddt,               #[0, 1]
                           #dG, #~[0, inf]
 #                         (num_conts + 2*seq_len) / seq_le
@@ -162,7 +165,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'id': id, 
                                 'seq_len': seq_len,
                                 'prot_len_penalty': round(prot_len_penalty, 2), 
-                                'max_helix_penalty': round(max_helix_penalty, 2),
+                                'max_alpha_penalty': round(max_alpha_penalty, 2),
+                                'max_beta_penalty': round(max_beta_penalty, 2),
                                 'ptm': round(ptm, 2), 
                                 'mean_plddt': round(mean_plddt, 2), 
                                 'num_conts': num_conts, 
@@ -214,7 +218,8 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
              'id', 
              'seq_len', 
              'prot_len_penalty', 
-             'max_helix_penalty',
+             'max_alpha_penalty',
+             'max_beta_penalty',
              'ptm', 
              'mean_plddt', 
              'num_conts', 
@@ -399,7 +404,8 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                'id', 
                'seq_len', 
                'prot_len_penalty',
-               'max_helix_penalty',
+               'max_alpha_penalty',
+               'max_beta_penalty',
                'ptm', 
                'mean_plddt', 
                'num_conts', 
@@ -535,6 +541,11 @@ if __name__ == '__main__':
             '-hl0', '--helix_len_penalty', type=int,
             help='population size',
             default=20,
+    )
+    parser.add_argument(
+            '-bl0', '--beta_len_penalty', type=int,
+            help='population size',
+            default=12,
     )
     parser.add_argument(
             '--random_seq_len', type=int,
