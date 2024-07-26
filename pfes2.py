@@ -183,7 +183,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         os.system(f"gzip {pdb_path}{id}'.pdb' &")
 
         # with open(pdb_path + id + '.pdb', 'rb') as f_pdb:
-        #     with gzip.open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
+        #     with  .open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
         #         shutil.copyfileobj(f_pdb, f_pdb_gz)
         #         shutil
 

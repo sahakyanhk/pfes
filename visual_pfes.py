@@ -61,6 +61,9 @@ def extract_lineage(log):
 
     return lineage
 
+def extract_sequences(log):
+    fasta  = "fasta"
+    return fasta
 
 #======================= make separate plots =======================#
 def make_plots(log, bestlog, lineage):
@@ -73,7 +76,7 @@ def make_plots(log, bestlog, lineage):
     for colname in log.keys(): 
         if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
                 fig, ax1 = plt.subplots(figsize=(9, 3))
-                ax1.plot(log[colname],'o', markersize=ms,    color='silver', label='all mutations')
+                ax1.plot(log[colname],'.', markersize=ms,    color='silver', label='all mutations')
                 ax1.plot(bestlog[colname],'-', linewidth=lw, label='best of the generation')
                 ax1.plot(lineage[colname],'-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={len(lineage[colname])})')
                 ax1.legend(loc ="lower right")
@@ -89,7 +92,7 @@ def make_plots(log, bestlog, lineage):
 #======================= Summary plot =======================#
 def make_summary_plot(log, bestlog, lineage):
     
-    ms=0.5
+    ms=0.1
     lw=1.0
     dpi=500
 
@@ -113,8 +116,8 @@ def make_summary_plot(log, bestlog, lineage):
     axs[1,0].set_xticklabels([])
 
     axs[2,0].plot(log.score,  '.', markersize=ms,    color='silver', label='all mutations')
-    axs[2,0].plot(lineage.score, '-', linewidth=lw,  label='best of the generation')
-    axs[2,0].plot(bestlog.score,  '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+    axs[2,0].plot(bestlog.score, '-', linewidth=lw,  label='best of the generation')
+    axs[2,0].plot(lineage.score,  '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
     axs[2,0].set(xlabel='Total number of mutations', ylabel='Score')
     axs[2,0].grid(True, which="both",linestyle='--', linewidth=0.5)
     axs[2,0].legend(loc ="lower right")
@@ -122,15 +125,15 @@ def make_summary_plot(log, bestlog, lineage):
     axs[0,1].plot(log.seq_len, '.', markersize=ms,    color='silver', label='all mutations')
     axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw, label='best of the generation')
     axs[0,1].plot(lineage.seq_len, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
-    axs[0,1].set(xlabel=None, ylabel='Seq len')
+    axs[0,1].set(xlabel=None, ylabel='Sequence length')
     axs[0,1].grid(True, which="both",linestyle='--', linewidth=0.5)
     axs[0,1].set_xticklabels([])
 
     if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
-        axs[1,1].plot(log.num_inter_conts, '.', markersize=ms,    color='silver', label='all mutations')
-        axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw, label='best of the generation')
-        axs[1,1].plot(lineage.num_inter_conts, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
-        axs[1,1].set(xlabel=None, ylabel='Number of inter contacts')
+        axs[1,1].plot(log.iplddt, '.', markersize=ms,    color='silver', label='all mutations')
+        axs[1,1].plot(bestlog.iplddt, '-', linewidth=lw, label='best of the generation')
+        axs[1,1].plot(lineage.iplddt, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+        axs[1,1].set(xlabel=None, ylabel='iPLDDT')
         axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
         axs[1,1].set_xticklabels([])
 
@@ -145,7 +148,7 @@ def make_summary_plot(log, bestlog, lineage):
     axs[2,1].plot(log.num_conts, '.', markersize=ms,  color='silver', label='all mutations')
     axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw, label='best of the generation')
     axs[2,1].plot(lineage.num_conts, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
-    axs[2,1].set(xlabel='Total number of mutations', ylabel='Num of contacts')
+    axs[2,1].set(xlabel='Total number of mutations', ylabel='Number of contacts')
     axs[2,1].grid(True, which="both",linestyle='--', linewidth=0.5)
 
     #plt.xticks(rotation=45)
@@ -202,8 +205,8 @@ def make_ss_plot(lineage):
         r"bend": "orange",
         r"turn": "brown",
         r"$\alpha$-helix": "purple",
-        r"$3_{10}$-helix": "mediumpurple",
-        r"$\pi$-helix": "blue",
+        r"$3_{10}$-helix": "blue",
+        r"$\pi$-helix": "mediumpurple",
         r"": "white"
         }
 
@@ -216,7 +219,7 @@ def make_ss_plot(lineage):
     plt.figure(figsize=(9, 3), dpi=dpi)
     plt.imshow(sse_digit.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
     plt.xticks(ticks, ticks.astype(int))
-    plt.xlabel("Lineage evolution")
+    plt.xlabel("Lineage length")
     plt.ylabel("Residues")
 
     custom_lines = [

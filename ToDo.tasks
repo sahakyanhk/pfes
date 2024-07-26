@@ -8,6 +8,7 @@ TO DO:
         ☐ why some strucutres are missing when running visual_pfes? @bag  might be because of above problem
         ☐ @critical weak simulation with norepeat fails
         ☐ save individual plddt in traj
+        ☐ visual_pfes: report some basic data and statistics in the stdout
         ☐ download a domain database, calculate C-beta distances for a big set to adjust you cutoff in gen_nconts()
         ☐ use codone probabilities from Igor's set
         ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB  or here https://www.rcsb.org/structure/7EL1
