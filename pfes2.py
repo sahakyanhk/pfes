@@ -8,7 +8,6 @@ import gzip
 import time
 import torch
 import esm
-from scipy.special import softmax
 
 
 from evolution import Evolver
@@ -71,8 +70,6 @@ def esm2data(esm_out):
     mean_plddt = esm_out["mean_plddt"].tolist()
     plddt = np.array(output["plddt"][0,:,1].tolist())/100
     
-
-
     #calculate the number of contacts
     # 
     # bins = np.append(0,np.linspace(2.3125,21.6875,63))
@@ -106,7 +103,7 @@ def sigmoid(x,L0=0,c=0.1):
 #==============================================================================================#
 #==============================================================================================#
 #==============================================================================================#
-#===========================================  SCORING =========================================#
+#================================== EXTRACT AND SCORE =========================================#
 #==============================================================================================#
 #==============================================================================================#
 #==============================================================================================#
@@ -116,7 +113,7 @@ def sigmoid(x,L0=0,c=0.1):
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
 
-    for meta_id, seq, pdb_txt, ptm, mean_plddt in zip(headers, sequences, pdbs, ptms, mean_plddts): #which plddt is better?
+    for meta_id, seq, pdb_txt, ptm, mean_plddt, in zip(headers, sequences, pdbs, ptms, mean_plddts): #which plddt is better?
         
         all_seqs = seq.split(':')
         seq = all_seqs[0]
@@ -132,10 +129,10 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
             f.write(pdb_txt.encode())   
 
         #================================SCORING================================# 
-        num_conts, _mean_plddt_ = get_nconts(pdb_txt, 'A', 6.0, 50) #mean_plddt only for residues above cutoff
+        num_conts, _mean_plddt_ = get_nconts(pdb_txt, 'A', 6.0, 50) #which plddt is better?
 
         mean_plddt = mean_plddt * 0.01
-        
+
         if args.evolution_mode == "single_chain": #if there are two or more chains, then calculate the number of interacting contacts
             num_inter_conts, iplddt = 1, 1
         else:
@@ -183,7 +180,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         os.system(f"gzip {pdb_path}{id}'.pdb' &")
 
         # with open(pdb_path + id + '.pdb', 'rb') as f_pdb:
-        #     with  .open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
+        #     with gzip.open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
         #         shutil.copyfileobj(f_pdb, f_pdb_gz)
         #         shutil
 
@@ -391,8 +388,9 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
     PDB_5YIW=":GAMDMSWTDERVSTLKKLWLDGLSASQIAKQLGGVTRNAVIGKVHRLGL" #HTH
     PDB_4OO8=":GQKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERGGL" #CAS9 HNH
+    PDB_5VGB=":GEPKSKDILKLRLYEQQHGKCLYSGKEINLGRLNEKGYVEIDHALPFSRTWDDSFNNKVLVLGSENQNKGNQTPYEYFNGKDNSREWQEFKARVETSRFPRSKKQRILLQ" #CAS9 HNH
     
-    seq2 = PDB_6SVE
+    seq2 = PDB_5YIW
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
