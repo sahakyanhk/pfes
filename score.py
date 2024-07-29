@@ -106,6 +106,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
     else:    
         coords = np.array([item[1] for item in ca_data])  # Extract coordinates
         CA_pLDDT = np.mean(np.array([item[2] for item in ca_data]))
+        mean_plddt = np.mean(np.array(plddt))
         n_atoms = len(coords)
         #pairs_data = np.zeros((0, 5))
 
@@ -117,7 +118,7 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
                     #pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], np.mean([ca_data[i][2], ca_data[j][2]]), distances_matrix[i, j]]], axis=0)
                     row += 1
         
-        return(row+1, round(CA_pLDDT * 0.01, 2))
+        return(row+1, round(mean_plddt * 0.01, 2))
 
 #TODO check how fast this is?
 def get_nconts_allatom(pdb_txt, chain="A", distance_cutoff=4.5, plddt_cutoff=0): 

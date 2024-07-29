@@ -58,7 +58,11 @@ def extract_lineage(log):
         pbar.update(i)
     pbar.close()
     lineage = lineage.sort_index()
-
+    ltail = lineage.tail(1)
+    print(f"""
+{ltail.sequence.to_string(index = False)}
+{ltail.ss.to_string(index = False)}
+""")
     return lineage
 
 def extract_sequences(log):
@@ -138,9 +142,9 @@ def make_summary_plot(log, bestlog, lineage):
         axs[1,1].set_xticklabels([])
 
     else:     
-        axs[1,1].plot(log.max_beta_penalty, '.', markersize=ms,    color='silver', label='all mutations')
-        axs[1,1].plot(bestlog.max_beta_penalty, '-', linewidth=lw, label='best of the generation')
-        axs[1,1].plot(lineage.max_beta_penalty, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+        axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms,    color='silver', label='all mutations')
+        axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw, label='best of the generation')
+        axs[1,1].plot(lineage.max_helix_penalty, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
         axs[1,1].set(xlabel=None, ylabel='SS penalty')
         axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
         axs[1,1].set_xticklabels([])

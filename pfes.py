@@ -8,11 +8,11 @@ import gzip
 import time
 import torch
 import esm
-from scipy.special import softmax
 
 
 from evolution import Evolver
 from score import get_nconts, cbiplddt
+#from dGscore import dGscore
 from psique import pypsique
 from datetime import datetime
 
@@ -51,8 +51,8 @@ def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_t
            batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0
     yield batch_headers, batch_sequences
 
-def pdbtxt2bbcoord(pdb_txt, chain):
-    # you can extract this directly from eso output
+def pdbtxt2bbcoord(pdb_txt, chain='A'):
+    # you can extract this directly from esm output
     # positions contains coordinates, and aatype contains the sequence
     #  
     coords3 = np.array([line[30:54].split()  for line in pdb_txt.splitlines() if line[:4] == "ATOM" and 
@@ -67,7 +67,7 @@ def esm2data(esm_out):
     output = {key: value.cpu() for key, value in esm_out.items()}
     pdbs = model.output_to_pdb(output)
     ptm = esm_out["ptm"].tolist()
-    mean_plddt = esm_out["mean_plddt"].tolist()
+    mean_plddt = esm_out["mean_plddt"].tolist() #extract plddt only for chain A using indexing
     plddt = np.array(output["plddt"][0,:,1].tolist())/100
     
     #calculate the number of contacts
@@ -99,13 +99,21 @@ def sigmoid(x,L0=0,c=0.1):
     return 1 / (1+2.71828182**(c * (L0-x)))
 
 
+#==============================================================================================#
+#==============================================================================================#
+#==============================================================================================#
+#==============================================================================================#
+#================================== EXTRACT AND SCORE =========================================#
+#==============================================================================================#
+#==============================================================================================#
+#==============================================================================================#
+#==============================================================================================#
 
-#--------------------------------------------
 
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
 
-    for meta_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts): #which plddt is better?
+    for meta_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts): #which plddt is better? this is plddt for both A and B chains in case of inter_chain
         
         all_seqs = seq.split(':')
         seq = all_seqs[0]
@@ -122,24 +130,29 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
 
         #================================SCORING================================# 
         num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50) #which plddt is better?
-        
-        if args.evolution_mode == "single_chian": #if there are two or more chains, then calculate the number of interacting contacts
+
+        if args.evolution_mode == "single_chain": #if there are two or more chains, then calculate the number of interacting contacts
             num_inter_conts, iplddt = 1, 1
         else:
-            num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 50) 
+            num_inter_conts, iplddt = cbiplddt(pdb_txt, 'A', 'B', 6.0, 40) 
 
-        ss, max_helix = pypsique(pdb_txt, 'A')
+        ss, max_helix, max_beta = pypsique(pdb_txt, 'A')
         #Rg, aspher = get_aspher(pdb_txt)
-        # dG = dGcore(coords, seq) 
+        #dG = dGscore(pdbtxt2bbcoord(pdb_txt), seq) # calculate dG if plddt > cat to save time
         prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) * np.tanh(seq_len*0.1)
-        max_helix_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
+        max_alpha_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
+        max_beta_penalty = 1 - sigmoid(max_beta, args.beta_len_penalty, 0.6)
+        
         score  = np.prod([mean_plddt,           #[0, 1]
                           ptm,                  #[0, 1]
                           prot_len_penalty,     #[0, 1]
-                          max_helix_penalty,    #[0, 1]
+                          max_beta_penalty,     #[0, 1]
+                          max_alpha_penalty,    #[0, 1]
                           iplddt,               #[0, 1]
-                          #dG,
-                          (num_conts + 2*seq_len) / seq_len])  #TODO replace with dG   #[~0, inf]
+                          #dG, #~[0, inf]
+#                         (num_conts + 2*seq_len) / seq_le
+                          (num_conts + seq_len)/ seq_len
+                          ])  #TODO replace with dG   #~[0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
         #================================SCORING================================#
@@ -147,12 +160,14 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'id': id, 
                                 'seq_len': seq_len,
                                 'prot_len_penalty': round(prot_len_penalty, 2), 
-                                'max_helix_penalty': round(max_helix_penalty, 2),
+                                'max_alpha_penalty': round(max_alpha_penalty, 2),
+                                'max_beta_penalty': round(max_beta_penalty, 2),
                                 'ptm': round(ptm, 2), 
-                                'mean_plddt': mean_plddt, 
+                                'mean_plddt': round(mean_plddt, 2), 
                                 'num_conts': num_conts, 
                                 'iplddt': iplddt,
                                 'num_inter_conts': num_inter_conts, 
+                                #'dG': round(dG, 3),
                                 'score': round(score, 3), 
                                 'sequence': seq, 
                                 'mutation': mutation,
@@ -179,8 +194,6 @@ def multimer_evolver(model, args):
 global new_gen #this will be modified in the extract_results() 
 
 #============================================================================#
-
-
 #==================================================================================================================================================================# 
 #==================================================================================================================================================================# 
 #==================================================================================================================================================================# 
@@ -200,12 +213,14 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
              'id', 
              'seq_len', 
              'prot_len_penalty', 
-             'max_helix_penalty',
+             'max_alpha_penalty',
+             'max_beta_penalty',
              'ptm', 
              'mean_plddt', 
              'num_conts', 
              'iplddt',
              'num_inter_conts',
+             #'dG',
              'score', 
              'sequence', 
              'mutation',
@@ -360,19 +375,16 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None: 
 
     #evolution of an interacting chain
-    PDB_6WXQ=":MKSYFVTMGFNETFLLRLLNETSAQKEDSLVIVVPSPIVSGTRAAIESLRAQISRLNYPPPRIYEIEITDFNLALSKILDIILTLPEPIISDLTMGMRMINLILLGIIVSRKRFTVYVRDE" # 6WXQ (12 to 134) 
     NZ_CP011286=":LNIIKLFHGHKYCLIFYVLP" #intergenic region from Yersinia
-    PDB_1RFA=":ASNTIRVFLPNKQRTVVNVRNGMSLHDCLMKALKVRGLQPECCAVFRLLHEHKGKKARLDWNTDAASLIGEELQVDFLD" #1RFA (55 to 132)
     PDB_1RFP=":QCRRLCYKQRCVTYCRGR" # 1RFP contains S-S bond
-    PDB_4REX=":DVPLPAGWEMAKTSSGQRYFLNHIDQTTTWQDPRKAMLSQ" #4REX (170 to 207)
     PDB_6SVE=":WEKRMSRNSGRVYYFNHITNASQF" #WW domain
-    PDB_4QR0=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVETLGRSDSYDPDKGVLLL" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
-    PDB_4QR02=":MMVLVTYDVNTETPAGRKRLRHVAKLCVDYGQRVQNSVFECSVTPAEFVDIKHRLTQIIDEKTDSIRFYLLGKNWQRRVET" #Cas2 from Streptococcus pyogenes serotype M1 (301447)
-    PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
     PDB_5YIW=":GAMDMSWTDERVSTLKKLWLDGLSASQIAKQLGGVTRNAVIGKVHRLGL" #HTH
+    PDB_4REX=":DVPLPAGWEMAKTSSGQRYFLNHIDQTTTWQDPRKAMLSQ" #4REX (170 to 207) 
+    PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
     PDB_4OO8=":GQKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERGGL" #CAS9 HNH
+    PDB_5VGB=":GEPKSKDILKLRLYEQQHGKCLYSGKEINLGRLNEKGYVEIDHALPFSRTWDDSFNNKVLVLGSENQNKGNQTPYEYFNGKDNSREWQEFKARVETSRFPRSKKQRILLQ" #CAS9 HNH
     
-    seq2 = PDB_6SVE
+    seq2 = PDB_5YIW
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
@@ -381,15 +393,18 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
     #creare an initial pool of sequences with pop_size
     columns = ['gndx',
+               
                'id', 
                'seq_len', 
                'prot_len_penalty',
-               'max_helix_penalty',
+               'max_alpha_penalty',
+               'max_beta_penalty',
                'ptm', 
                'mean_plddt', 
                'num_conts', 
                'iplddt',
                'num_inter_conts',
+               #'dG',
                'score', 
                'sequence', 
                'mutation',
@@ -519,6 +534,11 @@ if __name__ == '__main__':
             '-hl0', '--helix_len_penalty', type=int,
             help='population size',
             default=20,
+    )
+    parser.add_argument(
+            '-bl0', '--beta_len_penalty', type=int,
+            help='population size',
+            default=12,
     )
     parser.add_argument(
             '--random_seq_len', type=int,
