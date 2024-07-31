@@ -38,6 +38,10 @@ def sorted_alphanumeric(data):
     return sorted(data, key=alphanum_key)
 
 def extract_lineage(log):
+    traj_len = len(log)
+    #pop_size = len(log[log.gndx == 'gndx0'])
+
+    print(f'Processing a trajectory with {traj_len} mutations')
     lineage = log.drop_duplicates('gndx').tail(1)
     df = lineage
     ndx = df.id.to_string(index=False)
@@ -46,6 +50,7 @@ def extract_lineage(log):
         parent = log[log.id == node]
         parent = parent.drop_duplicates('sequence')
         return parent
+
     
     pbar = tqdm(desc='Extracting lineage')
     i=0
@@ -142,9 +147,9 @@ def make_summary_plot(log, bestlog, lineage):
         axs[1,1].set_xticklabels([])
 
     else:     
-        axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms,    color='silver', label='all mutations')
-        axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw, label='best of the generation')
-        axs[1,1].plot(lineage.max_helix_penalty, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+        axs[1,1].plot(log.max_beta_penalty, '.', markersize=ms,    color='silver', label='all mutations')
+        axs[1,1].plot(bestlog.max_beta_penalty, '-', linewidth=lw, label='best of the generation')
+        axs[1,1].plot(lineage.max_beta_penalty, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
         axs[1,1].set(xlabel=None, ylabel='SS penalty')
         axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
         axs[1,1].set_xticklabels([])
@@ -363,3 +368,4 @@ if args.notraj:
     print('making backbone trajectory')
     backbone_traj(lineage, pdbdir)
 
+print('=================================='"\n")

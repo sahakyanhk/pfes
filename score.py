@@ -220,7 +220,8 @@ def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=
             inteface_ndx = np.where(matrix_mask)
             AiPLDDT = np.array([cb_data_A[i][5] for i in np.unique(inteface_ndx[0])],dtype=float)
             BiPLDDT = np.array([cb_data_B[i][5] for i in np.unique(inteface_ndx[1])],dtype=float)
-            iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
+            #iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
+            iPLDDT = AiPLDDT.mean()
             return(n_contacts, round(iPLDDT * 0.01, 2))
 
 
