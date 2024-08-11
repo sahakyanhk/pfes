@@ -1,21 +1,22 @@
 import argparse
-import os, sys, shutil
+import os
+import sys
+import shutil
 import pandas as pd
 import numpy as np
 import typing as T
 import threading
 import gzip
 import time
+from datetime import datetime
+
 import torch
 import esm
 
-
 from evolution import Evolver
 from score import get_nconts, cbiplddt
-#from dGscore import dGscore
 from psique import pypsique
-from datetime import datetime
-
+from openfold.utils.loss import compute_tm
 
 #class PFEStools():
 
@@ -34,9 +35,8 @@ def backup_output(outpath):
         os.replace(outpath, outpath + '.' + str(last_backup +  1))
 
 
-def create_batched_sequence_datasets(sequences: T.List[T.Tuple[str, str]], max_tokens_per_batch: int = 1524
+def create_batched_sequence_dataset(sequences: T.List[T.Tuple[str, str]], max_tokens_per_batch: int = 1524
 ) -> T.Generator[T.Tuple[T.List[str], T.List[str]], None, None]:
-
     batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0 
     for header, seq in sequences:
         if (len(seq) + num_tokens > max_tokens_per_batch) and num_tokens > 0:
@@ -64,12 +64,18 @@ def pdbtxt2bbcoord(pdb_txt, chain='A'):
     return(coords33)
 
 def esm2data(esm_out):
-    output = {key: value.cpu() for key, value in esm_out.items()}
-    pdbs = model.output_to_pdb(output)
-    ptm = esm_out["ptm"].tolist()
-    mean_plddt = esm_out["mean_plddt"].tolist() #extract plddt only for chain A using indexing
-    plddt = np.array(output["plddt"][0,:,1].tolist())/100
-    
+    output = {key: value.cpu() for key, value in esm_out.items()} 
+    pdbs = model.output_to_pdb(output) 
+    mask = output["atom37_atom_exists"][:,:,1] == 1 
+    chainA_mask = torch.logical_and(mask, output["chain_index"] == 0)
+    sl = np.sum(chainA_mask.numpy(), 1) # chainA_len
+    sl_len = len(sl)
+    ptm = [compute_tm(output["ptm_logits"][i][None, :sl[i],:sl[i]]).item() for i in range(sl_len)] #ptm only for chain A
+    ptm_full = esm_out["ptm"].tolist() # will clculate pTM for entire complex if more than one chain
+    plddt =  [output["plddt"][:,:,1][i][chainA_mask[i]]/100 for i in range(sl_len)] 
+    mean_plddt = [plddt[i].mean().item() for i in range(len(sl))]
+    return(pdbs, ptm, mean_plddt) #return score instead
+
     #calculate the number of contacts
     # 
     # bins = np.append(0,np.linspace(2.3125,21.6875,63))
@@ -85,7 +91,6 @@ def esm2data(esm_out):
     Use indexes to calculate iPLDDT
 
     """
-    return(pdbs, ptm, mean_plddt) #return score instead
 
 
 
@@ -113,7 +118,7 @@ def sigmoid(x,L0=0,c=0.1):
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
 
-    for meta_id, seq, pdb_txt, ptm, _mean_plddt_, in zip(headers, sequences, pdbs, ptms, mean_plddts): #which plddt is better? this is plddt for both A and B chains in case of inter_chain
+    for meta_id, seq, pdb_txt, ptm, mean_plddt, in zip(headers, sequences, pdbs, ptms, mean_plddts): #which plddt is better? this is plddt for both A and B chains in case of inter_chain
         
         all_seqs = seq.split(':')
         seq = all_seqs[0]
@@ -129,7 +134,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
             f.write(pdb_txt.encode())   
 
         #================================SCORING================================# 
-        num_conts, mean_plddt = get_nconts(pdb_txt, 'A', 6.0, 50) #which plddt is better?
+        num_conts, _mean_plddt_ = get_nconts(pdb_txt, 'A', 6.0, 50) #which plddt is better?
 
         if args.evolution_mode == "single_chain": #if there are two or more chains, then calculate the number of interacting contacts
             num_inter_conts, iplddt = 1, 1
@@ -139,7 +144,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         ss, max_helix, max_beta = pypsique(pdb_txt, 'A')
         #Rg, aspher = get_aspher(pdb_txt)
         #dG = dGscore(pdbtxt2bbcoord(pdb_txt), seq) # calculate dG if plddt > cat to save time
-        prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) * np.tanh(seq_len*0.1)
+        prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) #* np.tanh(seq_len*0.1)
         max_alpha_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
         max_beta_penalty = 1 - sigmoid(max_beta, args.beta_len_penalty, 0.6)
         
@@ -267,7 +272,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                 mutation_collection.append(mutation_data)    
 
         
-        batched_sequences = create_batched_sequence_datasets(generated_sequences, args.max_tokens_per_batch)
+        batched_sequences = create_batched_sequence_dataset(generated_sequences, args.max_tokens_per_batch)
         
 
         #predict data for the new batch
@@ -384,7 +389,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     PDB_4OO8=":GQKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERGGL" #CAS9 HNH
     PDB_5VGB=":GAASEIEKRQEENRKDREKAAAKFREYFPNFVGEPKSKDILKLRLYEQQHGKCLYSGKEINLGRLNEKGYVEIDHALPFSRTWDDSFNNKVLVLGSENQNKGNQTPYEYFNGKDNSREWQEFKARVETSRFPRSKKQRILLQ" #CAS9 HNH
     
-    seq2 = PDB_4OO8
+    seq2 = ':' + args.initial_seq2
 
     os.makedirs(pdb_path, exist_ok=True)
     with open(os.path.join(args.outpath, args.log), 'w') as f:
@@ -450,12 +455,12 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                 mutation_collection.append(mutation_data)    
 
 
-        batched_sequences = create_batched_sequence_datasets(generated_sequences, args.max_tokens_per_batch)
+        batched_sequences = create_batched_sequence_dataset(generated_sequences, args.max_tokens_per_batch)
         
 
         #predict data for the new batch
         for headers, sequences in batched_sequences:
-            pdbs, ptms, mean_plddts = [], [], []
+            pdbs, ptms, mean_plddts = [], [], [] #TODO calculate pTM only of chain A
             with torch.no_grad(): 
                 pdbs, ptms, mean_plddts = esm2data(model.infer(sequences, 
                                                                num_recycles = args.num_recycles,
@@ -502,8 +507,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
             '-iseq2', '--initial_seq2', type=str,
-            help='second secuence',
-            default='random'
+            help='second sequence'
     )
     parser.add_argument(
             '-l', '--log', type=str,

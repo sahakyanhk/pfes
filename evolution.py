@@ -13,6 +13,15 @@ class Evolver():
                  'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
                  'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1
                  }
+    
+    flatoptim = {'A' : 1,  'C' : 1,  'D' : 1,  'E' : 1,  
+                 'F' : 1,  'G' : 1,  'H' : 1,  'I' : 1,  
+                 'K' : 1,  'L' : 1,  'M' : 1,  'N' : 1,  
+                 'P' : 1,  'Q' : 1,  'R' : 1,  'S' : 1,  
+                 'T' : 1,  'V' : 1,  'W' : 1,  'Y' : 1,
+                 '+' : 1,
+                 '-' : 1
+                 }
 
 
     #by number of codons. 
@@ -52,7 +61,7 @@ class Evolver():
                     'T' : 0.0536, 'V' : 0.0686, 'W' : 0.0110, 'Y' : 0.0292}
 
 
-    codonrates_opm = {'A' : 1.311475, #4
+    codonrates_pmo = {'A' : 1.311475, #4
                       'C' : 0.655738, #2 
                       'D' : 0.655738, #2 
                       'E' : 0.655738, #2 
@@ -81,7 +90,7 @@ class Evolver():
                            '-' : 1.0,   #single residue deletion
                            '*' : 0.4,   #partial duplication
                            '/' : 0.4,   #random insertion 
-                           '%' : 0.9,   #partial deletion
+                           '%' : 0.8,  #this was 0.9 #partial deletion 
                            'p' : 0.1,   #circular permutation
                            'd' : 0.05   #full duplication    
                            } 
@@ -99,12 +108,12 @@ class Evolver():
                  'ALA': 'A', 'VAL': 'V', 'GLU': 'E', 'TYR': 'Y', 'MET': 'M'}
 
 
-    evoldicts = {'flatrates': flatrates, 'codonrates': codonrates, 'codonrates_opm': codonrates_opm, 'uniprotrates': uniprotrates} 
+    evoldicts = {'flatrates': flatrates, 'codonrates': codonrates, 'flatoptim': flatoptim, 'uniprotrates': uniprotrates} 
 
     def __init__(self, evoldict: str):
         
         try:
-            if evoldict == 'codonrates_opm':
+            if evoldict == 'flatoptim':
                 self.evoldict = Evolver.evoldicts[evoldict]
             else:
                 self.evoldict = Evolver.evoldicts[evoldict]
@@ -126,8 +135,12 @@ class Evolver():
     
 
     def mutate(self, sequence: str) -> T.Tuple[str, str]:  
-            mutation_position = random.choice(range(len(sequence)))
-            mutation =  random.choices(self.mutation_types, weights=self.p)[0]
+            seq_len = len(sequence)
+            if seq_len < 5:
+                mutation = 'd'
+            else:
+                mutation_position = random.choice(range(seq_len))
+                mutation =  random.choices(self.mutation_types, weights=self.p)[0]
             
             if mutation in self.aa_alphabet:
                 sequence_mutated = sequence[:mutation_position] + mutation + sequence[mutation_position + 1:]
@@ -142,32 +155,32 @@ class Evolver():
                 sequence_mutated = sequence[:mutation_position] + sequence[mutation_position + 1:]
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}-'
 
-            elif mutation =='*' and len(sequence) > 5: #partial duplication
-                insertion_len = random.choice(range(2, int(len(sequence)/2))) #TODO what is the probable insertion lenght?
-            #   insertion_len = round(np.random.normal(loc=round(len(sequence)/2), scale=1.0, size=None))  to use normal distribution TODO try also gamma distribution          
+            elif mutation =='*' and seq_len > 5: #partial duplication
+                insertion_len = random.choice(range(2, int(seq_len/2))) #TODO what is the probable insertion lenght?
+            #   insertion_len = round(np.random.normal(loc=round(seq_len/2), scale=1.0, size=None))  to use normal distribution TODO try also gamma distribution          
                 sequence_mutated = sequence[:mutation_position] + sequence[mutation_position:][:insertion_len] + sequence[mutation_position:]
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}*{sequence[mutation_position:][:insertion_len]}'
 
             elif mutation =='/': #random insertion
-                mutation = self.randomseq(random.choice(range(2, int(len(sequence)/2)))) 
+                mutation = self.randomseq(random.choice(range(2, int(seq_len/2)))) 
                 sequence_mutated = sequence[:mutation_position + 1] + mutation + sequence[mutation_position + 1:]
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}/{mutation}'
 
-            elif mutation =='%' and len(sequence) > 5: #partial deletion
-                deletion_len = random.choice(range(2, int(len(sequence)/2))) #what is the probable deletion lenght?
+            elif mutation =='%' and seq_len > 5: #partial deletion
+                deletion_len = random.choice(range(2, int(seq_len/2))) #what is the probable deletion lenght?
                 sequence_mutated = sequence[:mutation_position] + sequence[mutation_position + deletion_len:]
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}%{deletion_len}'
 
-            elif mutation =='p' and len(sequence) > 5: #permutation 
+            elif mutation =='p' and seq_len > 5: #permutation 
                 sequence_mutated =  sequence[mutation_position:] + sequence[:mutation_position]
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}p{mutation}'
 
-            elif mutation =='d': #full duplication
-                linker = self.randomseq(4)
+            elif mutation =='d': #full duplication #TODO reduce the duplication probability with sequence growth
+                linker = self.randomseq(2)
                 sequence_mutated = sequence + linker + sequence     
                 mutation_info = f'd{linker}'
                 
-            elif mutation =='r' and len(sequence) > 5: #TODO recombination 
+            elif mutation =='r' and seq_len > 5: #TODO recombination 
                 sequence_mutated = sequence
                 mutation_info = f'{mutation_position+1}'
 

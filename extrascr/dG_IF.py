@@ -17,6 +17,10 @@ print("importing the model")
 model, alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
 model.eval().cuda().requires_grad_(False)
 
+def sorted_alphanumeric(data):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(data, key=alphanum_key)
 
 #@title PRELIMINARY OPERATIONS: Load EXTRA functions
 
@@ -82,7 +86,7 @@ with open(f'{outfile}', 'w') as f:
    f.write('id,dG_IF,dG_kcalmol\n')
 
 
-for pdb in os.listdir(pdbpath):
+for pdb in sorted_alphanumeric(os.listdir(pdbpath)):
     if pdb.endswith("pdb"):
         id = pdb.split('.')[0]
         structure = load_structure(pdbpath + '/' + pdb, chain_id)
