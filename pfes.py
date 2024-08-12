@@ -302,8 +302,6 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         #write init_gen as a checkpoit file to continue the simulation
 
 
-        #if condition:
-            #then the rest here
         #Change the selection with a condition (plddt, ptm)
         if args.strong_sm_by_condition:
             if (init_gen['mean_plddt'] > 0.6) & (init_gen['ptm'] > 0.5).any() & condition:

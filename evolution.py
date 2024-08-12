@@ -136,7 +136,7 @@ class Evolver():
 
     def mutate(self, sequence: str) -> T.Tuple[str, str]:  
             seq_len = len(sequence)
-            if seq_len < 5:
+            if seq_len < 6:
                 mutation = 'd'
             else:
                 mutation_position = random.choice(range(seq_len))

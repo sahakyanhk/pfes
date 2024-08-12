@@ -295,7 +295,7 @@ def backbone_traj(trajlog, pdbdir):
         lastresidueB=''.join([str(elem) for elem in bb_chain_B[-4:]]) # keep the last four lines to repeate them and make numer of atom in all models equal
 
         PDB_A.append(bb_chain_A) #save chain A
-        PDB_B.append(bb_chain_B) #save chain A
+        PDB_B.append(bb_chain_B) #save chain B
         lastBB_A.append(lastresidueA) #save bb of the last residue of chain A 
         lastBB_B.append(lastresidueB) #save bb of the last residue of chain B
 
@@ -322,9 +322,14 @@ def backbone_traj(trajlog, pdbdir):
     top = traj.select_atoms('protein')
 
     warnings.filterwarnings("ignore")
+    if 'num_inter_conts' in trajlog.columns and bestlog.num_inter_conts.max() != 1:
+        chianID = 'chainID B'
+    else:
+        chianID = 'chainID A'
+
     align.AlignTraj(traj,  # trajectory to align
                     top,  # reference
-                    select='chainID A',  # selection of atoms to align
+                    select=chianID,  # selection of atoms to align
                     filename=trajpath,  # file to write the trajectory to
                     ).run()
 
