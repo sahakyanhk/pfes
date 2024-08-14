@@ -386,7 +386,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     PDB_6M6W=":MNDIIINKIATIKRCIKRIQQVYGDGSQFKQDFTLQDSVILNLQRCCEACIDIANHINRQQQLGIPQSSRDSFTLLAQNNLITQPLSDNLKKMVGLRNIAVHDAQELNLDIVVHVVQHHLEDFEQFIDVIKAE" #HEPN toxin
     PDB_4OO8=":GQKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERGGL" #CAS9 HNH
     PDB_5VGB=":GAASEIEKRQEENRKDREKAAAKFREYFPNFVGEPKSKDILKLRLYEQQHGKCLYSGKEINLGRLNEKGYVEIDHALPFSRTWDDSFNNKVLVLGSENQNKGNQTPYEYFNGKDNSREWQEFKARVETSRFPRSKKQRILLQ" #CAS9 HNH
-    
+    PDB_5O56=":SKNSRERMKRIEEGIKELGSQILKEHPVENTQLQNEKLYLYYLQNGRDMYVDQELDINRLSDYDVDHIVPQSFLKDDSIDNKVLTRSDKNRGKSDNVPSEEVVKKMKNYWRQLLNAKLITQRKFDNLTKAERG"
     seq2 = ':' + args.initial_seq2
 
     os.makedirs(pdb_path, exist_ok=True)
@@ -463,7 +463,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                 pdbs, ptms, mean_plddts = esm2data(model.infer(sequences, 
                                                                num_recycles = args.num_recycles,
                                                                residue_index_offset = 1,
-                                                               chain_linker = "G" * 25))
+                                                               chain_linker = "GP" + "G"*30 + "PG"))
             
             #run extract_results() in becground and imediately start next round of model.infer()
             trd = threading.Thread(target=extract_results, args=(gen_i, headers, sequences, pdbs, ptms, mean_plddts))

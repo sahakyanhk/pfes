@@ -1,14 +1,19 @@
 from subprocess import Popen, PIPE
+import tempfile
 import sys, os
 
 def pypsique(pdb_txt, chainid='A'):    
-    cmd = f'echo "{pdb_txt}" | /data/saakyanh2/WD/PFES/pfes/bin/psique --format stride /dev/stdin' \
+    cmd = '/data/saakyanh2/WD/PFES/pfes/bin/psique --format stride /dev/stdin' \
         + "| awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" +chainid+ "\" {print $6}'" #udate bin path 
 
-    process = Popen(cmd, #["./sh/psique --format stride ", input_pdb_path, " | awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" , chainid,  "\" {print $6}'"], 
+#    process = Popen(cmd, #["./sh/psique --format stride ", input_pdb_path, " | awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" , chainid,  "\" {print $6}'"], 
+    process = Popen(cmd,
+                    stdin=PIPE,
                     stdout=PIPE, 
                     stderr=PIPE, shell=True)
-    stdout, stderr = process.communicate()
+    
+    stdout, stderr = process.communicate(input=str.encode(pdb_txt))
+    
     SSstring = stdout.decode('ascii')
     simplestring = SSstring.replace('G', 'C').replace('F', 'C').replace('T', 'C').replace('P', 'C')
     maxhelix = len(max(simplestring.replace('E', 'C').split('C')))
