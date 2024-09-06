@@ -189,7 +189,7 @@ class Evolver():
 
 
 
-    def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool): 
+    def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool, beta = 1): 
         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
         
         if norepeat:
@@ -199,7 +199,7 @@ class Evolver():
             new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
 
         if selection_mode == "weak":
-            weights = np.array(mixed_pop.score / mixed_pop.score.sum())
+            weights = np.array((1- beta + beta * mixed_pop.score) / ((1 - beta + beta * mixed_pop.score).sum()))
             weights[np.isnan(weights)] = 1e-100
             new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
 

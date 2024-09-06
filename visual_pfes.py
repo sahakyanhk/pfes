@@ -65,8 +65,9 @@ def extract_lineage(log):
     lineage = lineage.sort_index()
     ltail = lineage.tail(1)
     print(f"""
-{ltail.sequence.to_string(index = False)}
-{ltail.ss.to_string(index = False)}
+{ltail[["gndx","seq_len","ptm","mean_plddt","num_conts","iplddt", "num_inter_conts","score"]].iloc[-1]}
+{ltail.sequence.iloc[-1]}
+{ltail.ss.iloc[-1]}
 """)
     return lineage
 

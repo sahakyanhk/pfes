@@ -2,6 +2,7 @@
 
 TO DO:
     active:
+        ☐ weaker selection P(t+1)  = 1-b+b*(Si)/sum(1-b+b*Sk)
         ☐ MEASURE the indels lenght
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations. Chec
                     mutation can be the same residue, e.g. the sequeces will not change. Add an if condition in evolover to check in mutation will change the sequence and only then mutate.

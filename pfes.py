@@ -156,7 +156,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           max_alpha_penalty,    #[0, 1]
                           #dG, #~[0, inf]
                           (num_conts + seq_len) / seq_len,
-                          (num_inter_conts + seq_len) / (seq_len + 1)
+                          (num_inter_conts + seq_len) / (seq_len + 1) # change this to sigmod so the number of inter contacts > 5 would not increase the score 
                           ])  #TODO replace with dG   #~[0, inf]
         
         #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
@@ -173,6 +173,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'iplddt': iplddt,
                                 'num_inter_conts': num_inter_conts, 
                                 #'dG': round(dG, 3),
+                                #'ptm_full': ptm_full,
+                                #'cd' contact_density
                                 'score': round(score, 3), 
                                 'sequence': seq, 
                                 'mutation': mutation,
@@ -295,7 +297,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         ancestral_memory =  ancestral_memory.append(init_gen)
 
         #select the next generation 
-        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
+        init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat, args.beta)
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
@@ -536,6 +538,11 @@ if __name__ == '__main__':
             '-pl0', '--prot_len_penalty', type=int,
             help='population size',
             default=200,
+    )
+    parser.add_argument(
+            '-b', '--beta', type=float,
+            help='selection streight',
+            default=1,
     )
     parser.add_argument(
             '-hl0', '--helix_len_penalty', type=int,
