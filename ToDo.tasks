@@ -2,6 +2,7 @@
 
 TO DO:
     active:
+        ☐ python ../../pfes/visual_pfes.py -l progress.log -s structures/ 
         ☐ weaker selection P(t+1)  = 1-b+b*(Si)/sum(1-b+b*Sk)
         ☐ MEASURE the indels lenght
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations. Chec

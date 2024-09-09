@@ -87,13 +87,13 @@ class Evolver():
 
 
     non_point_mutations = {'+' : 1.0,   #single residue insertion
-                           '-' : 1.0,   #single residue deletion
-                           '*' : 0.4,   #partial duplication
-                           '/' : 0.4,   #random insertion 
-                           '%' : 0.8,  #this was 0.9 #partial deletion 
-                           'p' : 0.1,   #circular permutation
-                           'd' : 0.05   #full duplication    
-                           } 
+                        '-' : 1.0,   #single residue deletion
+                        '*' : 0.4,   #partial duplication
+                        '/' : 0.3,   #random insertion 
+                        '%' : 0.9,   #partial deletion
+                        'p' : 0.1,   #Circular permutation
+                        'd' : 0.05   #full duplication    
+                        } 
 
 
     one2three = {'C': 'CYS', 'D': 'ASP', 'S': 'SER', 'Q': 'GLN', 'K': 'LYS',
@@ -192,6 +192,8 @@ class Evolver():
     def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool, beta = 1): 
         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
         
+        e=2.71828182846
+
         if norepeat:
             mixed_pop = mixed_pop.drop_duplicates(subset=['sequence'])
 
@@ -199,7 +201,10 @@ class Evolver():
             new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
 
         if selection_mode == "weak":
-            weights = np.array((1- beta + beta * mixed_pop.score) / ((1 - beta + beta * mixed_pop.score).sum()))
+#            weights = np.array((1- beta + beta * mixed_pop.score) / ((1 - beta + beta * mixed_pop.score).sum()))
+
+            weights = np.array(e**(beta * mixed_pop.score) / (e**(beta * mixed_pop.score).sum()))
+
             weights[np.isnan(weights)] = 1e-100
             new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
 

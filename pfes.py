@@ -77,7 +77,6 @@ def esm2data(esm_out):
     return(pdbs, ptm, mean_plddt) #return score instead
 
     #calculate the number of contacts
-    # 
     # bins = np.append(0,np.linspace(2.3125,21.6875,63))
     # #you do not need softmax to keep the actual values! 
     # sm_contacts = softmax(output["distogram_logits"],-1)
@@ -94,9 +93,7 @@ def esm2data(esm_out):
 
 
 
-def selection_mode_changer(plddt:float, ptm:float) -> str:
-    if ((init_gen['mean_plddt'] > plddt) & (init_gen['ptm'] > ptm)).any():
-        return 'strong'
+
 
 #to score.py
 
@@ -172,6 +169,7 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'num_conts': num_conts, 
                                 'iplddt': iplddt,
                                 'num_inter_conts': num_inter_conts, 
+                                'sel_mode': args.selection_mode,
                                 #'dG': round(dG, 3),
                                 #'ptm_full': ptm_full,
                                 #'cd' contact_density
@@ -227,6 +225,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
              'num_conts', 
              'iplddt',
              'num_inter_conts',
+             'sel_mode',
              #'dG',
              'score', 
              'sequence', 
@@ -272,10 +271,8 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
             else:
                 generated_sequences.append((id, seq)) 
                 mutation_collection.append(mutation_data)    
-
         
         batched_sequences = create_batched_sequence_dataset(generated_sequences, args.max_tokens_per_batch)
-        
 
         #predict data for the new batch
         for headers, sequences in batched_sequences:
@@ -305,7 +302,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
 
         #Change the selection with a condition (plddt, ptm)
-        if args.strong_sm_by_condition:
+        if args.strong_selection_by_condition:
             if (init_gen['mean_plddt'] > 0.6) & (init_gen['ptm'] > 0.5).any() & condition:
                 args.selection_mode = 'strong'
                 condition = False #do not change args.selection_mode anymore
@@ -313,9 +310,10 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                     f.write("#changing the selection mode to strong")
 
         #Change the selection mode after n generations
-        if args.strong_sm_after_n_steps > 0:
-            if (gen_i > args.strong_sm_after_n_steps) & condition:
+        if args.strong_selection_after_n_gen > 0:
+            if (gen_i > args.strong_selection_after_n_gen) & condition:
                 args.selection_mode = 'strong'
+                evolver = Evolver('flatoptim')
                 condition = False #do not change args.selection_mode anymore
                 print("#changing the selection mode to strong")
                 with open(os.path.join(args.outpath, args.log), mode='a') as f:
@@ -409,6 +407,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                'num_conts', 
                'iplddt',
                'num_inter_conts',
+               'sel_mode',
                #'dG',
                'score', 
                'sequence', 
@@ -572,11 +571,11 @@ if __name__ == '__main__':
             help='',
     )
     parser.add_argument(
-            '--strong_sm_by_condition', action='store_true', 
+            '--strong_selection_by_condition', action='store_true', 
             help='',
     )
     parser.add_argument(
-            '--strong_sm_after_n_steps', type=int,
+            '--strong_selection_after_n_gen', type=int,
             help='',
             default=0,
     )
@@ -619,14 +618,16 @@ if __name__ == '__main__':
 #--evolution_mode, -em \t\t = {args.evolution_mode}
 #--selection_mode, -sm\t\t = {args.selection_mode}
 #--initial_seq, -iseq\t\t = {args.initial_seq}
+#--pop_size, -ps\t\t = {args.pop_size}
+#--evoldict, -ed\t\t = {args.evoldict}
+#--random_seq_len\t\t = {args.random_seq_len}
+#--beta, -b\t\t\t = {args.beta}
 #--log, -l\t\t\t = {args.log}
 #--outpath, -o\t\t\t = {args.outpath}
 #--helix_len_penalty, -hl0\t = {args.helix_len_penalty}
 #--prot_len_penalty, -pl0\t = {args.prot_len_penalty}
 #--num_generations, -ng\t\t = {args.num_generations}
-#--pop_size, -ps\t\t = {args.pop_size}
-#--evoldict, -ed\t\t = {args.evoldict}
-#--random_seq_len\t\t = {args.random_seq_len}
+#--strong_selection_after_n_gen\t\t = {args.strong_selection_after_n_gen}
 #--norepeat\t\t\t = {args.norepeat}
 #--nobackup\t\t\t = {args.nobackup}
 #--num-recycles\t\t\t = {args.num_recycles}
