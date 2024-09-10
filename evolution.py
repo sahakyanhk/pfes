@@ -89,7 +89,7 @@ class Evolver():
     non_point_mutations = {'+' : 1.0,   #single residue insertion
                         '-' : 1.0,   #single residue deletion
                         '*' : 0.4,   #partial duplication
-                        '/' : 0.3,   #random insertion 
+                        '/' : 0.4,   #random insertion 
                         '%' : 0.9,   #partial deletion
                         'p' : 0.1,   #Circular permutation
                         'd' : 0.05   #full duplication    
@@ -157,7 +157,7 @@ class Evolver():
 
             elif mutation =='*' and seq_len > 5: #partial duplication
                 insertion_len = random.choice(range(2, int(seq_len/2))) #TODO what is the probable insertion lenght?
-            #   insertion_len = round(np.random.normal(loc=round(seq_len/2), scale=1.0, size=None))  to use normal distribution TODO try also gamma distribution          
+            #   insertion_len = round(np.random.normal(loc=round(seq_len/2), scale=1.0, size=None))  to use normal distribution. TODO try also exp decline          
                 sequence_mutated = sequence[:mutation_position] + sequence[mutation_position:][:insertion_len] + sequence[mutation_position:]
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}*{sequence[mutation_position:][:insertion_len]}'
 
@@ -201,9 +201,9 @@ class Evolver():
             new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
 
         if selection_mode == "weak":
-#            weights = np.array((1- beta + beta * mixed_pop.score) / ((1 - beta + beta * mixed_pop.score).sum()))
+            weights = np.array((1- beta + beta * mixed_pop.score) / ((1 - beta + beta * mixed_pop.score).sum()))
 
-            weights = np.array(e**(beta * mixed_pop.score) / (e**(beta * mixed_pop.score).sum()))
+#            weights = np.array(e**(beta * mixed_pop.score) / (e**(beta * mixed_pop.score).sum()))
 
             weights[np.isnan(weights)] = 1e-100
             new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
