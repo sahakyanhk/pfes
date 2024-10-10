@@ -238,7 +238,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
     
     #mutate seqs from init_gen and select the best n seqs for the next generation    
-    for gen_i in range(args.num_generations):
+    for gen_i in range(3464,args.num_generations):
         n = 0
         global new_gen #this will be modified in the extract_results() 
         new_gen = pd.DataFrame(columns=columns)
@@ -625,7 +625,8 @@ if __name__ == '__main__':
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
                                  'sequence': [evolver.randomseq(args.random_seq_len) for i in range(args.pop_size)]})
-
+    elif args.initial_seq == 'c':
+        init_gen = pd.read_csv('run124.chk', sep='\t')
     else: 
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
                                  'sequence': [args.initial_seq] * args.pop_size})

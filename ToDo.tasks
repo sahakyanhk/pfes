@@ -5,7 +5,8 @@ TO DO:
         ☐ python ../../pfes/visual_pfes.py -l progress.log -s structures/ 
         ☐ weaker selection P(t+1)  = 1-b+b*(Si)/sum(1-b+b*Sk)
         ☐ MEASURE the indels lenght
-        ☐ @critical the same sequence in testrun1 lineage is reported with different mutations. Chec
+        ☐ add solubility to the score
+        ☐ @critical the same sequence in testrun1 lineage is reported with different mutations. Chech
                     mutation can be the same residue, e.g. the sequeces will not change. Add an if condition in evolover to check in mutation will change the sequence and only then mutate.
         ☐ why some strucutres are missing when running visual_pfes? @bag  might be because of above problem
         ☐ @critical weak simulation with norepeat fails

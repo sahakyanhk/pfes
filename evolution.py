@@ -87,14 +87,14 @@ class Evolver():
 
 
     non_point_mutations = {'+' : 1.0,   #single residue insertion
-                        '-' : 1.0,   #single residue deletion
-                        '*' : 0.4,   #partial duplication
-                        '/' : 0.4,   #random insertion 
-                        '%' : 0.9,   #partial deletion
-                        'p' : 0.1,   #Circular permutation
-                        'd' : 0.05   #full duplication    
-                        } 
-
+                           '-' : 1.0,   #single residue deletion
+                           '*' : 0.4,   #partial duplication
+                           '/' : 0.4,   #random insertion 
+                           '%' : 0.9,   #partial deletion
+                           'p' : 0.1,   #Circular permutation
+                           'd' : 0.05   #full duplication    
+                           } 
+   
 
     one2three = {'C': 'CYS', 'D': 'ASP', 'S': 'SER', 'Q': 'GLN', 'K': 'LYS',
                  'I': 'ILE', 'P': 'PRO', 'T': 'THR', 'F': 'PHE', 'N': 'ASN', 
