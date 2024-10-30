@@ -127,8 +127,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         prev_id = id_data[1]
         mutation = id_data[2]
 
-        with open(pdb_path + id + '.pdb', 'wb') as f: # TODO conver this into a function
-            f.write(pdb_txt.encode())   
+#        with open(pdb_path + id + '.pdb', 'wb') as f: # TODO conver this into a function
+#            f.write(pdb_txt.encode())   
 
         #================================SCORING================================# 
         num_conts, _mean_plddt_ = get_nconts(pdb_txt, 'A', 6.0, 50) #which plddt is better?
@@ -156,7 +156,6 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           (num_inter_conts + seq_len) / (seq_len + 1) # change this to sigmod so the number of inter contacts > 5 would not increase the score 
                           ])  #TODO replace with dG   #~[0, inf]
         
-        #score  = np.prod([mean_plddt, ptm])   #[~0, inf]
         #================================SCORING================================#
         iterlog = pd.DataFrame({'gndx': gen_i,
                                 'id': id, 
@@ -180,14 +179,14 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'ss': ss}, index=[0])
         
         new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
-        os.system(f"gzip {pdb_path}{id}'.pdb' &")
+#        os.system(f"gzip {pdb_path}{id}'.pdb' &")
 
         # with open(pdb_path + id + '.pdb', 'rb') as f_pdb:
         #     with gzip.open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
         #         shutil.copyfileobj(f_pdb, f_pdb_gz)
         #         shutil
 
-    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
+#    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
 
     
 
@@ -238,7 +237,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
     
     #mutate seqs from init_gen and select the best n seqs for the next generation    
-    for gen_i in range(3464,args.num_generations):
+    for gen_i in range(args.num_generations):
         n = 0
         global new_gen #this will be modified in the extract_results() 
         new_gen = pd.DataFrame(columns=columns)
@@ -620,8 +619,8 @@ if __name__ == '__main__':
     if args.initial_seq == 'random':
         randomsequence = evolver.randomseq(args.random_seq_len)
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
-                                 'sequence': [randomsequence] * args.pop_size})
-
+                                 'sequence': [randomsequence] * args.pop_size,
+                                 'score': [0.001] * args.pop_size})
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
                                  'sequence': [evolver.randomseq(args.random_seq_len) for i in range(args.pop_size)]})

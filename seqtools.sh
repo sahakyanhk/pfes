@@ -19,6 +19,9 @@ export PATH=/data/saakyanh2/WD/PFES/pfes/bin/mmseqs/bin/:$PATH
 
 log=$1 
 
+
+
+
 mkdir -p sequences_analyses
 cd sequences_analyses
 
@@ -130,3 +133,18 @@ rm *_all_seqs.fasta *_cluster.tsv
 # #
 # #
 # #
+
+
+# extract general information from folders
+# for run in run{1..200}/; do 
+# cp ${run}/Summary.png visual_data/${run::-1}_summary.png
+# cp ${run}/Secondary_structures.png visual_data/${run::-1}_seqstr.png
+# cp ${run}/pfestraj.pdb visual_data/${run::-1}_traj.pdb
+# cp ${run}/trajpdb/$(ls  ${run}/trajpdb/ | sort -V | tail -n 1) visual_data/${run::-1}_lastpdb.pdb.gz
+# cp ${run}/bestlog.tsv visual_data/${run::-1}_bestlog.tsv
+# cp ${run}/lineage.tsv visual_data/${run::-1}_lineage.tsv
+# cp ${run}/progress.log visual_data/${run::-1}_progress.log
+# grep -v "#"  ${run}/lineage.tsv | tail -n +2 |  sort -Vk1 | awk '{print ">" $1, "\n" $14}' > ${run}/lineage.fasta
+# tail -n 2 ${run}/lineage.fasta > visual_data/${run::-1}_lastseq.fasta
+# done
+

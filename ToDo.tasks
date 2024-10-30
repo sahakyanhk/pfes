@@ -2,19 +2,19 @@
 
 TO DO:
     active:
-        ☐ python ../../pfes/visual_pfes.py -l progress.log -s structures/ 
-        ☐ weaker selection P(t+1)  = 1-b+b*(Si)/sum(1-b+b*Sk)
-        ☐ MEASURE the indels lenght
+        ✔ @critical simulations with high --beta (>5) fail @done (10/29/2024, 6:37:19 PM)
+        ✔ weaker selection P(t+1)  = 1-b+b*(Si)/sum(1-b+b*Sk) @done (10/29/2024, 6:37:21 PM)
+        ✔ MEASURE the indels lenght @done (10/29/2024, 6:37:25 PM)
         ☐ add solubility to the score
         ☐ @critical the same sequence in testrun1 lineage is reported with different mutations. Chech
                     mutation can be the same residue, e.g. the sequeces will not change. Add an if condition in evolover to check in mutation will change the sequence and only then mutate.
         ☐ why some strucutres are missing when running visual_pfes? @bag  might be because of above problem
         ☐ @critical weak simulation with norepeat fails
         ☐ save individual plddt in traj
-        ☐ visual_pfes: report some basic data and statistics in the stdout
+        ✔ visual_pfes: report some basic data and statistics in the stdout @done (10/29/2024, 6:38:28 PM)
         ☐ download a domain database, calculate C-beta distances for a big set to adjust you cutoff in gen_nconts()
         ☐ use codone probabilities from Igor's set
-        ☐ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB  or here https://www.rcsb.org/structure/7EL1
+        ✔ Simulate an Acr evolution using HNH domain as here https://www.rcsb.org/structure/5VGB  or here https://www.rcsb.org/structure/7EL1 @done (10/29/2024, 6:38:50 PM)
         ☐ write checkpoint file and continue simulations (all sequences from the generation are needed) #added a beta sheet penalty
         ☐ ADD rmsd mesurment with the previous frame in traj in visual_pfes  
         ☐ DEVELOP A FOLD COMPLEXITY MESURMENT AND ADD IT TO THE SCORE
@@ -24,10 +24,10 @@ TO DO:
         ☐ add a function to save pdb (all atoms, only CA, ziped, etc) 
         ☐ Consider adding new mutation types: split sequnece and join sequences
         ###add more tools for analyses###
-        ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5), phylogeny (FastTree?)
+        ☐ seqtools, sequence analyses: clusterization (mmseqs), alingment (muscule5, foldmason), phylogeny (FastTree?)
         ☐ https://moviepy-tburrows13.readthedocs.io/en/improve-docs/ref/VideoClip/TextClip.html
         ☐ develop a new optimization strategy based on plddt (mutation probability in inversely proportional to the pLDDT)
-        ☐ add absolute stability scoring using ESM-IF https://github.com/KULL-Centre/_2024_cagiada_stability/blob/main/stab_ESM_IF.ipynb @high
+        ✔ add absolute stability scoring using ESM-IF https://github.com/KULL-Centre/_2024_cagiada_stability/blob/main/stab_ESM_IF.ipynb @high @done (10/29/2024, 6:39:59 PM)
         #hello from Eugene
         evolv NA interacting protein or a membrane protein. New components in the score are needed for this. 
         Finished:
