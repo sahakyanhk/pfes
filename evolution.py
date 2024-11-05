@@ -110,7 +110,7 @@ class Evolver():
 
     evoldicts = {'flatrates': flatrates, 'codonrates': codonrates, 'flatoptim': flatoptim, 'uniprotrates': uniprotrates} 
 
-    def __init__(self, evoldict: str):
+    def __init__(self, evoldict: str): #, selection_mode:str):
         
         try:
             if evoldict == 'flatoptim':
@@ -128,6 +128,33 @@ class Evolver():
         self.aa_alphabet = self.mutation_types[:20] #allowed substitutions for point mutations 
         self.w = self.p[:20] #probabilities for random sequence generation
 
+        # if selection_mode == "strong":
+        #     def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool, beta = 1): 
+        #         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
+        #         if norepeat:
+        #             mixed_pop = mixed_pop.drop_duplicates(subset=['sequence'])      
+        #         new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
+        #         return new_init_gen
+
+        # if selection_mode == "weak":
+        #     def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool, beta = 1): 
+        #         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
+        #         if norepeat:
+        #             mixed_pop = mixed_pop.drop_duplicates(subset=['sequence'])
+        #             weights = np.array((mixed_pop.score) / ((mixed_pop.score).sum()))
+        #         new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
+        #         return new_init_gen
+
+        # if selection_mode == "weak2":
+        #     def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool, beta = 1): 
+        #         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
+        #         if norepeat:
+        #             mixed_pop = mixed_pop.drop_duplicates(subset=['sequence'])
+        #         weights = np.array(e**(beta * mixed_pop.score) / np.array(e**(beta * mixed_pop.score)).sum())
+        #         new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
+        #         return new_init_gen
+        #
+        # self.select = select()
 
     #random sequence generator
     def randomseq(self, nres=24, weights = None ) -> str:
@@ -191,7 +218,7 @@ class Evolver():
 
     def select(self, input_new_gen, input_init_gen, pop_size:int, selection_mode:str, norepeat:bool, beta = 1): 
         mixed_pop = pd.concat([input_new_gen, input_init_gen], axis=0, ignore_index=True) 
-        
+
         e=2.71828182846
 
         if norepeat:
@@ -201,9 +228,24 @@ class Evolver():
             new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
 
         if selection_mode == "weak":
-#            weights = np.array((1- beta + beta * mixed_pop.score) / ((1 - beta + beta * mixed_pop.score).sum()))
+            weights = np.array((mixed_pop.score) / ((mixed_pop.score).sum()))
+            new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
+            print(weights.sum())
+
+        if selection_mode == "weak2":
             weights = np.array(e**(beta * mixed_pop.score) / np.array(e**(beta * mixed_pop.score)).sum())
             new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
-
+        # try:
+        #     print("\ninput_new_gen\n",input_new_gen[['id','prev_id','score', 'sequence']], 
+        #         "\ninput_init_gen\n",input_init_gen[['id','prev_id','score', 'sequence']], 
+        #         "\nmixed_pop\n",mixed_pop[['id','prev_id','score', 'sequence']], 
+        #         "\nnew_init_gen\n",new_init_gen[['id','prev_id','score', 'sequence']],
+        #         "\nnew_init_gen\n",len(new_init_gen.sequence.unique()),
+        #         "\n\n\n\n================================================")
+        # except:
+        #     pass
         return new_init_gen
+    
+
+
 

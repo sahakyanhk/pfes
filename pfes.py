@@ -320,7 +320,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
         #STOPPER
         if args.stop_by_condition:
-            if (init_gen['mean_plddt'] > 0.9) & (init_gen['ptm'] > 0.8).any():
+            if (init_gen['mean_plddt'] > 0.85).any() & (init_gen['ptm'] > 0.75).any():
                 print(f'gndx={gen_i}; the condition reached, breaking!')
                 break
 
@@ -496,7 +496,7 @@ if __name__ == '__main__':
     parser.add_argument(
             '-ed', '--evoldict', type=str,
             help='population size',
-            default='codonrates',
+            default='flatrates',
     )
     parser.add_argument(
             '-pl0', '--prot_len_penalty', type=int,
