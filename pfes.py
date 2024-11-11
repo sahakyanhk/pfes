@@ -18,7 +18,6 @@ from score import get_nconts, cbiplddt
 from psique import pypsique
 from openfold.utils.loss import compute_tm
 
-#class PFEStools():
 
 def backup_output(outpath):
     print(f'\nSaving output files to {args.outpath}')
@@ -46,15 +45,14 @@ def create_batched_sequence_dataset(sequences: T.List[T.Tuple[str, str]], max_to
         batch_sequences.append(seq)
         num_tokens += len(seq)
         num_sequences += 1
-        if num_sequences > args.pop_size / 2: #TODO CHECK THIS WITH args.pop_size / 4 and lartge pop size
+        if num_sequences > args.pop_size / 2: #TODO test this with args.pop_size / 4 and lartge pop size
            yield batch_headers, batch_sequences
            batch_headers, batch_sequences, num_tokens, num_sequences= [], [], 0, 0
     yield batch_headers, batch_sequences
 
 def pdbtxt2bbcoord(pdb_txt, chain='A'):
-    # you can extract this directly from esm output
+    # can extract this directly from esm output
     # positions contains coordinates, and aatype contains the sequence
-    #  
     coords3 = np.array([line[30:54].split()  for line in pdb_txt.splitlines() if line[:4] == "ATOM" and 
                         line[20:22].strip() == chain and 
                         ((line[11:16].strip() == "N") | 
@@ -78,7 +76,7 @@ def esm2data(esm_out):
 
     #calculate the number of contacts
     # bins = np.append(0,np.linspace(2.3125,21.6875,63))
-    # #you do not need softmax to keep the actual values! 
+    # #you do not need softmax to keep the actual values 
     # sm_contacts = softmax(output["distogram_logits"],-1)
     # sm_contacts = sm_contacts[...,bins<8].sum(-1)
     # mask = output["atom37_atom_exists"][0,:,1] == 1
@@ -91,26 +89,13 @@ def esm2data(esm_out):
 
     """
 
-
-
-
-
-#to score.py
-
 def sigmoid(x,L0=0,c=0.1):
     return 1 / (1+2.71828182**(c * (L0-x)))
 
 
 #==============================================================================================#
-#==============================================================================================#
-#==============================================================================================#
-#==============================================================================================#
 #================================== EXTRACT AND SCORE =========================================#
 #==============================================================================================#
-#==============================================================================================#
-#==============================================================================================#
-#==============================================================================================#
-
 
 def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
     global new_gen #this will be modified in the fold_evolver()
@@ -127,11 +112,12 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         prev_id = id_data[1]
         mutation = id_data[2]
 
-#        with open(pdb_path + id + '.pdb', 'wb') as f: # TODO conver this into a function
-#            f.write(pdb_txt.encode())   
+        with open(pdb_path + id + '.pdb', 'wb') as f: 
+            f.write(pdb_txt.encode())   
 
+        #=======================================================================# 
         #================================SCORING================================# 
-        num_conts, _mean_plddt_ = get_nconts(pdb_txt, 'A', 6.0, 50) #which plddt is better?
+        num_conts, _mean_plddt_ = get_nconts(pdb_txt, 'A', 6.0, 50) #plddt is better only for chain A and for residues > 50
 
         if args.evolution_mode == "single_chain": #if there are two or more chains, then calculate the number of interacting contacts
             num_inter_conts, iplddt = 1, 1
@@ -140,8 +126,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
 
         ss, max_helix, max_beta = pypsique(pdb_txt, 'A')
         #Rg, aspher = get_aspher(pdb_txt)
-        #dG = dGscore(pdbtxt2bbcoord(pdb_txt), seq) # calculate dG if plddt > cat to save time
-        prot_len_penalty =  (1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)) #* np.tanh(seq_len*0.1)
+        #dG = dGscore(pdbtxt2bbcoord(pdb_txt), seq) 
+        prot_len_penalty =  1 - sigmoid(seq_len, args.prot_len_penalty, 0.2)
         max_alpha_penalty = 1 - sigmoid(max_helix, args.helix_len_penalty, 0.5)
         max_beta_penalty = 1 - sigmoid(max_beta, args.beta_len_penalty, 0.6)
         
@@ -153,10 +139,11 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                           max_alpha_penalty,    #[0, 1]
                           #dG, #~[0, inf]
                           (num_conts + seq_len) / seq_len,
-                          (num_inter_conts + seq_len) / (seq_len + 1) # change this to sigmod so the number of inter contacts > 5 would not increase the score 
-                          ])  #TODO replace with dG   #~[0, inf]
-        
+                          (num_inter_conts + seq_len) / (seq_len + 1) # change this to sigmod so the number of inter contacts > X would not increase the score 
+                          ]) 
         #================================SCORING================================#
+        #=======================================================================# 
+
         iterlog = pd.DataFrame({'gndx': gen_i,
                                 'id': id, 
                                 'seq_len': seq_len,
@@ -179,31 +166,20 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'ss': ss}, index=[0])
         
         new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
-#        os.system(f"gzip {pdb_path}{id}'.pdb' &")
+        os.system(f"gzip {pdb_path}{id}'.pdb' &")
 
-        # with open(pdb_path + id + '.pdb', 'rb') as f_pdb:
-        #     with gzip.open(pdb_path + id + '.pdb.gz', 'wb') as f_pdb_gz:
-        #         shutil.copyfileobj(f_pdb, f_pdb_gz)
-        #         shutil
+    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
 
-#    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
 
-    
-
-#========================================CONCEPTS========================================# 
 def multimer_evolver(model, args):  
     print("evolution of interacting dimers")
-#========================================CONCEPTS========================================# 
 
 global new_gen #this will be modified in the extract_results() 
 
-#============================================================================#
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
+#============================================================================# 
 #================================FOLD_EVOLVER================================# 
+ 
+
 def fold_evolver(args, model, evolver, logheader, init_gen) -> None: 
 
     os.makedirs(pdb_path, exist_ok=True)
@@ -236,7 +212,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
     ancestral_memory = pd.DataFrame(columns=columns)
     ancestral_memory.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=True, sep='\t') #write header of the progress log
     
-    #mutate seqs from init_gen and select the best n seqs for the next generation    
+    #mutate seqs from init_gen and select the best N seqs for the next generation    
     for gen_i in range(args.num_generations):
         n = 0
         global new_gen #this will be modified in the extract_results() 
@@ -257,7 +233,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                     seq, mutation_data = evolver.mutate(seq)
                     seqmask = ancestral_memory.sequence == seq 
 
-            id = "g{0}seq{1}_{2}_{3}".format(gen_i, n, prev_id, mutation_data); n+=1 # give an uniq id even if the same sequence already exists            
+            id = "g{0}seq{1}_{2}_{3}".format(gen_i, n, prev_id, mutation_data); n+=1 # gives an unique id even if the same sequence already exists            
 
             if seqmask.any(): #if sequence already exits do not predict a structure again 
                 repeat = ancestral_memory[seqmask].drop_duplicates(subset=['sequence'], keep='last') 
@@ -282,7 +258,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                                                                residue_index_offset = 1,
                                                                chain_linker = "G" * 25))
             
-            #run extract_results() in becground and imediately start next round of model.infer()
+            #run extract_results() in becground and imediately start next the round of model.infer()
             trd = threading.Thread(target=extract_results, args=(gen_i, headers, sequences, pdbs, ptms, mean_plddts))
             trd.start()
 
@@ -297,8 +273,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         init_gen.gndx = f'gndx{gen_i}' #assign a new gen index
         init_gen.to_csv(os.path.join(args.outpath, args.log), mode='a', index=False, header=False, sep='\t')
 
-        #write init_gen as a checkpoit file to continue the simulation
-
+        #TODO write init_gen as a checkpoit file to continue the simulation
 
         #Change the selection with a condition (plddt, ptm)
         if args.strong_selection_by_condition:
@@ -318,26 +293,20 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                 with open(os.path.join(args.outpath, args.log), mode='a') as f:
                     f.write("#changing the selection mode to strong")
 
-        #STOPPER
+        #stop simulation by a condition
         if args.stop_by_condition:
             if (init_gen['mean_plddt'] > 0.85).any() & (init_gen['ptm'] > 0.75).any():
                 print(f'gndx={gen_i}; the condition reached, breaking!')
                 break
 
-
+ 
 #================================FOLD_EVOLVER================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
+#============================================================================# 
 
 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
-#==================================================================================================================================================================# 
+
+
+
 #==================================================================================#
 #================================INTER_FOLD_EVOLVER================================# 
 
@@ -420,7 +389,6 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
 
 
         batched_sequences = create_batched_sequence_dataset(generated_sequences, args.max_tokens_per_batch)
-        
 
         #predict data for the new batch
         for headers, sequences in batched_sequences:
@@ -501,7 +469,7 @@ if __name__ == '__main__':
     parser.add_argument(
             '-pl0', '--prot_len_penalty', type=int,
             help='population size',
-            default=200,
+            default=250,
     )
     parser.add_argument(
             '-b', '--beta', type=float,
@@ -546,7 +514,7 @@ if __name__ == '__main__':
     )
     # parser.add_argument(
     #         '--continue', action='store_true', 
-    #         help='owerride files if exists',
+    #         help='',
     # )
     parser.add_argument(
             '--num-recycles',
@@ -557,10 +525,10 @@ if __name__ == '__main__':
     parser.add_argument(
             '--max-tokens-per-batch',
             type=int,
-            default=5120,
+            default=5120, # works with A100
             help="Maximum number of tokens per gpu forward-pass. This will group shorter sequences together "
             "for batched prediction. Lowering this can help with out of memory issues, if these occur on "
-            "short sequences.",
+            "short sequences."
     )
 
     args = parser.parse_args()
@@ -624,15 +592,13 @@ if __name__ == '__main__':
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
                                  'sequence': [evolver.randomseq(args.random_seq_len) for i in range(args.pop_size)]})
-    elif args.initial_seq == 'c':
-        init_gen = pd.read_csv('run124.chk', sep='\t')
+    #elif args.initial_seq == 'c':
+    #    init_gen = pd.read_csv('test.chk', sep='\t')
     else: 
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
                                  'sequence': [args.initial_seq] * args.pop_size})
     
 
-
-    # TODO check arguments and input paths before loading models 
     #load models
     print('\nloading esm.pretrained.esmfold_v1... \n')
     model = esm.pretrained.esmfold_v1()

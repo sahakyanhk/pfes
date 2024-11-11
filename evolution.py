@@ -23,11 +23,9 @@ class Evolver():
                  '-' : 1
                  }
 
-
     #by number of codons. 
     # Calculated as (Codon_i/sum(all codons)) * 20
     # so the mean probability is 1. 
-    # This makes it easier to optimize probability of non point mutations
 
     codonrates = {'A' : 1.311475, #4 
                   'C' : 0.655738, #2
@@ -50,8 +48,6 @@ class Evolver():
                   'W' : 0.327869, #1
                   'Y' : 0.655738 #2
                   }
-
-
 
     #https://www.uniprot.org/uniprotkb/statistics#amino-acid-composition
     uniprotrates = {'A' : 0.0826, 'C' : 0.0139, 'D' : 0.0546, 'E' : 0.0672, 
@@ -183,7 +179,7 @@ class Evolver():
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}-'
 
             elif mutation =='*' and seq_len > 5: #partial duplication
-                insertion_len = random.choice(range(2, int(seq_len/2))) #TODO what is the probable insertion lenght?
+                insertion_len = random.choice(range(2, int(seq_len/2))) #TODO insertion length probabability
             #   insertion_len = round(np.random.normal(loc=round(seq_len/2), scale=1.0, size=None))  to use normal distribution. TODO try also exp decline          
                 sequence_mutated = sequence[:mutation_position] + sequence[mutation_position:][:insertion_len] + sequence[mutation_position:]
                 mutation_info = f'{sequence[mutation_position]}{mutation_position+1}*{sequence[mutation_position:][:insertion_len]}'
@@ -211,7 +207,7 @@ class Evolver():
                 sequence_mutated = sequence
                 mutation_info = f'{mutation_position+1}'
 
-            #random change for a chanck of the sequence. (imitation of a frameshift)
+            #TODO random change for a chanck of the sequence. (imitation of a frameshift)
             return sequence_mutated, mutation_info
 
 
