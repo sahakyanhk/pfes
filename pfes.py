@@ -242,7 +242,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                 #except  FileNotFoundError: 
                 #    pass
                 #repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
-                new_gen = new_gen.append(repeat)
+                new_gen = pd.concat([new_gen, repeat])
             else:
                 generated_sequences.append((id, seq)) 
                 mutation_collection.append(mutation_data)    
@@ -266,7 +266,7 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
             time.sleep(0.2)
         
         #print(f"#GENtime {datetime.now() - now}")
-        ancestral_memory =  ancestral_memory.append(init_gen)
+        ancestral_memory =  pd.concat([ancestral_memory, init_gen])
 
         #select the next generation 
         init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat, args.beta)
@@ -382,7 +382,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                 #except  FileNotFoundError: 
                 #    pass
                 #repeat.id = id.split('_')[0] #assing a new id to the already exiting sequence
-                new_gen = new_gen.append(repeat)
+                new_gen = pd.concat([new_gen, repeat])
             else:
                 generated_sequences.append((id, seq + seq2)) #(seq+seq2)) add a function to select the sma
                 mutation_collection.append(mutation_data)    
@@ -407,7 +407,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
             time.sleep(0.2)
         
         #print(f"#GENtime {datetime.now() - now}")
-        ancestral_memory =  ancestral_memory.append(init_gen)
+        ancestral_memory =  pd.concat([ancestral_memory, init_gen])
 
         #select the next generation 
         init_gen = evolver.select(new_gen, init_gen, args.pop_size, args.selection_mode, args.norepeat)
