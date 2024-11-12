@@ -102,10 +102,11 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
     
     if len(ca_data) == 0:
         mean_plddt = np.mean(np.array(plddt))
-        return(1, round(mean_plddt * 0.01, 3))
+        return(1, round(mean_plddt * 0.01, 2))
     else:    
         coords = np.array([item[1] for item in ca_data])  # Extract coordinates
         CA_pLDDT = np.mean(np.array([item[2] for item in ca_data]))
+        mean_plddt = np.mean(np.array(plddt))
         n_atoms = len(coords)
         #pairs_data = np.zeros((0, 5))
 
@@ -117,9 +118,13 @@ def get_nconts(pdb_txt, chain="A", distance_cutoff=6.0, plddt_cutoff=0):
                     #pairs_data = np.append(pairs_data, [[row, ca_data[i][0], ca_data[j][0], np.mean([ca_data[i][2], ca_data[j][2]]), distances_matrix[i, j]]], axis=0)
                     row += 1
         
-        return(row+1, round(CA_pLDDT * 0.01, 3))
+        return(row+1, round(mean_plddt * 0.01, 2))
 
-
+#TODO check how fast this is?
+def get_nconts_allatom(pdb_txt, chain="A", distance_cutoff=4.5, plddt_cutoff=0): 
+    nconts = "nconts"
+    contact_density = "nconts/seq_len"
+    return(nconts, contact_density)
 
 
 def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=0): 
@@ -162,8 +167,7 @@ def get_inter_nconts(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt
         contact_map[contact_map <= distance_cutoff] = 1
         contact_map[contact_map > distance_cutoff] = 0
         n_contacts = contact_map.sum()
-        return(n_contacts, round(CA_pLDDT_A * 0.01, 3))
-
+        return(n_contacts, round(CA_pLDDT_A * 0.01, 2))
 
 
 def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=0):
@@ -197,10 +201,9 @@ def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=
             #cb_data_A = np.array(cb_data_A, dtype='float32')
             #cb_data_B = np.array(cb_data_B, dtype='float32')
     if len(cb_data_A) == 0 or len(cb_data_B) == 0: 
-        return(1, 1)
+        return(1, 0.01)
     else:    
-        #Acoords = cb_data_A[:,2:5]
-        
+        #Acoords = cb_data_A[:,2:5]        
         #Bcoords = cb_data_B[:,2:5]
         Acoords = np.array([item[2:5] for item in cb_data_A], dtype="float32")
         Bcoords = np.array([item[2:5] for item in cb_data_B], dtype="float32")
@@ -211,12 +214,15 @@ def cbiplddt(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0, plddt_cutoff=
         #contact_map[contact_map > distance_cutoff] = 0
         matrix_mask = distances_matrix <= distance_cutoff
         n_contacts = matrix_mask.sum()
-        inteface_ndx = np.where(matrix_mask)
-        AiPLDDT = np.array([cb_data_A[i][5] for i in np.unique(inteface_ndx[0])],dtype=float)
-        BiPLDDT = np.array([cb_data_B[i][5] for i in np.unique(inteface_ndx[1])],dtype=float)
-        iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
-        return(n_contacts, round(iPLDDT,3))
-    
+        if n_contacts == 0:
+            return(1,0.01)
+        else:
+            inteface_ndx = np.where(matrix_mask)
+            AiPLDDT = np.array([cb_data_A[i][5] for i in np.unique(inteface_ndx[0])],dtype=float)
+            BiPLDDT = np.array([cb_data_B[i][5] for i in np.unique(inteface_ndx[1])],dtype=float)
+            #iPLDDT = np.concatenate([AiPLDDT, BiPLDDT]).mean()
+            iPLDDT = AiPLDDT.mean()
+            return(n_contacts, round(iPLDDT * 0.01, 2))
 
 
 def iplddt_all_atom(pdb_txt, chainA='A', chainB='B', distance_cutoff=6.0,):
@@ -232,7 +238,7 @@ if  os.path.isfile(input_pdb_path):
     pdb_txt = file.read()
 
 
-    print("inner contancts:" + str(get_nconts(pdb_txt, "A", 6.0, 0)))
-    print("intra contancts:" + str(get_inter_nconts(pdb_txt,"A","B", 6.0, 0)))
+    print("inner contancts, plddt:" + str(get_nconts(pdb_txt, "A", 6.0, 0)))
+    print("intra contancts, iplddt:" + str(cbiplddt(pdb_txt,"A","B", 6.0, 0)))
 
 

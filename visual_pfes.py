@@ -20,6 +20,8 @@ parser.add_argument('-l', '--log', type=str, help='log file name', default='prog
 parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='structures')
 parser.add_argument('-t', '--traj', type=str, help='make backbone trajectory', default='pfestraj.pdb')
 parser.add_argument('-o', '--outdir', type=str, help='output directory name', default='visual_pfes_results')
+parser.add_argument('-b', '--start', type=int, help='first point to read from trajectory', default=0)
+parser.add_argument('-e', '--end', type=int, help='last point to read from trajectory', default=99999999)
 parser.add_argument('--notraj', action='store_false', )
 parser.add_argument('--noplots', action='store_false', )
 
@@ -36,6 +38,10 @@ def sorted_alphanumeric(data):
     return sorted(data, key=alphanum_key)
 
 def extract_lineage(log):
+    traj_len = len(log)
+    #pop_size = len(log[log.gndx == 'gndx0'])
+
+    print(f'Processing a trajectory with {traj_len} mutations')
     lineage = log.drop_duplicates('gndx').tail(1)
     df = lineage
     ndx = df.id.to_string(index=False)
@@ -44,8 +50,9 @@ def extract_lineage(log):
         parent = log[log.id == node]
         parent = parent.drop_duplicates('sequence')
         return parent
+
     
-    pbar = tqdm(desc='while loop')
+    pbar = tqdm(desc='Extracting lineage')
     i=0
     while not df.empty:
         ndx = return_ancestor(log, ndx)
@@ -56,32 +63,46 @@ def extract_lineage(log):
         pbar.update(i)
     pbar.close()
     lineage = lineage.sort_index()
-
+    ltail = lineage.tail(1)
+    print(f"""
+{ltail[["gndx","seq_len","ptm","mean_plddt","num_conts","iplddt", "num_inter_conts","score"]].iloc[-1]}
+{ltail.sequence.iloc[-1]}
+{ltail.ss.iloc[-1]}
+""")
     return lineage
 
+def extract_sequences(log):
+    fasta  = "fasta"
+    return fasta
 
 #======================= make separate plots =======================#
 def make_plots(log, bestlog, lineage):
 
-    ms=0.5
-    lw=1.0
+    ms=0.1
+    lw=1.4
     dpi=500
 
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
         if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
-                plt.plot(log[colname],'.', markersize=ms)
-                plt.plot(bestlog[colname],'-', linewidth=lw)
-                plt.plot(lineage[colname],'-', linewidth=lw, color='green')
-                plt.grid(True, which="both",linestyle='--', linewidth=1)
-                plt.legend([colname], loc ="upper left")
-                plt.savefig(plotdir + colname + '.png', dpi=dpi)
-                plt.clf()
+                fig, ax1 = plt.subplots(figsize=(9, 3))
+                ax1.plot(log[colname],'.', markersize=ms,    color='silver', label='all mutations')
+                ax1.plot(bestlog[colname],'-', linewidth=lw, label='best of the generation')
+                ax1.plot(lineage[colname],'-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={len(lineage[colname])})')
+                ax1.legend(loc ="lower right")
+                ax1.grid(True, which="both",linestyle='--', linewidth=0.3)
+                ax1.set(xlabel="Total number of mutations", ylabel=colname.capitalize())
+                #ax2 = ax1.twiny()
+                #ax2.plot(lineage[colname].tolist(),'-', linewidth=lw, color='mediumslateblue')
+                #ax2.set(xlabel="Lineage length")
+                fig.tight_layout()
+                fig.savefig(plotdir + colname + '.png', dpi=dpi)
+                fig.clf()
 
 #======================= Summary plot =======================#
 def make_summary_plot(log, bestlog, lineage):
     
-    ms=0.5
+    ms=0.1
     lw=1.0
     dpi=500
 
@@ -89,49 +110,55 @@ def make_summary_plot(log, bestlog, lineage):
 
     fig.suptitle(None)
 
-
-    axs[0,0].plot(log.mean_plddt, '.', markersize=ms)
-    axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw)
-    axs[0,0].plot(lineage.mean_plddt, '-', linewidth=lw)
+    L = len(lineage)
+    axs[0,0].plot(log.mean_plddt, '.', markersize=ms,    color='silver', label='all mutations')
+    axs[0,0].plot(bestlog.mean_plddt, '-', linewidth=lw, label='best of the generation')
+    axs[0,0].plot(lineage.mean_plddt, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
     axs[0,0].set(xlabel=None, ylabel='mean pLDDT')
     axs[0,0].grid(True, which="both",linestyle='--', linewidth=0.5)
+    axs[0,0].set_xticklabels([])
 
-
-    axs[1,0].plot(log.ptm, '.', markersize=ms)
-    axs[1,0].plot(bestlog.ptm, '-', linewidth=lw)
-    axs[1,0].plot(lineage.ptm, '-', linewidth=lw)
+    axs[1,0].plot(log.ptm, '.', markersize=ms,    color='silver', label='all mutations')
+    axs[1,0].plot(bestlog.ptm, '-', linewidth=lw, label='best of the generation')
+    axs[1,0].plot(lineage.ptm, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
     axs[1,0].set(xlabel=None, ylabel='pTM')
     axs[1,0].grid(True, which="both",linestyle='--', linewidth=0.5)
+    axs[1,0].set_xticklabels([])
 
-    axs[2,0].plot(log.score,  '.', markersize=ms)
-    axs[2,0].plot(bestlog.score,  '-', linewidth=lw)
-    axs[2,0].plot(lineage.score, '-', linewidth=lw)
-    axs[2,0].set(xlabel='Number of mutations', ylabel='Score')
+    axs[2,0].plot(log.score,  '.', markersize=ms,    color='silver', label='all mutations')
+    axs[2,0].plot(bestlog.score, '-', linewidth=lw,  label='best of the generation')
+    axs[2,0].plot(lineage.score,  '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+    axs[2,0].set(xlabel='Total number of mutations', ylabel='Score')
     axs[2,0].grid(True, which="both",linestyle='--', linewidth=0.5)
-        
-    axs[0,1].plot(log.seq_len, '.', markersize=ms)
-    axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw)
-    axs[0,1].plot(lineage.seq_len, '-', linewidth=lw)
-    axs[0,1].set(xlabel=None, ylabel='Seq len')
+    axs[2,0].legend(loc ="lower right")
+
+    axs[0,1].plot(log.seq_len, '.', markersize=ms,    color='silver', label='all mutations')
+    axs[0,1].plot(bestlog.seq_len, '-', linewidth=lw, label='best of the generation')
+    axs[0,1].plot(lineage.seq_len, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+    axs[0,1].set(xlabel=None, ylabel='Sequence length')
     axs[0,1].grid(True, which="both",linestyle='--', linewidth=0.5)
+    axs[0,1].set_xticklabels([])
 
     if 'num_inter_conts' in bestlog.columns and bestlog.num_inter_conts.max() != 1:
-        axs[1,1].plot(log.num_inter_conts, '.', markersize=ms)
-        axs[1,1].plot(bestlog.num_inter_conts, '-', linewidth=lw)
-        axs[1,1].plot(lineage.num_inter_conts, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='Num of inter contacts')
+        axs[1,1].plot(log.iplddt, '.', markersize=ms,    color='silver', label='all mutations')
+        axs[1,1].plot(bestlog.iplddt, '-', linewidth=lw, label='best of the generation')
+        axs[1,1].plot(lineage.iplddt, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+        axs[1,1].set(xlabel=None, ylabel='iPLDDT')
         axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
-    else:     
-        axs[1,1].plot(log.max_helix_penalty, '.', markersize=ms)
-        axs[1,1].plot(bestlog.max_helix_penalty, '-', linewidth=lw)
-        axs[1,1].plot(lineage.max_helix_penalty, '-', linewidth=lw)
-        axs[1,1].set(xlabel=None, ylabel='max_helix_penalty')
-        axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
+        axs[1,1].set_xticklabels([])
 
-    axs[2,1].plot(log.num_conts, '.', markersize=ms)
-    axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw)
-    axs[2,1].plot(lineage.num_conts, '-', linewidth=lw)
-    axs[2,1].set(xlabel='Number of mutations', ylabel='Num of contacts')
+    else:     
+        axs[1,1].plot(log.max_beta_penalty, '.', markersize=ms,    color='silver', label='all mutations')
+        axs[1,1].plot(bestlog.max_beta_penalty, '-', linewidth=lw, label='best of the generation')
+        axs[1,1].plot(lineage.max_beta_penalty, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+        axs[1,1].set(xlabel=None, ylabel='SS penalty')
+        axs[1,1].grid(True, which="both",linestyle='--', linewidth=0.5)
+        axs[1,1].set_xticklabels([])
+
+    axs[2,1].plot(log.num_conts, '.', markersize=ms,  color='silver', label='all mutations')
+    axs[2,1].plot(bestlog.num_conts, '-', linewidth=lw, label='best of the generation')
+    axs[2,1].plot(lineage.num_conts, '-', linewidth=lw, color='mediumslateblue', label=f'lineage (L={L})')
+    axs[2,1].set(xlabel='Total number of mutations', ylabel='Number of contacts')
     axs[2,1].grid(True, which="both",linestyle='--', linewidth=0.5)
 
     #plt.xticks(rotation=45)
@@ -188,8 +215,8 @@ def make_ss_plot(lineage):
         r"bend": "orange",
         r"turn": "brown",
         r"$\alpha$-helix": "purple",
-        r"$3_{10}$-helix": "mediumpurple",
-        r"$\pi$-helix": "blue",
+        r"$3_{10}$-helix": "blue",
+        r"$\pi$-helix": "mediumpurple",
         r"": "white"
         }
 
@@ -199,10 +226,10 @@ def make_ss_plot(lineage):
     else: 
         ticks = np.arange(0, len(lineage)+1, 100)
 
-    plt.figure(figsize=(9, 5), dpi=dpi)
+    plt.figure(figsize=(9, 3), dpi=dpi)
     plt.imshow(sse_digit.T, origin='lower', cmap=cmap,  interpolation='nearest', aspect='auto')
     plt.xticks(ticks, ticks.astype(int))
-    plt.xlabel("Number of generations")
+    plt.xlabel("Lineage length")
     plt.ylabel("Residues")
 
     custom_lines = [
@@ -210,8 +237,8 @@ def make_ss_plot(lineage):
 
     plt.legend(
         custom_lines, color_assign.keys(), loc="upper center",
-        bbox_to_anchor=(0.5, 1.1), ncol=len(color_assign), fontsize=8)
-
+        bbox_to_anchor=(0.5, 1.15), ncol=len(color_assign), fontsize=8)
+    plt.tight_layout()
     plt.savefig(os.path.join(outdir,'Secondary_structures.png'), dpi=dpi) 
 
 def backbone_traj(trajlog, pdbdir):
@@ -269,7 +296,7 @@ def backbone_traj(trajlog, pdbdir):
         lastresidueB=''.join([str(elem) for elem in bb_chain_B[-4:]]) # keep the last four lines to repeate them and make numer of atom in all models equal
 
         PDB_A.append(bb_chain_A) #save chain A
-        PDB_B.append(bb_chain_B) #save chain A
+        PDB_B.append(bb_chain_B) #save chain B
         lastBB_A.append(lastresidueA) #save bb of the last residue of chain A 
         lastBB_B.append(lastresidueB) #save bb of the last residue of chain B
 
@@ -296,9 +323,14 @@ def backbone_traj(trajlog, pdbdir):
     top = traj.select_atoms('protein')
 
     warnings.filterwarnings("ignore")
+    if 'num_inter_conts' in trajlog.columns and bestlog.num_inter_conts.max() != 1:
+        chianID = 'chainID B'
+    else:
+        chianID = 'chainID A'
+
     align.AlignTraj(traj,  # trajectory to align
                     top,  # reference
-                    select='chainID A',  # selection of atoms to align
+                    select=chianID,  # selection of atoms to align
                     filename=trajpath,  # file to write the trajectory to
                     ).run()
 
@@ -316,11 +348,13 @@ trajpath = os.path.join(outdir, args.traj)
 
 log = pd.read_csv(args.log, sep='\t', comment='#')
 
+log = log.iloc[args.start:args.end]
+
 bestlog = log.groupby('gndx').head(1)
 bestlog.to_csv(os.path.join(outdir, 'bestlog.tsv'), sep='\t', index=False, header=True)
 
 
-print('Extracting lineage')
+print('==================================')
 lineage = extract_lineage(log)
 lineage.to_csv(os.path.join(outdir, 'lineage.tsv'), sep='\t', index=False, header=True)
 
@@ -340,3 +374,4 @@ if args.notraj:
     print('making backbone trajectory')
     backbone_traj(lineage, pdbdir)
 
+print('=================================='"\n")
