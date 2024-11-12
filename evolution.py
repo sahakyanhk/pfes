@@ -224,13 +224,14 @@ class Evolver():
             new_init_gen = mixed_pop.sort_values('score', ascending=False).head(pop_size)
 
         if selection_mode == "weak":
+            weights = np.array(e**(beta * mixed_pop.score) / np.array(e**(beta * mixed_pop.score)).sum())
+            new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
+        
+        if selection_mode == "weak2":
             weights = np.array((mixed_pop.score) / ((mixed_pop.score).sum()))
             new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
             print(weights.sum())
 
-        if selection_mode == "weak2":
-            weights = np.array(e**(beta * mixed_pop.score) / np.array(e**(beta * mixed_pop.score)).sum())
-            new_init_gen = mixed_pop.sample(n=pop_size, weights=weights, replace=(not norepeat)).sort_values('score', ascending=False)
         # try:
         #     print("\ninput_new_gen\n",input_new_gen[['id','prev_id','score', 'sequence']], 
         #         "\ninput_init_gen\n",input_init_gen[['id','prev_id','score', 'sequence']], 

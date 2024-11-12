@@ -83,7 +83,7 @@ def esm2data(esm_out):
     # contact_map = sm_contacts[0][mask,:][:,mask]
     # num_conts = []
     """
-    Return the number of contact and individual plddts (write it in the log). 
+    Return the number of contacts and individual plddts (write it in the log). 
     In the case of dimers, return also the number of interchain interaction with indexes. 
     Use indexes to calculate iPLDDT
 
@@ -433,6 +433,11 @@ if __name__ == '__main__':
             default="weak"
     )
     parser.add_argument(
+            '-b', '--beta', type=float,
+            help='selection streight',
+            default=1,
+    )
+    parser.add_argument(
             '-iseq', '--initial_seq', type=str,
             help='a sequence to initiate with, if "random" pop_size random sequneces will be generated, the lenght of the random sequences can be assigned with "--random_seq_len"',
             default='random'
@@ -472,11 +477,6 @@ if __name__ == '__main__':
             default=250,
     )
     parser.add_argument(
-            '-b', '--beta', type=float,
-            help='selection streight',
-            default=1,
-    )
-    parser.add_argument(
             '-hl0', '--helix_len_penalty', type=int,
             help='population size',
             default=20,
@@ -501,16 +501,16 @@ if __name__ == '__main__':
     )
     parser.add_argument(
             '--stop_by_condition', action='store_true', 
-            help='',
+            help='experimental',
     )
     parser.add_argument(
             '--strong_selection_by_condition', action='store_true', 
-            help='',
+            help='experimental',
     )
     parser.add_argument(
             '--strong_selection_after_n_gen', type=int,
             help='',
-            default=0,
+            default=1000,
     )
     # parser.add_argument(
     #         '--continue', action='store_true', 
@@ -519,13 +519,13 @@ if __name__ == '__main__':
     parser.add_argument(
             '--num-recycles',
             type=int,
-            default=16,
+            default=1,
             help="Number of recycles to run. Defaults to number used in training (4).",
     )
     parser.add_argument(
             '--max-tokens-per-batch',
             type=int,
-            default=5120, # works with A100
+            default=2048, # 5120 works fine with A100
             help="Maximum number of tokens per gpu forward-pass. This will group shorter sequences together "
             "for batched prediction. Lowering this can help with out of memory issues, if these occur on "
             "short sequences."
