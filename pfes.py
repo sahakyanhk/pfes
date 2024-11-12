@@ -84,7 +84,7 @@ def esm2data(esm_out):
     # num_conts = []
     """
     Return the number of contacts and individual plddts (write it in the log). 
-    In the case of dimers, return also the number of interchain interaction with indexes. 
+    In the case of dimers, the number of interchain interactions with indexes is also returned. 
     Use indexes to calculate iPLDDT
 
     """
@@ -364,7 +364,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
         for prev_id, sequence in zip(init_gen.id, init_gen.sequence):
             seq, mutation_data= evolver.mutate(sequence)
             
-            #chek if the mutated seqeuece was already predicted
+            #chek if the mutated sequence was already predicted
             seqmask = ancestral_memory.sequence == seq 
             
             #if --norepeat and seq is in the ancestral_memory mutate it again
@@ -399,7 +399,7 @@ def inter_fold_evolver(args, model, evolver, logheader, init_gen) -> None:
                                                                residue_index_offset = 1,
                                                                chain_linker = "GP" + "G"*30 + "PG"))
             
-            #run extract_results() in becground and imediately start next round of model.infer()
+            #run extract_results() in background and immediately start next round of model.infer()
             trd = threading.Thread(target=extract_results, args=(gen_i, headers, sequences, pdbs, ptms, mean_plddts))
             trd.start()
 
@@ -434,12 +434,12 @@ if __name__ == '__main__':
     )
     parser.add_argument(
             '-b', '--beta', type=float,
-            help='selection streight',
+            help='selection strength',
             default=1,
     )
     parser.add_argument(
             '-iseq', '--initial_seq', type=str,
-            help='a sequence to initiate with, if "random" pop_size random sequneces will be generated, the lenght of the random sequences can be assigned with "--random_seq_len"',
+            help='a sequence to initiate with, if "random" pop_size random sequences will be generated, the length of the random sequences can be assigned with "--random_seq_len"',
             default='random'
     )
     parser.add_argument(
