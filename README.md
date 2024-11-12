@@ -3,4 +3,4 @@
 This code used [ESMfold](https://github.com/facebookresearch/esm) to run. 
 
 Usage:
-python pfes/pfes.py  -ng 500 -ps 50 -sm weak -em single_chain  -iseq random --random_seq_len 24 -o pfes_test
+python pfes.py  -ng 500 -ps 50 -sm weak -em single_chain  -iseq random --random_seq_len 24 -o pfes_test
