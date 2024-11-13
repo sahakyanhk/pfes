@@ -9,14 +9,12 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib import colors
 
-import MDAnalysis as mda
-from MDAnalysis.analysis import align
 
 import warnings
 
 
 parser = argparse.ArgumentParser(description="Analyse PFES")
-parser.add_argument('-l', '--log', type=str, help='log file name', default='progress.log') #rename log to pfes traj
+parser.add_argument('-l', '--log', type=str, help='log file name', default='progress.log') 
 parser.add_argument('-s', '--pdbdir', type=str, help='directory with pdb files', default='structures')
 parser.add_argument('-t', '--traj', type=str, help='make backbone trajectory', default='pfestraj.pdb')
 parser.add_argument('-o', '--outdir', type=str, help='output directory name', default='visual_pfes_results')
@@ -84,7 +82,7 @@ def make_plots(log, bestlog, lineage):
 
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
-        if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx', 'sel_mode']:
+        if not colname in ['seq', 'sequence', 'ss', 'genindex','dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx', 'sel_mode']:
                 fig, ax1 = plt.subplots(figsize=(9, 3))
                 ax1.plot(log[colname],'.', markersize=ms,    color='silver', label='all mutations')
                 ax1.plot(bestlog[colname],'-', linewidth=lw, label='best of the generation')
@@ -257,7 +255,7 @@ def backbone_traj(trajlog, pdbdir):
     if os.path.isdir(trajpdb) and len(os.listdir(trajpdb)) != pfeslen:
         shutil.rmtree(trajpdb)
         os.makedirs(trajpdb, exist_ok=True)
-        print(f'{pfeslen} uniqs sequences with the best folds are selected') # do not copy files, just make a list and extract BB coords from pdb dir
+        print(f'{pfeslen} unique sequences with the best folds are selected') 
         for gndx, pdbid in tqdm(zip(trajlog.gndx, trajlog.id), total=len(trajlog)):
             try:
                 shutil.copy(pdbdir +'/' + pdbid +'.pdb.gz', trajpdb +'/'+ gndx + '.pdb.gz')
@@ -292,8 +290,8 @@ def backbone_traj(trajlog, pdbdir):
                 col[4] == 'B'):
                 bb_chain_B.append(line + '\n')
 
-        lastresidueA=''.join([str(elem) for elem in bb_chain_A[-4:]]) # keep the last four lines to repeate them and make numer of atom in all models equal
-        lastresidueB=''.join([str(elem) for elem in bb_chain_B[-4:]]) # keep the last four lines to repeate them and make numer of atom in all models equal
+        lastresidueA=''.join([str(elem) for elem in bb_chain_A[-4:]]) # keep the last four lines to repeat them and make the number of atoms in all models equal
+        lastresidueB=''.join([str(elem) for elem in bb_chain_B[-4:]]) # keep the last four lines to repeat them and make number of atoms in all models equal
 
         PDB_A.append(bb_chain_A) #save chain A
         PDB_B.append(bb_chain_B) #save chain B
@@ -317,25 +315,30 @@ def backbone_traj(trajlog, pdbdir):
             dumlinesB = lastresBB_B  * int((topmax_B - len(chB)) / 4)
 
             f.write(f'MODEL        {i}\n' + ''.join(chA) + dumlinesA + 'TER\n' + ''.join(chB) + dumlinesB + 'ENDMDL\n')
+    try: 
+        import MDAnalysis as mda
+        from MDAnalysis.analysis import align
 
-    print('writing aligned backbone trajectory...')
-    traj = mda.Universe(outdir+'/.tmp.pdb')
-    top = traj.select_atoms('protein')
+        print('writing aligned backbone trajectory...')
+        traj = mda.Universe(outdir+'/.tmp.pdb')
+        top = traj.select_atoms('protein')
 
-    warnings.filterwarnings("ignore")
-    if 'num_inter_conts' in trajlog.columns and bestlog.num_inter_conts.max() != 1:
-        chianID = 'chainID B'
-    else:
-        chianID = 'chainID A'
+        warnings.filterwarnings("ignore")
+        if 'num_inter_conts' in trajlog.columns and bestlog.num_inter_conts.max() != 1:
+            chianID = 'chainID B'
+        else:
+            chianID = 'chainID A'
 
-    align.AlignTraj(traj,  # trajectory to align
-                    top,  # reference
-                    select=chianID,  # selection of atoms to align
-                    filename=trajpath,  # file to write the trajectory to
-                    ).run()
+        align.AlignTraj(traj,  # trajectory to align
+                        top,  # reference
+                        select=chianID,  # selection of atoms to align
+                        filename=trajpath,  # file to write the trajectory to
+                        ).run()
 
-    os.remove(outdir+'/.tmp.pdb')
-
+        os.remove(outdir+'/.tmp.pdb')
+    except:
+        print('Warning: MDAnalysis package is not available, writing unaligned trajectory')
+        shutil.copy(outdir+'/.tmp.pdb', trajpath)
 
 
 
