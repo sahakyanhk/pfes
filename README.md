@@ -4,7 +4,6 @@ Code for [In silico evolution of globular protein folds from random sequences
 Harutyun Sahakyan, Sanasar Babajanyan, Yuri I. Wolf, Eugene V. Koonin
 bioRxiv 2024.11.10.622830; doi: https://doi.org/10.1101/2024.11.10.622830](https://www.biorxiv.org/content/10.1101/2024.11.10.622830v1)
 
-<p align="center"><img src="https://github.com/sahakyanhk/pfes/tree/alpha/.workflow/fig1.jpg" height="250"/></p>
 
 This code requires [ESMfold](https://github.com/facebookresearch/esm) to run. 
 
