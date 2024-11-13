@@ -84,7 +84,7 @@ def make_plots(log, bestlog, lineage):
 
     os.makedirs(plotdir, exist_ok=True)
     for colname in log.keys(): 
-        if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx']:
+        if not colname in ['seq', 'sequence', 'ss', 'genindex' ,'dssp', 'mutation', 'index', 'id', 'prev_id', 'gndx', 'sel_mode']:
                 fig, ax1 = plt.subplots(figsize=(9, 3))
                 ax1.plot(log[colname],'.', markersize=ms,    color='silver', label='all mutations')
                 ax1.plot(bestlog[colname],'-', linewidth=lw, label='best of the generation')
