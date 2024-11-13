@@ -7,7 +7,7 @@ psiquepath = os.path.join(pfesdir, '/bin/psique')
 os.chmod(psiquepath, 0o755)
 
 def pypsique(pdb_txt, chainid='A'):    
-    cmd = pfesdir+' --format stride /dev/stdin' \
+    cmd = psiquepath+' --format stride /dev/stdin' \
         + "| awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" +chainid+ "\" {print $6}'" #udate bin path 
  
 
