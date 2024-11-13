@@ -3,7 +3,7 @@ import tempfile
 import sys, os
 
 pfesdir = os.path.dirname(os.path.realpath(__file__))
-psiquepath = os.path.join(pfesdir, '/bin/psique')
+psiquepath = pfesdir + '/bin/psique'
 os.chmod(psiquepath, 0o755)
 
 def pypsique(pdb_txt, chainid='A'):    
