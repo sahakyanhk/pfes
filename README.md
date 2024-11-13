@@ -15,8 +15,9 @@ wget https://github.com/sahakyanhk/PFES/archive/refs/heads/alpha.zip -O pfes-alp
 
 python pfes-alpha/pfes.py -h
 
-#run a simulation starting from random peptides
+#run a simulation starting from random peptides and analyse results 
 python pfes-alpha/pfes.py  -ng 100 -ps 50 -sm weak -em single_chain -iseq random --random_seq_len 24 -o pfes_test_random
+python pfes-alpha/visual_pfes.py -l pfes_test_random/progress.log -s pfes_test_random/structures/ -o pfes_test_random/
 
 #run a simulation starting from polyalanine
 python pfes-alpha/pfes.py  -ng 100 -ps 50 -sm weak -em single_chain -iseq AAAAAAAAAAAAAAAAAAAAAAAA -o pfes_test_polyA
