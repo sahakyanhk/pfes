@@ -591,12 +591,14 @@ if __name__ == '__main__':
                                  'score': [0.001] * args.pop_size})
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
-                                 'sequence': [evolver.randomseq(args.random_seq_len) for i in range(args.pop_size)]})
+                                 'sequence': [evolver.randomseq(args.random_seq_len) for i in range(args.pop_size)],
+                                 'score': [0.001] * args.pop_size})
     #elif args.initial_seq == 'c':
     #    init_gen = pd.read_csv('test.chk', sep='\t')
     else: 
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
-                                 'sequence': [args.initial_seq] * args.pop_size})
+                                 'sequence': [args.initial_seq] * args.pop_size,
+                                 'score': [0.001] * args.pop_size})
     
 
     #load models
