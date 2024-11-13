@@ -3,9 +3,11 @@ import tempfile
 import sys, os
 
 pfesdir = os.path.dirname(os.path.realpath(__file__))
+psiquepath = os.path.join(pfesdir, '/bin/psique')
+os.chmod(psiquepath, 0o755)
 
 def pypsique(pdb_txt, chainid='A'):    
-    cmd = pfesdir+'/bin/psique --format stride /dev/stdin' \
+    cmd = pfesdir+' --format stride /dev/stdin' \
         + "| awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" +chainid+ "\" {print $6}'" #udate bin path 
  
 
