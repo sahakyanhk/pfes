@@ -23,7 +23,12 @@ python pfes-alpha/visual_pfes.py -l pfes_test_random/progress.log -s pfes_test_r
 python pfes-alpha/pfes.py  -ng 100 -ps 50 -sm weak -em single_chain -iseq AAAAAAAAAAAAAAAAAAAAAAAA -o pfes_test_polyA
 
 ```
+### Extended data
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14061036.svg)](https://doi.org/10.5281/zenodo.14061036)
+
 
 ### Hardware requirements 
 PFES was tested on Rocky Linux 8.7 (Green Obsidian) with NVIDIA Tesla V100 and A100 GPUs. 
+
+
 
