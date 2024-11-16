@@ -10,8 +10,6 @@ def pypsique(pdb_txt, chainid='A'):
     cmd = psiquepath+' --format stride /dev/stdin' \
         + "| awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" +chainid+ "\" {print $6}'" #udate bin path 
  
-
-#    process = Popen(cmd, #["./sh/psique --format stride ", input_pdb_path, " | awk 'BEGIN { ORS = \"\" } $1==\"ASG\" && $3==\"" , chainid,  "\" {print $6}'"], 
     process = Popen(cmd,
                     stdin=PIPE,
                     stdout=PIPE, 
