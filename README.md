@@ -19,8 +19,10 @@ python pfes-alpha/visual_pfes.py -l pfes_test_random/progress.log -s pfes_test_r
 python pfes-alpha/pfes.py  -ng 100 -ps 50 -sm weak -em single_chain -iseq AAAAAAAAAAAAAAAAAAAAAAAA -o pfes_test_polyA
 
 ```
-![](examples/example2.gif)
-
+<p align="center">
+  <img src="examples/example2.gif" width="450" height="450"/>
+  <img src="examples/Summary.png" width="450" height="450"/>
+</p>
 
 ### Extended data
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14061036.svg)](https://doi.org/10.5281/zenodo.14061036)
