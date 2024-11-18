@@ -242,10 +242,6 @@ def make_ss_plot(lineage):
 def backbone_traj(trajlog, pdbdir):
     """
     make trajectory from C-alpha atoms
-    TO DO: 
-    1. find the biggest pdb in folder, or from progress log. \
-    Make it initial topology that should be uploaded first or append in in the begining of the trajectory file
-    2. save trajectory in xyz format to save space. 
     """
     trajpdb = os.path.join(outdir, 'trajpdb/')
     trajlog = trajlog.drop_duplicates(subset = 'sequence')
