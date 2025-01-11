@@ -510,7 +510,7 @@ if __name__ == '__main__':
     parser.add_argument(
             '--strong_selection_after_n_gen', type=int,
             help='',
-            default=1000,
+            default=4500,
     )
     # parser.add_argument(
     #         '--continue', action='store_true', 
