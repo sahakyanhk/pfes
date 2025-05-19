@@ -12,6 +12,7 @@ from datetime import datetime
 
 import torch
 import esm
+import foldcomp
 
 from evolution import Evolver
 from score import get_nconts, cbiplddt
@@ -112,6 +113,8 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
         prev_id = id_data[1]
         mutation = id_data[2]
 
+        pdbfcz = foldcomp.compress("tmp", pdb_txt)
+
         with open(pdb_path + id + '.pdb', 'wb') as f: 
             f.write(pdb_txt.encode())   
 
@@ -163,12 +166,13 @@ def extract_results(gen_i, headers, sequences, pdbs, ptms, mean_plddts) -> None:
                                 'sequence': seq, 
                                 'mutation': mutation,
                                 'prev_id': prev_id,
-                                'ss': ss}, index=[0])
+                                'ss': ss,
+                                'pdbfcz': pdbfcz}, index=[0])
         
         new_gen = pd.concat([new_gen, iterlog], axis=0, ignore_index=True) 
         os.system(f"gzip {pdb_path}{id}'.pdb' &")
 
-    print(new_gen.tail(args.pop_size).drop('gndx', axis=1).to_string(index=False, header=False))
+    print(new_gen.tail(args.pop_size).drop(columns=['gndx', 'pdbfcz'], axis=1).to_string(index=False, header=False))
 
 
 def multimer_evolver(model, args):  
@@ -206,7 +210,8 @@ def fold_evolver(args, model, evolver, logheader, init_gen) -> None:
              'sequence', 
              'mutation',
              'prev_id',
-             'ss']
+             'ss',
+             'pdbfcz']
     
 
     ancestral_memory = pd.DataFrame(columns=columns)
@@ -589,17 +594,20 @@ if __name__ == '__main__':
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
                                  'sequence': [randomsequence] * args.pop_size,
                                  'score': [0.001] * args.pop_size})
+        
     elif args.initial_seq == 'randoms':
         init_gen = pd.DataFrame({'id': [f'init_seq{i}' for i in range(args.pop_size)], 
                                  'sequence': [evolver.randomseq(args.random_seq_len) for i in range(args.pop_size)],
                                  'score': [0.001] * args.pop_size})
+        
     #elif args.initial_seq == 'c':
     #    init_gen = pd.read_csv('test.chk', sep='\t')
+
     else: 
         init_gen = pd.DataFrame({'id': ['init_seq'] * args.pop_size, 
                                  'sequence': [args.initial_seq] * args.pop_size,
                                  'score': [0.001] * args.pop_size})
-    
+        
 
     #load models
     print('\nloading esm.pretrained.esmfold_v1... \n')
