@@ -1,9 +1,6 @@
 # PFES: protein fold evolution simulation
 
-Code for [In silico evolution of globular protein folds from random sequences
-Harutyun Sahakyan, Sanasar Babajanyan, Yuri I. Wolf, Eugene V. Koonin
-bioRxiv 2024.11.10.622830; doi: https://doi.org/10.1101/2024.11.10.622830](https://www.biorxiv.org/content/10.1101/2024.11.10.622830v1)
-
+[In silico evolution of globular protein folds from random sequences <br> Harutyun Sahakyan, Sanasar G. Babajanyan, Yuri I. Wolf, and Eugene V. Koonin, PNAS (2025)](https://www.pnas.org/doi/10.1073/pnas.2509015122)
 
 ### Installation and usage examples 
 ```
@@ -32,6 +29,7 @@ python pfes-alpha/pfes.py  -ng 100 -ps 50 -sm weak -em single_chain -iseq AAAAAA
 This code requires [ESMfold](https://github.com/facebookresearch/esm) to run. 
 
 PFES was tested on Rocky Linux 8.7 (Green Obsidian) with NVIDIA Tesla V100 and A100 GPUs. 
+
 
 
 
