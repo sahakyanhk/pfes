@@ -1,3 +1,6 @@
+Please use [AMES](https://github.com/sahakyanhk/ames). It is an updated version of PFES that supports more simulations.
+#
+
 # PFES: protein fold evolution simulation
 
 Code for [In silico evolution of globular protein folds from random sequences](https://www.pnas.org/doi/10.1073/pnas.2509015122)
